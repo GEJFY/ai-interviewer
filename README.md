@@ -393,6 +393,13 @@ docker-compose -f docker-compose.prod.yml up -d --scale backend=3
 - [開発ガイド](docs/guides/DEVELOPMENT.md) - コーディング規約、テスト方法
 - [デプロイガイド](docs/guides/DEPLOYMENT.md) - 本番環境へのデプロイ
 
+### エンタープライズ仕様書（学習用テキスト）
+- [ログ管理仕様書](docs/specifications/LOGGING.md) - 構造化ログ、相関ID、マスキング
+- [エラー処理仕様書](docs/specifications/ERROR_HANDLING.md) - エラー階層、リトライ、サーキットブレーカー
+- [セキュリティ仕様書](docs/specifications/SECURITY.md) - JWT認証、RBAC、OWASP対策
+- [インフラ仕様書](docs/specifications/INFRASTRUCTURE.md) - Docker、CI/CD、Terraform
+- [AIプロバイダー仕様書](docs/specifications/AI_PROVIDERS.md) - マルチクラウドAI、音声サービス
+
 ### リファレンス
 - [アーキテクチャ設計](docs/architecture/)
 - [API仕様](docs/api/)

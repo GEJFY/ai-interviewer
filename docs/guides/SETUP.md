@@ -2,6 +2,8 @@
 
 このガイドでは、開発環境のセットアップ手順を**初心者向け**に詳しく説明します。
 
+> **学習リソース**: エンタープライズレベルの実装詳細については、[仕様書一覧](../specifications/README.md)を参照してください。
+
 ## 目次
 
 1. [必要なソフトウェア](#1-必要なソフトウェア)
@@ -12,6 +14,7 @@
 6. [フロントエンドのセットアップ](#6-フロントエンドのセットアップ)
 7. [動作確認](#7-動作確認)
 8. [トラブルシューティング](#8-トラブルシューティング)
+9. [セキュリティ設定](#9-セキュリティ設定)
 
 ---
 
@@ -415,13 +418,71 @@ docker-compose logs postgres
 
 ---
 
+## 9. セキュリティ設定
+
+本番環境にデプロイする前に、以下のセキュリティ設定を必ず行ってください。
+
+> **詳細**: [セキュリティ仕様書](../specifications/SECURITY.md)を参照
+
+### 9.1 SECRET_KEYの生成
+
+```bash
+# Pythonで安全なシークレットキーを生成
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+生成された値を `.env` の `SECRET_KEY` に設定します。
+
+### 9.2 CORS設定
+
+`.env` に許可するオリジンを設定:
+
+```env
+CORS_ORIGINS=["http://localhost:3000","https://your-domain.com"]
+```
+
+### 9.3 セキュリティヘッダーの確認
+
+本番環境では以下のヘッダーが自動的に設定されます:
+
+| ヘッダー | 説明 |
+| -------- | ---- |
+| X-Content-Type-Options | MIMEタイプスニッフィング防止 |
+| X-Frame-Options | クリックジャッキング防止 |
+| X-XSS-Protection | XSS攻撃防止 |
+| Strict-Transport-Security | HTTPS強制（本番のみ） |
+
+### 9.4 APIキーの管理
+
+```bash
+# APIキーは絶対にコードにハードコードしない
+# .envファイルは.gitignoreに含まれていることを確認
+cat .gitignore | grep .env
+```
+
+---
+
 ## 次のステップ
 
 セットアップが完了したら、以下のドキュメントを参照してください：
 
+### 開発ガイド
+
 - [開発ガイド](./DEVELOPMENT.md) - コーディング規約、テスト方法
 - [デプロイガイド](./DEPLOYMENT.md) - 本番環境へのデプロイ方法
 - [アーキテクチャ](../architecture/README.md) - システム構成の詳細
+
+### エンタープライズ仕様書（学習用）
+
+実装の詳細を学びたい方は、以下の仕様書を参照してください：
+
+| 仕様書 | 内容 |
+| ------ | ---- |
+| [ログ管理仕様書](../specifications/LOGGING.md) | 構造化ログ、相関ID、センシティブデータマスキング |
+| [エラー処理仕様書](../specifications/ERROR_HANDLING.md) | エラー階層、リトライ戦略、サーキットブレーカー |
+| [セキュリティ仕様書](../specifications/SECURITY.md) | JWT認証、RBAC、OWASP対策 |
+| [インフラ仕様書](../specifications/INFRASTRUCTURE.md) | Docker、CI/CD、Terraform |
+| [AIプロバイダー仕様書](../specifications/AI_PROVIDERS.md) | マルチクラウドAI、音声サービス |
 
 ---
 
