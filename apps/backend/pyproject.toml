@@ -1,0 +1,46 @@
+[project]
+name = "grc-backend"
+version = "0.1.0"
+description = "FastAPI backend for AI Interview Tool"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+dependencies = [
+    # Web Framework (2026 latest)
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "starlette>=0.45.0",
+    # Data Validation
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    # Security
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.18",
+    # Database
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    # Cache
+    "redis>=5.2.0",
+    # Internal packages
+    "grc-core",
+    "grc-ai",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=6.0.0",
+    "httpx>=0.28.0",
+    "ruff>=0.8.0",
+    "mypy>=1.14.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grc_backend"]

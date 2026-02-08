@@ -1,0 +1,88 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.uv/
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.local
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Build
+.next/
+out/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Docker
+docker-compose.override.yml
+
+# Misc
+*.bak
+*.tmp
+.cache/
+
+# Credentials (NEVER commit!)
+credentials/
+*.pem
+*.key
+*-credentials.json
+service-account.json
+
+# Local storage
+storage/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Expo
+.expo/
+
+# Mobile builds
+*.apk
+*.ipa
