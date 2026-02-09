@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     # GCP Vertex AI
     gcp_project_id: str = Field(default="")
     gcp_location: str = Field(default="asia-northeast1")
+    gcp_vertex_model: str = Field(default="gemini-2.5-flash")
     google_application_credentials: str = Field(default="")
 
     # Ollama (Local LLM)

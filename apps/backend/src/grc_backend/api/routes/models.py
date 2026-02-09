@@ -94,27 +94,27 @@ async def list_models(
 
     if realtime_only:
         models = get_realtime_models(provider)
-    else:
-        if provider:
-            models = [m for m in models if m.provider == provider]
-        if tier:
-            try:
-                tier_enum = ModelTier(tier)
-            except ValueError as err:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Invalid tier: '{tier}'. Valid values: {[t.value for t in ModelTier]}",
-                ) from err
-            models = [m for m in models if m.tier == tier_enum]
-        if capability:
-            try:
-                cap_enum = ModelCapability(capability)
-            except ValueError as err:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Invalid capability: '{capability}'. Valid values: {[c.value for c in ModelCapability]}",
-                ) from err
-            models = [m for m in models if cap_enum in m.capabilities]
+    elif provider:
+        models = [m for m in models if m.provider == provider]
+
+    if tier:
+        try:
+            tier_enum = ModelTier(tier)
+        except ValueError as err:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid tier: '{tier}'. Valid values: {[t.value for t in ModelTier]}",
+            ) from err
+        models = [m for m in models if m.tier == tier_enum]
+    if capability:
+        try:
+            cap_enum = ModelCapability(capability)
+        except ValueError as err:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid capability: '{capability}'. Valid values: {[c.value for c in ModelCapability]}",
+            ) from err
+        models = [m for m in models if cap_enum in m.capabilities]
 
     model_responses = [
         ModelResponse(
@@ -166,44 +166,85 @@ async def list_providers() -> ProvidersResponse:
     )
 
 
+_PROVIDER_ID_TO_FACTORY = {
+    "azure_openai": "azure",
+    "openai": "azure",  # OpenAI models accessed via Azure
+    "aws_bedrock": "aws",
+    "gcp_vertex": "gcp",
+    "local": "local",
+}
+
+
 @router.post("/test-connection", response_model=ConnectionTestResponse)
 async def test_connection(request: ConnectionTestRequest) -> ConnectionTestResponse:
     """プロバイダー接続テスト。"""
     try:
-        import os
-
         from grc_ai.base import ChatMessage, MessageRole
-        from grc_ai.factory import create_ai_provider_from_env
+        from grc_ai.config import AIConfig
+        from grc_ai.factory import create_ai_provider
 
-        # テスト対象プロバイダーを一時的に設定
-        original = os.environ.get("AI_PROVIDER")
-        os.environ["AI_PROVIDER"] = request.provider
+        settings = get_settings()
 
-        try:
-            provider = create_ai_provider_from_env()
-            response = await provider.chat(
-                messages=[
-                    ChatMessage(
-                        role=MessageRole.USER,
-                        content="Reply with exactly: OK",
-                    )
-                ],
-                temperature=0.0,
-                max_tokens=10,
-            )
-            await provider.close()
+        # PROVIDER_CAPABILITIES のIDをファクトリIDに変換
+        factory_id = _PROVIDER_ID_TO_FACTORY.get(request.provider, request.provider)
 
+        # 環境変数を汚染せず、直接configを構築
+        config_dict: dict = {"provider": factory_id}
+
+        if factory_id == "azure":
+            config_dict["azure"] = {
+                "api_key": settings.azure_openai_api_key or "",
+                "endpoint": settings.azure_openai_endpoint or "",
+                "deployment_name": settings.azure_openai_deployment_name,
+                "api_version": settings.azure_openai_api_version,
+            }
+        elif factory_id == "aws":
+            config_dict["aws"] = {
+                "access_key_id": settings.aws_access_key_id,
+                "secret_access_key": settings.aws_secret_access_key,
+                "region": settings.aws_region,
+                "model_id": settings.aws_bedrock_model_id,
+            }
+        elif factory_id == "gcp":
+            config_dict["gcp"] = {
+                "project_id": settings.gcp_project_id or "",
+                "location": settings.gcp_location,
+                "model_name": settings.gcp_vertex_model,
+            }
+        elif factory_id == "local":
+            config_dict["ollama"] = {
+                "base_url": settings.ollama_base_url,
+                "model_name": settings.ollama_model,
+                "embedding_model": settings.ollama_embedding_model,
+            }
+        else:
             return ConnectionTestResponse(
                 provider=request.provider,
-                status="success",
-                message="接続成功",
-                model_used=response.model,
+                status="error",
+                message=f"未対応のプロバイダー: {request.provider}",
             )
-        finally:
-            if original is not None:
-                os.environ["AI_PROVIDER"] = original
-            elif "AI_PROVIDER" in os.environ:
-                del os.environ["AI_PROVIDER"]
+
+        config = AIConfig(**config_dict)
+        provider = create_ai_provider(config)
+
+        response = await provider.chat(
+            messages=[
+                ChatMessage(
+                    role=MessageRole.USER,
+                    content="Reply with exactly: OK",
+                )
+            ],
+            temperature=0.0,
+            max_tokens=10,
+        )
+        await provider.close()
+
+        return ConnectionTestResponse(
+            provider=request.provider,
+            status="success",
+            message="接続成功",
+            model_used=response.model,
+        )
 
     except Exception as e:
         logger.warning(f"Connection test failed for {request.provider}: {e}")
