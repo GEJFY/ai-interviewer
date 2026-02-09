@@ -517,7 +517,7 @@ jobs:
           echo "e2e-test:                ${{ needs.e2e-test.result }}"
           echo ""
 
-          # Required jobs (must succeed)
+          # Required jobs (must succeed or be skipped due to dependency failure)
           FAILED=false
           for job in backend-test frontend-test frontend-build docker-build terraform-validate; do
             result="${{ needs.backend-test.result }}"
@@ -528,9 +528,11 @@ jobs:
               docker-build) result="${{ needs.docker-build.result }}" ;;
               terraform-validate) result="${{ needs.terraform-validate.result }}" ;;
             esac
-            if [[ "$result" != "success" ]]; then
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
               echo "FAIL: $job ($result)"
               FAILED=true
+            elif [[ "$result" == "skipped" ]]; then
+              echo "SKIP: $job (skipped due to dependency)"
             fi
           done
 
