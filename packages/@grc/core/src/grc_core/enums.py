@@ -1,9 +1,9 @@
 """Enumeration definitions for the AI Interview Tool domain."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     """User roles for access control."""
 
     ADMIN = "admin"
@@ -12,7 +12,7 @@ class UserRole(str, Enum):
     VIEWER = "viewer"
 
 
-class ProjectStatus(str, Enum):
+class ProjectStatus(StrEnum):
     """Project lifecycle status."""
 
     ACTIVE = "active"
@@ -20,7 +20,7 @@ class ProjectStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Interview task status."""
 
     PENDING = "pending"
@@ -29,7 +29,7 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class InterviewStatus(str, Enum):
+class InterviewStatus(StrEnum):
     """Interview session status."""
 
     SCHEDULED = "scheduled"
@@ -39,7 +39,7 @@ class InterviewStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class Speaker(str, Enum):
+class Speaker(StrEnum):
     """Speaker identification for transcript entries."""
 
     AI = "ai"
@@ -47,7 +47,7 @@ class Speaker(str, Enum):
     INTERVIEWER = "interviewer"
 
 
-class ReportType(str, Enum):
+class ReportType(StrEnum):
     """Types of reports that can be generated."""
 
     SUMMARY = "summary"
@@ -57,7 +57,7 @@ class ReportType(str, Enum):
     SURVEY_ANALYSIS = "survey_analysis"  # 意識調査分析
 
 
-class ReportStatus(str, Enum):
+class ReportStatus(StrEnum):
     """Report approval workflow status."""
 
     DRAFT = "draft"
@@ -66,7 +66,7 @@ class ReportStatus(str, Enum):
     PUBLISHED = "published"
 
 
-class UseCaseType(str, Enum):
+class UseCaseType(StrEnum):
     """GRC use case categories."""
 
     # Compliance

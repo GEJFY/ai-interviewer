@@ -1,22 +1,20 @@
 """Model catalog unit tests."""
 
-import pytest
 
 from grc_ai.models import (
     ALL_MODELS,
     LOCAL_MODELS,
-    RECOMMENDED_MODELS,
     PROVIDER_CAPABILITIES,
-    ModelTier,
-    ModelCapability,
+    RECOMMENDED_MODELS,
     LatencyClass,
+    ModelCapability,
+    ModelTier,
     get_model,
+    get_models_by_capability,
     get_models_by_provider,
     get_models_by_tier,
-    get_models_by_capability,
     get_realtime_models,
     get_recommended_realtime_model,
-    get_recommended_model,
 )
 
 
@@ -102,14 +100,12 @@ class TestRealtimeModels:
     def test_get_realtime_models_sorted(self):
         """リアルタイムモデルが遅延順にソートされていること。"""
         models = get_realtime_models()
-        ultra_fast_seen = False
         fast_seen = False
         for m in models:
             if m.latency_class == LatencyClass.FAST:
                 fast_seen = True
             if m.latency_class == LatencyClass.ULTRA_FAST:
                 assert not fast_seen, "ULTRA_FAST should come before FAST"
-                ultra_fast_seen = True
 
     def test_get_recommended_realtime_economy(self):
         """コスパ重視のリアルタイムモデル推奨。"""

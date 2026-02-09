@@ -2,13 +2,13 @@
 
 from grc_ai.base import (
     AIProvider,
+    ChatChunk,
     ChatMessage,
     ChatResponse,
-    ChatChunk,
     EmbeddingResponse,
 )
-from grc_ai.factory import create_ai_provider, AIProviderType
 from grc_ai.config import AIConfig
+from grc_ai.factory import AIProviderType, create_ai_provider
 
 __version__ = "0.1.0"
 

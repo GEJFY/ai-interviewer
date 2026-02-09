@@ -15,16 +15,15 @@ import hmac
 import ipaddress
 import secrets
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Callable
 
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .logging import LogContext, get_logger, request_id_var
+from .logging import LogContext, get_logger
 
 logger = get_logger(__name__)
 

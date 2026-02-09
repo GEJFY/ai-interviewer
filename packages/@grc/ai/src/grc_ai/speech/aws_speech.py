@@ -1,9 +1,7 @@
 """AWS Transcribe and Polly implementation for STT and TTS."""
 
 import asyncio
-import base64
-import io
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from grc_ai.speech.base import (
     AudioFormat,
@@ -69,7 +67,7 @@ class AWSSpeechToText(BaseSpeechToText):
             except ImportError:
                 raise ImportError(
                     "boto3 is required for AWS services. Install with: pip install boto3"
-                )
+                ) from None
         return self._transcribe_client
 
     async def transcribe(
@@ -115,7 +113,7 @@ class AWSSpeechToText(BaseSpeechToText):
             raise ImportError(
                 "amazon-transcribe is required for AWS Transcribe streaming. "
                 "Install with: pip install amazon-transcribe"
-            )
+            ) from None
 
         aws_language = self.LANGUAGE_MAPPING.get(language, "ja-JP")
 
@@ -217,7 +215,7 @@ class AWSTextToSpeech(BaseTextToSpeech):
             except ImportError:
                 raise ImportError(
                     "boto3 is required for AWS services. Install with: pip install boto3"
-                )
+                ) from None
         return self._polly_client
 
     async def synthesize(

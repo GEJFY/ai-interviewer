@@ -1,20 +1,21 @@
 """Report management endpoints."""
 
-from fastapi import APIRouter, HTTPException, Query, status
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Any
 import io
 import json
+from datetime import UTC
+from typing import Any
 
-from grc_backend.api.deps import DBSession, CurrentUser, AIProviderDep
-from grc_core.enums import ReportType, ReportStatus
+from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
+from grc_core.enums import ReportStatus, ReportType
 from grc_core.models import Report
 from grc_core.repositories import InterviewRepository
 from grc_core.repositories.base import BaseRepository
-from grc_core.schemas import ReportCreate, ReportRead, ReportGenerate
+from grc_core.schemas import ReportGenerate, ReportRead
 from grc_core.schemas.base import PaginatedResponse
-from grc_ai.dialogue import InterviewAgent, InterviewContext
+from pydantic import BaseModel
+
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 
 router = APIRouter()
 
@@ -383,7 +384,7 @@ async def approve_report(
     current_user: CurrentUser,
 ) -> ReportRead:
     """Approve a report."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     repo = ReportRepository(db)
     report = await repo.get(report_id)
@@ -404,7 +405,7 @@ async def approve_report(
         report_id,
         status=ReportStatus.APPROVED,
         approved_by=current_user.id,
-        approved_at=datetime.now(timezone.utc),
+        approved_at=datetime.now(UTC),
     )
 
     await db.commit()

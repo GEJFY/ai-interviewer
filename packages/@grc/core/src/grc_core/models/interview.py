@@ -11,12 +11,12 @@ from grc_core.enums import InterviewStatus
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from grc_core.models.task import InterviewTask
     from grc_core.models.interviewee import Interviewee
-    from grc_core.models.user import User
-    from grc_core.models.transcript import TranscriptEntry
-    from grc_core.models.report import Report
     from grc_core.models.knowledge import KnowledgeItem
+    from grc_core.models.report import Report
+    from grc_core.models.task import InterviewTask
+    from grc_core.models.transcript import TranscriptEntry
+    from grc_core.models.user import User
 
 
 class Interview(Base, TimestampMixin):

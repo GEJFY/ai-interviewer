@@ -4,19 +4,17 @@ Handles audio generation for AI responses using the multi-cloud
 speech abstraction layer.
 """
 
-import asyncio
 import logging
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator
-from uuid import UUID
 
 from grc_ai.speech import (
     AudioFormat,
     SpeechLanguage,
+    SpeechProviderType,
     SynthesisResult,
     VoiceInfo,
     create_text_to_speech,
-    SpeechProviderType,
 )
 
 logger = logging.getLogger(__name__)

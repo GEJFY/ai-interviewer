@@ -1,6 +1,7 @@
 """GCP Vertex AI provider implementation."""
 
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -84,6 +85,7 @@ class GCPVertexProvider(AIProvider):
     ) -> ChatResponse:
         """Generate a chat completion using GCP Vertex AI."""
         import asyncio
+
         from vertexai.generative_models import GenerationConfig, GenerativeModel
 
         self._ensure_initialized()
@@ -135,6 +137,7 @@ class GCPVertexProvider(AIProvider):
     ) -> AsyncIterator[ChatChunk]:
         """Stream a chat completion using GCP Vertex AI."""
         import asyncio
+
         from vertexai.generative_models import GenerationConfig, GenerativeModel
 
         self._ensure_initialized()
@@ -191,6 +194,7 @@ class GCPVertexProvider(AIProvider):
     ) -> EmbeddingResponse:
         """Generate an embedding using GCP Vertex AI."""
         import asyncio
+
         from vertexai.language_models import TextEmbeddingModel
 
         self._ensure_initialized()
@@ -221,6 +225,7 @@ class GCPVertexProvider(AIProvider):
     ) -> list[EmbeddingResponse]:
         """Generate embeddings for multiple texts."""
         import asyncio
+
         from vertexai.language_models import TextEmbeddingModel
 
         self._ensure_initialized()

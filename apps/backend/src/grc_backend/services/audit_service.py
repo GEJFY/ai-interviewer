@@ -6,16 +6,16 @@ supporting regulatory compliance and security requirements.
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
 
-class AuditAction(str, Enum):
+class AuditAction(StrEnum):
     """Types of auditable actions."""
 
     # Authentication
@@ -76,7 +76,7 @@ class AuditAction(str, Enum):
     API_KEY_REVOKED = "system.api_key_revoked"
 
 
-class AuditSeverity(str, Enum):
+class AuditSeverity(StrEnum):
     """Severity levels for audit events."""
 
     INFO = "info"

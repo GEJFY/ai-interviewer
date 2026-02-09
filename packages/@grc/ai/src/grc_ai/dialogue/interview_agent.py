@@ -1,8 +1,9 @@
 """Interview agent for conducting AI-powered interviews."""
 
 import json
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any
 
 from grc_ai.base import AIProvider, ChatMessage, MessageRole
 from grc_ai.dialogue.prompts import PromptManager

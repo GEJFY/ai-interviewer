@@ -14,12 +14,11 @@ import sys
 import time
 import traceback
 import uuid
+from collections.abc import Callable
 from contextvars import ContextVar
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import wraps
-from typing import Any, Callable
-
-from pydantic import BaseModel
+from typing import Any
 
 # Context variables for request tracking
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -107,7 +106,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

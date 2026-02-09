@@ -1,8 +1,6 @@
 """Knowledge management endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query, status
-
-from grc_backend.api.deps import DBSession, CurrentUser, AIProviderDep
 from grc_core.models import KnowledgeItem
 from grc_core.repositories.base import BaseRepository
 from grc_core.schemas import (
@@ -11,6 +9,8 @@ from grc_core.schemas import (
     KnowledgeSearchRequest,
 )
 from grc_core.schemas.base import PaginatedResponse
+
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 
 router = APIRouter()
 
@@ -61,9 +61,9 @@ async def search_knowledge(
     ai_provider: AIProviderDep,
 ) -> dict:
     """Search knowledge items using semantic search."""
-    from sqlalchemy import select, func, text
+    from sqlalchemy import select
 
-    repo = KnowledgeRepository(db)
+    KnowledgeRepository(db)
 
     # Generate embedding for the query
     query_embedding = await ai_provider.embed(search_request.query)
@@ -126,7 +126,7 @@ def _cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     if len(vec1) != len(vec2):
         return 0.0
 
-    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=False))
     magnitude1 = math.sqrt(sum(a * a for a in vec1))
     magnitude2 = math.sqrt(sum(b * b for b in vec2))
 

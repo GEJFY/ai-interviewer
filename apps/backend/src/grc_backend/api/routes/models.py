@@ -3,20 +3,19 @@
 import logging
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
-
 from grc_ai.models import (
     ALL_MODELS,
-    RECOMMENDED_MODELS,
     PROVIDER_CAPABILITIES,
+    RECOMMENDED_MODELS,
     ModelCapability,
     ModelTier,
-    LatencyClass,
+    get_models_by_capability,
     get_models_by_provider,
     get_models_by_tier,
-    get_models_by_capability,
     get_realtime_models,
 )
+from pydantic import BaseModel
+
 from grc_backend.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -164,9 +163,10 @@ async def list_providers() -> ProvidersResponse:
 async def test_connection(request: ConnectionTestRequest) -> ConnectionTestResponse:
     """プロバイダー接続テスト。"""
     try:
-        from grc_ai.factory import create_ai_provider_from_env
-        from grc_ai.base import ChatMessage, MessageRole
         import os
+
+        from grc_ai.base import ChatMessage, MessageRole
+        from grc_ai.factory import create_ai_provider_from_env
 
         # テスト対象プロバイダーを一時的に設定
         original = os.environ.get("AI_PROVIDER")

@@ -1,16 +1,16 @@
 """AI provider factory."""
 
-from enum import Enum
+from enum import StrEnum
 
 from grc_ai.base import AIProvider
 from grc_ai.config import AIConfig
-from grc_ai.providers.azure_openai import AzureOpenAIProvider
 from grc_ai.providers.aws_bedrock import AWSBedrockProvider
+from grc_ai.providers.azure_openai import AzureOpenAIProvider
 from grc_ai.providers.gcp_vertex import GCPVertexProvider
 from grc_ai.providers.ollama_provider import OllamaProvider
 
 
-class AIProviderType(str, Enum):
+class AIProviderType(StrEnum):
     """Supported AI provider types."""
 
     AZURE = "azure"

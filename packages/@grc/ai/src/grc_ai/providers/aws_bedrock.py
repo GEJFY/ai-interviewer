@@ -1,7 +1,8 @@
 """AWS Bedrock provider implementation."""
 
 import json
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import boto3
 from botocore.config import Config

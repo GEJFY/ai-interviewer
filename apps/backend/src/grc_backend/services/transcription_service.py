@@ -5,18 +5,19 @@ with the speech abstraction layer for multi-cloud STT support.
 """
 
 import asyncio
+import contextlib
 import logging
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import AsyncIterator, Callable
 from uuid import UUID, uuid4
 
 from grc_ai.speech import (
     AudioFormat,
     SpeechLanguage,
+    SpeechProviderType,
     TranscriptionResult,
     create_speech_to_text,
-    SpeechProviderType,
 )
 
 logger = logging.getLogger(__name__)
@@ -171,7 +172,7 @@ class TranscriptionService:
 
                 yield result
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # No audio data, continue waiting
                 continue
             except Exception as e:
@@ -237,10 +238,8 @@ class TranscriptionService:
         # Cancel transcription task if running
         if session._transcription_task:
             session._transcription_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await session._transcription_task
-            except asyncio.CancelledError:
-                pass
 
         del self._sessions[session_id]
         self._callbacks.pop(session_id, None)

@@ -1,16 +1,15 @@
 """Factory functions for creating translation providers."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from grc_ai.translation.base import (
-    BaseTranslation,
     TranslationLanguage,
     TranslationProvider,
 )
 
 
-class TranslationProviderType(str, Enum):
+class TranslationProviderType(StrEnum):
     """Supported translation provider types."""
 
     AZURE = "azure"
@@ -63,8 +62,8 @@ def create_translator(
     match provider_type:
         case TranslationProviderType.AZURE:
             from grc_ai.translation.azure_translate import (
-                AzureTranslatorConfig,
                 AzureTranslator,
+                AzureTranslatorConfig,
             )
 
             config_obj = AzureTranslatorConfig(
@@ -81,8 +80,8 @@ def create_translator(
 
         case TranslationProviderType.AWS:
             from grc_ai.translation.aws_translate import (
-                AWSTranslateConfig,
                 AWSTranslate,
+                AWSTranslateConfig,
             )
 
             config_obj = AWSTranslateConfig(
@@ -97,8 +96,8 @@ def create_translator(
 
         case TranslationProviderType.GCP:
             from grc_ai.translation.gcp_translate import (
-                GCPTranslateConfig,
                 GCPTranslate,
+                GCPTranslateConfig,
             )
 
             config_obj = GCPTranslateConfig(

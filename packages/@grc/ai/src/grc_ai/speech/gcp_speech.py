@@ -1,7 +1,7 @@
 """GCP Speech-to-Text and Text-to-Speech implementation."""
 
 import asyncio
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from grc_ai.speech.base import (
     AudioFormat,
@@ -61,7 +61,7 @@ class GCPSpeechToText(BaseSpeechToText):
                 raise ImportError(
                     "google-cloud-speech is required for GCP Speech. "
                     "Install with: pip install google-cloud-speech"
-                )
+                ) from None
         return self._client
 
     async def transcribe(
@@ -216,7 +216,7 @@ class GCPTextToSpeech(BaseTextToSpeech):
                 raise ImportError(
                     "google-cloud-texttospeech is required for GCP TTS. "
                     "Install with: pip install google-cloud-texttospeech"
-                )
+                ) from None
         return self._client
 
     async def synthesize(

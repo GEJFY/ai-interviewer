@@ -13,9 +13,9 @@ from google.oauth2 import service_account
 
 from grc_ai.translation.base import (
     BaseTranslation,
+    DetectionResult,
     TranslationLanguage,
     TranslationResult,
-    DetectionResult,
 )
 
 

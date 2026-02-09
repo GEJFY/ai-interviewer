@@ -9,8 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from grc_core.models.organization import Organization
     from grc_core.models.interview import Interview
+    from grc_core.models.organization import Organization
 
 
 class KnowledgeItem(Base, TimestampMixin):

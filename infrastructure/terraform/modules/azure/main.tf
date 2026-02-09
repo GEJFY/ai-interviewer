@@ -108,7 +108,7 @@ resource "azurerm_key_vault" "main" {
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
 
-  enable_rbac_authorization = true
+  rbac_authorization_enabled = true
 
   network_acls {
     default_action = "Allow"
@@ -183,7 +183,7 @@ resource "azurerm_redis_cache" "main" {
   capacity            = var.environment == "prod" ? 2 : 0
   family              = var.environment == "prod" ? "C" : "C"
   sku_name            = var.environment == "prod" ? "Standard" : "Basic"
-  enable_non_ssl_port = false
+  non_ssl_port_enabled = false
   minimum_tls_version = "1.2"
 
   redis_configuration {
@@ -571,7 +571,7 @@ resource "azurerm_monitor_metric_alert" "redis_memory" {
 
 # Application Insights Smart Detection
 resource "azurerm_application_insights_smart_detection_rule" "failure_anomalies" {
-  name                    = "Failure Anomalies"
+  name                    = "Slow page load time"
   application_insights_id = azurerm_application_insights.main.id
   enabled                 = true
 }

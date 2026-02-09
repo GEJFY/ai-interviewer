@@ -10,14 +10,14 @@ Generates various types of reports from interview transcripts:
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
 
-class ReportType(str, Enum):
+class ReportType(StrEnum):
     """Types of reports that can be generated."""
 
     SUMMARY = "summary"  # Interview summary
@@ -26,7 +26,7 @@ class ReportType(str, Enum):
     AUDIT_WORKPAPER = "audit_workpaper"  # Audit workpaper
 
 
-class ExportFormat(str, Enum):
+class ExportFormat(StrEnum):
     """Supported export formats."""
 
     JSON = "json"

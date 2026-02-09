@@ -1,12 +1,12 @@
 """Project management endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query, status
-
-from grc_backend.api.deps import DBSession, CurrentUser, ManagerUser
 from grc_core.enums import ProjectStatus
 from grc_core.repositories import ProjectRepository
 from grc_core.schemas import ProjectCreate, ProjectRead, ProjectUpdate
 from grc_core.schemas.base import PaginatedResponse
+
+from grc_backend.api.deps import CurrentUser, DBSession, ManagerUser
 
 router = APIRouter()
 

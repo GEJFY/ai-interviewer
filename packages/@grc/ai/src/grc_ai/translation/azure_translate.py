@@ -5,13 +5,14 @@ and language detection.
 """
 
 from dataclasses import dataclass
+
 import httpx
 
 from grc_ai.translation.base import (
     BaseTranslation,
+    DetectionResult,
     TranslationLanguage,
     TranslationResult,
-    DetectionResult,
 )
 
 
@@ -252,7 +253,7 @@ class AzureTranslator(BaseTranslation):
         data = response.json()
 
         supported = []
-        for code in data.get("translation", {}).keys():
+        for code in data.get("translation", {}):
             lang = self._normalize_language_code(code)
             if lang:
                 supported.append(lang)

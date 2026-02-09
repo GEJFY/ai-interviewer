@@ -10,12 +10,12 @@ from grc_core.enums import UserRole
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from grc_core.models.interview import Interview
     from grc_core.models.organization import Organization
     from grc_core.models.project import Project
+    from grc_core.models.report import Report
     from grc_core.models.task import InterviewTask
     from grc_core.models.template import Template
-    from grc_core.models.interview import Interview
-    from grc_core.models.report import Report
 
 
 class User(Base, TimestampMixin):

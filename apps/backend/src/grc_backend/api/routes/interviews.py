@@ -1,19 +1,19 @@
 """Interview management endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query, status
-
-from grc_backend.api.deps import DBSession, CurrentUser, AIProviderDep
 from grc_core.enums import InterviewStatus
 from grc_core.repositories import InterviewRepository, TaskRepository
 from grc_core.schemas import (
+    InterviewComplete,
     InterviewCreate,
     InterviewRead,
-    InterviewUpdate,
     InterviewStart,
-    InterviewComplete,
+    InterviewUpdate,
 )
-from grc_core.schemas.transcript import TranscriptEntryRead
 from grc_core.schemas.base import PaginatedResponse
+from grc_core.schemas.transcript import TranscriptEntryRead
+
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 
 router = APIRouter()
 

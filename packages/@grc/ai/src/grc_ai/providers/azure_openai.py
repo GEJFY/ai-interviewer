@@ -1,6 +1,6 @@
 """Azure OpenAI provider implementation."""
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from openai import AsyncAzureOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential

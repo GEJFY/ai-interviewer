@@ -1,17 +1,18 @@
 """FastAPI dependencies."""
 
-from typing import Annotated, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from grc_backend.config import get_settings, Settings
+from grc_ai import AIConfig, AIProvider, create_ai_provider
 from grc_core.database import get_database
 from grc_core.models import User
 from grc_core.repositories import UserRepository
-from grc_ai import AIProvider, create_ai_provider, AIConfig
+from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from grc_backend.config import Settings, get_settings
 
 # Security
 security = HTTPBearer()
@@ -50,8 +51,8 @@ async def get_current_user(
         user_id: str | None = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+    except JWTError as err:
+        raise credentials_exception from err
 
     user_repo = UserRepository(db)
     user = await user_repo.get(user_id)

@@ -11,11 +11,11 @@ from grc_core.enums import TaskStatus, UseCaseType
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from grc_core.models.interview import Interview
     from grc_core.models.project import Project
+    from grc_core.models.report import Report
     from grc_core.models.template import Template
     from grc_core.models.user import User
-    from grc_core.models.interview import Interview
-    from grc_core.models.report import Report
 
 
 class InterviewTask(Base, TimestampMixin):

@@ -11,8 +11,8 @@ from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from grc_core.models.organization import Organization
-    from grc_core.models.user import User
     from grc_core.models.task import InterviewTask
+    from grc_core.models.user import User
 
 
 class Template(Base, TimestampMixin):

@@ -12,9 +12,9 @@ from grc_ai.speech.base import (
     VoiceInfo,
 )
 from grc_ai.speech.factory import (
+    SpeechProviderType,
     create_speech_to_text,
     create_text_to_speech,
-    SpeechProviderType,
 )
 
 __all__ = [

@@ -1,12 +1,13 @@
 """Base AI provider protocol and data classes."""
 
 from abc import abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import AsyncIterator, Protocol, runtime_checkable
+from enum import StrEnum
+from typing import Protocol, runtime_checkable
 
 
-class MessageRole(str, Enum):
+class MessageRole(StrEnum):
     """Chat message roles."""
 
     SYSTEM = "system"

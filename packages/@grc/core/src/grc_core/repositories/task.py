@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from grc_core.enums import TaskStatus
-from grc_core.models.task import InterviewTask
 from grc_core.models.interview import Interview
+from grc_core.models.task import InterviewTask
 from grc_core.repositories.base import BaseRepository
 
 

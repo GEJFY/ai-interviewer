@@ -52,7 +52,12 @@ select = [
     "ARG",    # flake8-unused-arguments
     "SIM",    # flake8-simplify
 ]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line too long
+    "B008",   # function call in default argument (FastAPI Depends pattern)
+    "ARG001", # unused function argument (FastAPI DI: current_user, etc.)
+    "ARG002", # unused method argument (protocol compliance: kwargs, etc.)
+]
 
 [tool.mypy]
 python_version = "3.11"

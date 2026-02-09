@@ -5,11 +5,10 @@ Updated for 2026 with the latest available models including GPT-5.2, Claude Sonn
 """
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Literal
+from enum import StrEnum
 
 
-class ModelTier(str, Enum):
+class ModelTier(StrEnum):
     """Model performance/cost tiers."""
 
     ECONOMY = "economy"  # Lowest cost, good for simple tasks
@@ -18,7 +17,7 @@ class ModelTier(str, Enum):
     FLAGSHIP = "flagship"  # Best performance, highest cost
 
 
-class ModelCapability(str, Enum):
+class ModelCapability(StrEnum):
     """Model capabilities."""
 
     CHAT = "chat"
@@ -32,7 +31,7 @@ class ModelCapability(str, Enum):
     REALTIME = "realtime"  # Optimized for real-time interaction
 
 
-class LatencyClass(str, Enum):
+class LatencyClass(StrEnum):
     """Model latency classification for real-time requirements."""
 
     ULTRA_FAST = "ultra_fast"  # <200ms TTFT, ideal for real-time dialogue

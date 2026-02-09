@@ -1,18 +1,5 @@
 """GRC Core - Domain models and shared utilities for AI Interview Tool."""
 
-from grc_core.models import (
-    Base,
-    Interview,
-    InterviewTask,
-    Interviewee,
-    KnowledgeItem,
-    Organization,
-    Project,
-    Report,
-    Template,
-    TranscriptEntry,
-    User,
-)
 from grc_core.enums import (
     InterviewStatus,
     ProjectStatus,
@@ -22,6 +9,19 @@ from grc_core.enums import (
     TaskStatus,
     UseCaseType,
     UserRole,
+)
+from grc_core.models import (
+    Base,
+    Interview,
+    Interviewee,
+    InterviewTask,
+    KnowledgeItem,
+    Organization,
+    Project,
+    Report,
+    Template,
+    TranscriptEntry,
+    User,
 )
 
 __version__ = "0.1.0"

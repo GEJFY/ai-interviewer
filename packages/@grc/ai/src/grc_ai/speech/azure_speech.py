@@ -1,8 +1,7 @@
 """Azure Speech Services implementation for STT and TTS."""
 
 import asyncio
-import io
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from grc_ai.speech.base import (
     AudioFormat,
@@ -47,7 +46,7 @@ class AzureSpeechToText(BaseSpeechToText):
                 raise ImportError(
                     "azure-cognitiveservices-speech is required for Azure Speech. "
                     "Install with: pip install azure-cognitiveservices-speech"
-                )
+                ) from None
         return self._speech_config
 
     async def transcribe(
@@ -213,7 +212,7 @@ class AzureTextToSpeech(BaseTextToSpeech):
                 raise ImportError(
                     "azure-cognitiveservices-speech is required for Azure Speech. "
                     "Install with: pip install azure-cognitiveservices-speech"
-                )
+                ) from None
         return self._speech_config
 
     async def synthesize(

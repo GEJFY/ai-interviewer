@@ -12,9 +12,9 @@ import boto3
 
 from grc_ai.translation.base import (
     BaseTranslation,
+    DetectionResult,
     TranslationLanguage,
     TranslationResult,
-    DetectionResult,
 )
 
 

@@ -1,7 +1,7 @@
 """Ollama (Local LLM) provider implementation."""
 
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from ollama import AsyncClient
 

@@ -6,11 +6,11 @@ supporting Azure Translator, AWS Translate, and GCP Cloud Translation.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
 
-class TranslationLanguage(str, Enum):
+class TranslationLanguage(StrEnum):
     """Supported languages for translation."""
 
     JA = "ja"  # Japanese

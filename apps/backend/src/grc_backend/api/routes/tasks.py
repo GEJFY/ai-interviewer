@@ -1,12 +1,12 @@
 """Interview task management endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query, status
-
-from grc_backend.api.deps import DBSession, CurrentUser, ManagerUser
 from grc_core.enums import TaskStatus
-from grc_core.repositories import TaskRepository, ProjectRepository
+from grc_core.repositories import ProjectRepository, TaskRepository
 from grc_core.schemas import TaskCreate, TaskRead, TaskUpdate
 from grc_core.schemas.base import PaginatedResponse
+
+from grc_backend.api.deps import CurrentUser, DBSession, ManagerUser
 
 router = APIRouter()
 
