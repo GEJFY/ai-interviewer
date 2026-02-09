@@ -1,9 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Settings Page', () => {
   // テスト前にログイン状態にする
   test.beforeEach(async ({ page }) => {
-    // ログインをシミュレート（実際の認証フローに合わせて調整）
     await page.goto('/login');
     await page.getByLabel(/メール|Email/i).first().fill('admin@example.com');
     await page.getByLabel(/パスワード|Password/i).first().fill('password123');
