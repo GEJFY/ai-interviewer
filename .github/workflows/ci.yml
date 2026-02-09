@@ -103,6 +103,12 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        id: setup-uv
+        continue-on-error: true
+
+      - name: Install uv (fallback via pip)
+        if: steps.setup-uv.outcome == 'failure'
+        run: pip install uv
 
       - name: Install dependencies
         run: |
@@ -277,6 +283,12 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        id: setup-uv-ollama
+        continue-on-error: true
+
+      - name: Install uv (fallback via pip)
+        if: steps.setup-uv-ollama.outcome == 'failure'
+        run: pip install uv
 
       - name: Install dependencies
         run: |
