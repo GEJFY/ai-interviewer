@@ -7,15 +7,15 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 from grc_core.enums import ReportStatus, ReportType
 from grc_core.models import Report
 from grc_core.repositories import InterviewRepository
 from grc_core.repositories.base import BaseRepository
 from grc_core.schemas import ReportGenerate, ReportRead
 from grc_core.schemas.base import PaginatedResponse
-from pydantic import BaseModel
-
-from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 
 router = APIRouter()
 

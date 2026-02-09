@@ -5,14 +5,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from grc_core.repositories import UserRepository
-from grc_core.schemas import UserCreate, UserRead
 from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
 from grc_backend.api.deps import CurrentUser, DBSession, get_settings_dep
 from grc_backend.config import Settings
+from grc_core.repositories import UserRepository
+from grc_core.schemas import UserCreate, UserRead
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

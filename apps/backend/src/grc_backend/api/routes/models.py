@@ -3,6 +3,8 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
+
 from grc_ai.models import (
     ALL_MODELS,
     PROVIDER_CAPABILITIES,
@@ -11,8 +13,6 @@ from grc_ai.models import (
     ModelTier,
     get_realtime_models,
 )
-from pydantic import BaseModel
-
 from grc_backend.config import get_settings
 
 logger = logging.getLogger(__name__)

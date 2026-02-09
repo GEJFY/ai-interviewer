@@ -1,6 +1,8 @@
 """Knowledge management endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query, status
+
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 from grc_core.models import KnowledgeItem
 from grc_core.repositories.base import BaseRepository
 from grc_core.schemas import (
@@ -9,8 +11,6 @@ from grc_core.schemas import (
     KnowledgeSearchRequest,
 )
 from grc_core.schemas.base import PaginatedResponse
-
-from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
 
 router = APIRouter()
 

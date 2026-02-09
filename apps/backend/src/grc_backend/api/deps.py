@@ -5,14 +5,14 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from grc_ai import AIConfig, AIProvider, create_ai_provider
-from grc_core.database import get_database
-from grc_core.models import User
-from grc_core.repositories import UserRepository
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from grc_ai import AIConfig, AIProvider, create_ai_provider
 from grc_backend.config import Settings, get_settings
+from grc_core.database import get_database
+from grc_core.models import User
+from grc_core.repositories import UserRepository
 
 # Security
 security = HTTPBearer()

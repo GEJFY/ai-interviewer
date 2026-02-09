@@ -3,13 +3,13 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
-from grc_ai.dialogue import InterviewAgent, InterviewContext
-from grc_core.enums import InterviewStatus, Speaker
-from grc_core.repositories import InterviewRepository, TaskRepository, TemplateRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from grc_ai.dialogue import InterviewAgent, InterviewContext
 from grc_backend.api.deps import get_ai_provider, get_db
 from grc_backend.config import get_settings
+from grc_core.enums import InterviewStatus, Speaker
+from grc_core.repositories import InterviewRepository, TaskRepository, TemplateRepository
 
 router = APIRouter()
 
