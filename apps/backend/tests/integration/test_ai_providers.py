@@ -83,6 +83,59 @@ class TestAIProviderAbstraction:
         assert "api_key" in config
 
 
+class TestLocalProvider:
+    """Test local (Ollama) provider configuration."""
+
+    @pytest.mark.asyncio
+    async def test_create_local_provider(self):
+        """Local LLM provider should be created correctly."""
+        config = {
+            "provider": "local",
+            "base_url": "http://localhost:11434",
+            "model_name": "gemma3:1b",
+        }
+
+        assert config["provider"] == "local"
+        assert "base_url" in config
+
+    @pytest.mark.asyncio
+    async def test_local_provider_factory(self):
+        """Local provider should be created via factory."""
+        from grc_ai.config import AIConfig, OllamaConfig
+        from grc_ai.factory import create_ai_provider
+        from grc_ai.providers.ollama_provider import OllamaProvider
+
+        config = AIConfig(
+            provider="local",
+            ollama=OllamaConfig(model_name="gemma3:1b"),
+        )
+        provider = create_ai_provider(config)
+        assert isinstance(provider, OllamaProvider)
+        assert provider.config.model_name == "gemma3:1b"
+
+    @pytest.mark.asyncio
+    async def test_local_provider_default_config(self):
+        """Local provider with default config should use defaults."""
+        from grc_ai.config import AIConfig
+        from grc_ai.factory import create_ai_provider
+        from grc_ai.providers.ollama_provider import OllamaProvider
+
+        config = AIConfig(provider="local")
+        provider = create_ai_provider(config)
+        assert isinstance(provider, OllamaProvider)
+        assert provider.config.base_url == "http://localhost:11434"
+
+    def test_local_models_in_catalog(self):
+        """Local models should be in the model catalog."""
+        from grc_ai.models import get_models_by_provider
+
+        local_models = get_models_by_provider("local")
+        assert len(local_models) > 0
+        model_ids = [m.model_id for m in local_models]
+        assert "gemma3:1b" in model_ids
+        assert "phi4" in model_ids
+
+
 class TestChatCompletion:
     """Test chat completion across providers."""
 

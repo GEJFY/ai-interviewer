@@ -8,17 +8,16 @@ import {
   ArrowLeft,
   Plus,
   ClipboardList,
-  MessageSquare,
   Edit2,
-  Trash2,
   Calendar,
   Users,
-  MoreVertical,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
 import { Button, Input, Select, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const USE_CASE_OPTIONS = [
   { value: 'compliance_survey', label: 'コンプライアンス意識調査' },
@@ -86,28 +85,21 @@ export default function ProjectDetailPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      pending: 'bg-secondary-100 text-secondary-700',
-      in_progress: 'bg-amber-100 text-amber-700',
-      completed: 'bg-green-100 text-green-700',
-      cancelled: 'bg-red-100 text-red-700',
-    };
-    const labels = {
+  const statusBadgeVariant = (status: string) => {
+    if (status === 'in_progress') return 'warning' as const;
+    if (status === 'completed') return 'success' as const;
+    if (status === 'cancelled') return 'danger' as const;
+    return 'default' as const;
+  };
+
+  const statusLabel = (status: string) => {
+    const labels: Record<string, string> = {
       pending: '未着手',
       in_progress: '進行中',
       completed: '完了',
       cancelled: 'キャンセル',
     };
-    return (
-      <span
-        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-          styles[status as keyof typeof styles] || styles.pending
-        }`}
-      >
-        {labels[status as keyof typeof labels] || status}
-      </span>
-    );
+    return labels[status] || status;
   };
 
   const getUseCaseLabel = (type: string) => {
@@ -117,19 +109,19 @@ export default function ProjectDetailPage() {
   if (isLoadingProject) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-secondary-200 rounded w-1/4" />
-        <div className="h-4 bg-secondary-200 rounded w-1/2" />
-        <div className="h-64 bg-secondary-200 rounded" />
+        <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4" />
+        <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2" />
+        <div className="h-64 bg-surface-200 dark:bg-surface-700 rounded" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Back link */}
       <Link
         href="/projects"
-        className="inline-flex items-center gap-2 text-secondary-600 hover:text-secondary-900 transition"
+        className="inline-flex items-center gap-2 text-surface-500 hover:text-surface-900 dark:hover:text-surface-100 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         案件一覧に戻る
@@ -139,27 +131,21 @@ export default function ProjectDetailPage() {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold text-secondary-900">
+            <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">
               {project?.name}
             </h1>
-            <span
-              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                project?.status === 'active'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-secondary-100 text-secondary-700'
-              }`}
-            >
-              {project?.status === 'active' ? '進行中' : project?.status}
-            </span>
+            <Badge variant={project?.status === 'active' ? 'success' : 'default'}>
+              {project?.status === 'active' ? '進行中' : project?.status === 'completed' ? '完了' : project?.status}
+            </Badge>
           </div>
           {project?.client_name && (
-            <p className="text-secondary-600 flex items-center gap-2">
+            <p className="text-surface-500 dark:text-surface-400 flex items-center gap-2">
               <Users className="w-4 h-4" />
               {project.client_name}
             </p>
           )}
           {project?.description && (
-            <p className="text-secondary-600 mt-2">{project.description}</p>
+            <p className="text-surface-500 dark:text-surface-400 mt-2">{project.description}</p>
           )}
         </div>
         <div className="flex gap-3">
@@ -167,6 +153,7 @@ export default function ProjectDetailPage() {
             編集
           </Button>
           <Button
+            variant="accent"
             leftIcon={<Plus className="w-5 h-5" />}
             onClick={() => setIsCreateTaskModalOpen(true)}
           >
@@ -177,21 +164,21 @@ export default function ProjectDetailPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl border border-secondary-200 p-6">
-          <p className="text-sm text-secondary-500 mb-1">タスク数</p>
-          <p className="text-2xl font-bold text-secondary-900">
+        <Card className="p-6">
+          <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">タスク数</p>
+          <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">
             {project?.task_count || 0}
           </p>
-        </div>
-        <div className="bg-white rounded-xl border border-secondary-200 p-6">
-          <p className="text-sm text-secondary-500 mb-1">完了タスク</p>
-          <p className="text-2xl font-bold text-green-600">
+        </Card>
+        <Card className="p-6">
+          <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">完了タスク</p>
+          <p className="text-2xl font-bold text-emerald-500">
             {project?.completed_task_count || 0}
           </p>
-        </div>
-        <div className="bg-white rounded-xl border border-secondary-200 p-6">
-          <p className="text-sm text-secondary-500 mb-1">進捗率</p>
-          <p className="text-2xl font-bold text-primary-600">
+        </Card>
+        <Card className="p-6">
+          <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">進捗率</p>
+          <p className="text-2xl font-bold text-accent-500">
             {project?.task_count
               ? Math.round(
                   ((project?.completed_task_count || 0) / project.task_count) * 100
@@ -199,72 +186,74 @@ export default function ProjectDetailPage() {
               : 0}
             %
           </p>
-        </div>
+        </Card>
       </div>
 
       {/* Tasks */}
-      <div className="bg-white rounded-xl border border-secondary-200">
-        <div className="px-6 py-4 border-b border-secondary-200">
-          <h2 className="font-semibold text-secondary-900">タスク一覧</h2>
+      <Card>
+        <div className="px-6 py-4 border-b border-surface-200 dark:border-surface-700">
+          <h2 className="font-semibold text-surface-900 dark:text-surface-50">タスク一覧</h2>
         </div>
 
         {isLoadingTasks ? (
           <div className="p-6">
             <div className="animate-pulse space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-secondary-100 rounded" />
+                <div key={i} className="h-16 bg-surface-200 dark:bg-surface-700 rounded" />
               ))}
             </div>
           </div>
         ) : tasksData?.items?.length > 0 ? (
-          <div className="divide-y divide-secondary-100">
+          <div className="divide-y divide-surface-100 dark:divide-surface-800">
             {tasksData.items.map((task: Task) => (
               <Link
                 key={task.id}
                 href={`/tasks/${task.id}`}
-                className="flex items-center gap-4 px-6 py-4 hover:bg-secondary-50 transition"
+                className="flex items-center gap-4 px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition"
               >
-                <div className="p-2 bg-secondary-100 rounded-lg">
-                  <ClipboardList className="w-5 h-5 text-secondary-500" />
+                <div className="p-2 bg-surface-100 dark:bg-surface-800 rounded-lg">
+                  <ClipboardList className="w-5 h-5 text-surface-500 dark:text-surface-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-secondary-900">{task.name}</p>
-                  <p className="text-sm text-secondary-500">
+                  <p className="font-medium text-surface-900 dark:text-surface-50">{task.name}</p>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
                     {getUseCaseLabel(task.use_case_type)}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="text-sm text-secondary-600">
+                    <p className="text-sm text-surface-500 dark:text-surface-400">
                       {task.completed_interview_count}/{task.interview_count} 完了
                     </p>
                     {task.deadline && (
-                      <p className="text-xs text-secondary-400 flex items-center gap-1 justify-end">
+                      <p className="text-xs text-surface-400 flex items-center gap-1 justify-end">
                         <Calendar className="w-3 h-3" />
                         {format(new Date(task.deadline), 'M/d', { locale: ja })}
                       </p>
                     )}
                   </div>
-                  {getStatusBadge(task.status)}
+                  <Badge variant={statusBadgeVariant(task.status)}>
+                    {statusLabel(task.status)}
+                  </Badge>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
           <div className="p-12 text-center">
-            <ClipboardList className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-secondary-900 mb-2">
+            <ClipboardList className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
               タスクがありません
             </h3>
-            <p className="text-secondary-500 mb-6">
+            <p className="text-surface-500 dark:text-surface-400 mb-6">
               新しいタスクを追加してインタビューを開始しましょう
             </p>
-            <Button onClick={() => setIsCreateTaskModalOpen(true)}>
+            <Button variant="accent" onClick={() => setIsCreateTaskModalOpen(true)}>
               最初のタスクを作成
             </Button>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Create Task Modal */}
       <Modal
@@ -299,7 +288,7 @@ export default function ProjectDetailPage() {
             }
           />
           <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-2">
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
               説明
             </label>
             <textarea
@@ -309,7 +298,7 @@ export default function ProjectDetailPage() {
                 setNewTask({ ...newTask, description: e.target.value })
               }
               rows={3}
-              className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-2.5 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500 resize-none transition-all"
             />
           </div>
         </ModalBody>
@@ -321,6 +310,7 @@ export default function ProjectDetailPage() {
             キャンセル
           </Button>
           <Button
+            variant="accent"
             onClick={handleCreateTask}
             isLoading={createTaskMutation.isPending}
             disabled={!newTask.name.trim() || !newTask.use_case_type}

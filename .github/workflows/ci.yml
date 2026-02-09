@@ -222,6 +222,174 @@ jobs:
         run: pnpm build
 
   # ===========================================================================
+  # Ollama Integration Tests (Local LLM)
+  # ===========================================================================
+  integration-test-ollama:
+    name: Ollama Integration Tests
+    runs-on: ubuntu-latest
+    needs: backend-test
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama server
+        run: |
+          ollama serve &
+          sleep 5
+
+      - name: Pull test model
+        run: ollama pull gemma3:1b
+        timeout-minutes: 10
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install -e "./packages/@grc/core[dev]"
+          uv pip install -e "./packages/@grc/ai[dev]"
+          uv pip install -e "./apps/backend[dev]"
+
+      - name: Run Ollama integration tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+          SECRET_KEY: test-secret-key
+          AI_PROVIDER: local
+          OLLAMA_BASE_URL: http://localhost:11434
+          OLLAMA_MODEL: gemma3:1b
+        run: |
+          source .venv/bin/activate
+          pytest apps/backend/tests/integration/test_ollama_integration.py \
+            -v --timeout=120 -m ollama
+
+  # ===========================================================================
+  # E2E Tests (Playwright)
+  # ===========================================================================
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-build, backend-test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Build frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8001
+          NEXT_PUBLIC_WS_URL: ws://localhost:8001
+        run: pnpm build
+
+      - name: Run E2E tests
+        working-directory: apps/web
+        env:
+          E2E_BASE_URL: http://localhost:3001
+        run: npx playwright test --reporter=html
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  # ===========================================================================
+  # Dependency Security Audit
+  # ===========================================================================
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Python dependency audit
+        run: |
+          pip-audit --desc -r <(cat packages/@grc/ai/pyproject.toml | grep -oP '"[a-zA-Z0-9_-]+>=[\d.]+"' | tr -d '"') || true
+        continue-on-error: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Node dependency audit
+        run: pnpm audit --audit-level moderate || true
+        continue-on-error: true
+
+  # ===========================================================================
   # Security Scanning
   # ===========================================================================
   security-scan:
@@ -315,7 +483,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, frontend-build, security-scan, docker-build, terraform-validate]
+    needs: [backend-test, frontend-test, frontend-build, security-scan, docker-build, terraform-validate, integration-test-ollama, e2e-test]
     if: always()
     steps:
       - name: Check all jobs

@@ -8,7 +8,6 @@ import {
   Plus,
   Search,
   FolderKanban,
-  MoreVertical,
   Calendar,
   Users,
 } from 'lucide-react';
@@ -16,6 +15,8 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
 import { Button, Input, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Project {
   id: string;
@@ -70,39 +71,29 @@ export default function ProjectsPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      active: 'bg-green-100 text-green-700',
-      completed: 'bg-blue-100 text-blue-700',
-      archived: 'bg-secondary-100 text-secondary-700',
-    };
-    const labels = {
-      active: '進行中',
-      completed: '完了',
-      archived: 'アーカイブ',
-    };
-    return (
-      <span
-        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-          styles[status as keyof typeof styles] || styles.active
-        }`}
-      >
-        {labels[status as keyof typeof labels] || status}
-      </span>
-    );
+  const statusVariant = (status: string) => {
+    if (status === 'active') return 'success';
+    if (status === 'completed') return 'info';
+    return 'default';
+  };
+
+  const statusLabel = (status: string) => {
+    const labels: Record<string, string> = { active: '進行中', completed: '完了', archived: 'アーカイブ' };
+    return labels[status] || status;
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">案件管理</h1>
-          <p className="text-secondary-600 mt-1">
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">案件管理</h1>
+          <p className="text-surface-500 dark:text-surface-400 mt-1">
             プロジェクトの作成と管理を行います
           </p>
         </div>
         <Button
+          variant="accent"
           leftIcon={<Plus className="w-5 h-5" />}
           onClick={() => setIsCreateModalOpen(true)}
         >
@@ -112,13 +103,13 @@ export default function ProjectsPage() {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
         <input
           type="text"
           placeholder="案件名またはクライアント名で検索..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500 transition-all"
         />
       </div>
 
@@ -126,93 +117,89 @@ export default function ProjectsPage() {
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl border border-secondary-200 p-6 animate-pulse"
-            >
-              <div className="h-6 bg-secondary-200 rounded w-3/4 mb-4" />
-              <div className="h-4 bg-secondary-200 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-secondary-200 rounded w-1/3" />
-            </div>
+            <Card key={i} className="p-6">
+              <div className="animate-pulse">
+                <div className="h-6 bg-surface-200 dark:bg-surface-700 rounded w-3/4 mb-4" />
+                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2 mb-2" />
+                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/3" />
+              </div>
+            </Card>
           ))}
         </div>
       ) : filteredProjects.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project: Project) => (
-            <Link
-              key={project.id}
-              href={`/projects/${project.id}`}
-              className="bg-white rounded-xl border border-secondary-200 p-6 hover:border-primary-300 hover:shadow-md transition group"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2 bg-primary-100 rounded-lg">
-                  <FolderKanban className="w-6 h-6 text-primary-600" />
+            <Link key={project.id} href={`/projects/${project.id}`}>
+              <Card hover className="p-6 h-full group">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-2 bg-accent-500/10 rounded-lg">
+                    <FolderKanban className="w-6 h-6 text-accent-500" />
+                  </div>
+                  <Badge variant={statusVariant(project.status)}>
+                    {statusLabel(project.status)}
+                  </Badge>
                 </div>
-                {getStatusBadge(project.status)}
-              </div>
 
-              <h3 className="text-lg font-semibold text-secondary-900 mb-2 group-hover:text-primary-600 transition">
-                {project.name}
-              </h3>
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-50 mb-2 group-hover:text-accent-500 transition-colors">
+                  {project.name}
+                </h3>
 
-              {project.client_name && (
-                <p className="text-sm text-secondary-500 mb-3 flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  {project.client_name}
-                </p>
-              )}
-
-              {project.description && (
-                <p className="text-sm text-secondary-600 mb-4 line-clamp-2">
-                  {project.description}
-                </p>
-              )}
-
-              <div className="flex items-center justify-between text-sm text-secondary-500">
-                <span>
-                  {project.completed_task_count}/{project.task_count} タスク完了
-                </span>
-                {project.start_date && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {format(new Date(project.start_date), 'M/d', { locale: ja })}
-                  </span>
+                {project.client_name && (
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mb-3 flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {project.client_name}
+                  </p>
                 )}
-              </div>
 
-              {/* Progress bar */}
-              {project.task_count > 0 && (
-                <div className="mt-4 h-2 bg-secondary-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary-500 rounded-full transition-all"
-                    style={{
-                      width: `${
-                        (project.completed_task_count / project.task_count) * 100
-                      }%`,
-                    }}
-                  />
+                {project.description && (
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mb-4 line-clamp-2">
+                    {project.description}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between text-sm text-surface-400">
+                  <span>
+                    {project.completed_task_count}/{project.task_count} タスク完了
+                  </span>
+                  {project.start_date && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {format(new Date(project.start_date), 'M/d', { locale: ja })}
+                    </span>
+                  )}
                 </div>
-              )}
+
+                {project.task_count > 0 && (
+                  <div className="mt-4 h-1.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-accent-400 to-accent-500 rounded-full transition-all"
+                      style={{
+                        width: `${(project.completed_task_count / project.task_count) * 100}%`,
+                      }}
+                    />
+                  </div>
+                )}
+              </Card>
             </Link>
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-secondary-200 p-12 text-center">
-          <FolderKanban className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-secondary-900 mb-2">
+        <Card className="p-12 text-center">
+          <FolderKanban className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
             {searchQuery ? '検索結果がありません' : '案件がありません'}
           </h3>
-          <p className="text-secondary-500 mb-6">
+          <p className="text-surface-500 dark:text-surface-400 mb-6">
             {searchQuery
               ? '別のキーワードで検索してください'
               : '新しい案件を作成して始めましょう'}
           </p>
           {!searchQuery && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button variant="accent" onClick={() => setIsCreateModalOpen(true)}>
               最初の案件を作成
             </Button>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Create Modal */}
@@ -241,7 +228,7 @@ export default function ProjectsPage() {
             }
           />
           <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-2">
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
               説明
             </label>
             <textarea
@@ -251,18 +238,16 @@ export default function ProjectsPage() {
                 setNewProject({ ...newProject, description: e.target.value })
               }
               rows={3}
-              className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-2.5 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500 resize-none transition-all"
             />
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button
-            variant="outline"
-            onClick={() => setIsCreateModalOpen(false)}
-          >
+          <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
             キャンセル
           </Button>
           <Button
+            variant="accent"
             onClick={handleCreateProject}
             isLoading={createMutation.isPending}
             disabled={!newProject.name.trim()}

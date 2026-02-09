@@ -1,14 +1,13 @@
 'use client';
 
-import { Fragment, ReactNode } from 'react';
 import { X } from 'lucide-react';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/cn';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  children: ReactNode;
+  children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
@@ -30,38 +29,36 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={clsx(
-            'relative w-full bg-white rounded-xl shadow-xl transform transition-all',
+          className={cn(
+            'relative w-full rounded-xl shadow-2xl transform transition-all animate-scale-in',
+            'bg-white dark:bg-surface-850',
+            'border border-surface-200 dark:border-surface-700',
             sizes[size]
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           {title && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-secondary-200">
-              <h2 className="text-lg font-semibold text-secondary-900">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200 dark:border-surface-700">
+              <h2 className="text-lg font-semibold text-surface-900 dark:text-surface-50">
                 {title}
               </h2>
               <button
                 onClick={onClose}
-                className="p-1 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-lg transition"
+                className="p-1 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           )}
 
-          {/* Content */}
-          <div className={clsx(!title && 'pt-6')}>{children}</div>
+          <div className={cn(!title && 'pt-6')}>{children}</div>
         </div>
       </div>
     </div>
@@ -69,24 +66,24 @@ export function Modal({
 }
 
 interface ModalBodyProps {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 
 export function ModalBody({ children, className }: ModalBodyProps) {
-  return <div className={clsx('px-6 py-4', className)}>{children}</div>;
+  return <div className={cn('px-6 py-4', className)}>{children}</div>;
 }
 
 interface ModalFooterProps {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 
 export function ModalFooter({ children, className }: ModalFooterProps) {
   return (
     <div
-      className={clsx(
-        'px-6 py-4 border-t border-secondary-200 flex justify-end gap-3',
+      className={cn(
+        'px-6 py-4 border-t border-surface-200 dark:border-surface-700 flex justify-end gap-3',
         className
       )}
     >

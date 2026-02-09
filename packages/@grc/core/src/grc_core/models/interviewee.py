@@ -32,8 +32,8 @@ class Interviewee(Base):
     is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Additional metadata
-    metadata: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, default=dict, server_default="{}"
+    extra_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, default=dict, server_default="{}"
     )
 
     created_at: Mapped[datetime] = mapped_column(

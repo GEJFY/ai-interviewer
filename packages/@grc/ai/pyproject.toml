@@ -9,19 +9,21 @@ dependencies = [
     "pydantic>=2.10.0",
     "httpx>=0.28.0",
     "tenacity>=9.0.0",
-    # OpenAI / Azure OpenAI (GPT-4o, GPT-4 Turbo, o1, o3)
-    "openai>=1.59.0",
-    # Anthropic Claude (Claude 3.5 Sonnet, Claude 3 Opus, Claude 3.5 Haiku)
-    "anthropic>=0.42.0",
+    # OpenAI / Azure OpenAI (GPT-5.2, o4-mini, GPT-5 Mini)
+    "openai>=1.68.0",
+    # Anthropic Claude (Claude 4.6 Opus, Claude 4.5 Sonnet/Haiku)
+    "anthropic>=0.49.0",
     # Azure Speech Services
     "azure-cognitiveservices-speech>=1.42.0",
-    # AWS Bedrock (Claude, Llama 3, Titan)
-    "boto3>=1.35.0",
-    # GCP Vertex AI (Gemini 2.0, PaLM 2)
-    "google-cloud-aiplatform>=1.75.0",
+    # AWS Bedrock (Claude 4.x, Llama 3.3, Nova, Titan)
+    "boto3>=1.36.0",
+    # GCP Vertex AI (Gemini 3.0, Gemini 2.5 GA)
+    "google-cloud-aiplatform>=1.82.0",
     "google-cloud-speech>=2.28.0",
     "google-cloud-texttospeech>=2.22.0",
     "google-cloud-translate>=3.18.0",
+    # Local LLM (Ollama)
+    "ollama>=0.4.0",
     # Token counting
     "tiktoken>=0.8.0",
 ]

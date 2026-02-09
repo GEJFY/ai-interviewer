@@ -164,24 +164,25 @@ SECRET_KEY=your-secret-key-change-this-in-production
 # =============================================================================
 
 # Azure OpenAI を使う場合
-AI_PROVIDER=azure_openai
+AI_PROVIDER=azure
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-api-key
 
-# または OpenAI を直接使う場合
-# AI_PROVIDER=openai
-# OPENAI_API_KEY=your-api-key
-
 # または AWS Bedrock を使う場合
-# AI_PROVIDER=aws_bedrock
+# AI_PROVIDER=aws
 # AWS_ACCESS_KEY_ID=your-access-key
 # AWS_SECRET_ACCESS_KEY=your-secret-key
 # AWS_REGION=ap-northeast-1
 
 # または GCP Vertex AI を使う場合
-# AI_PROVIDER=gcp_vertex
+# AI_PROVIDER=gcp
 # GCP_PROJECT_ID=your-project-id
 # GOOGLE_APPLICATION_CREDENTIALS=./credentials/gcp-credentials.json
+
+# または ローカルLLM (Ollama) を使う場合
+# AI_PROVIDER=local
+# OLLAMA_BASE_URL=http://localhost:11434
+# OLLAMA_MODEL=gemma3:1b
 
 # =============================================================================
 # 音声サービス設定（オプション）

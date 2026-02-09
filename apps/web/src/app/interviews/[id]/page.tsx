@@ -17,7 +17,11 @@ import {
   User,
   Bot,
   Loader2,
+  Zap,
+  ArrowLeft,
 } from 'lucide-react';
+import { cn } from '@/lib/cn';
+import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api-client';
 import { createInterviewWebSocket, InterviewWebSocket, WSResponse } from '@/lib/websocket';
 import { useAudioRecorder, AudioChunk } from '@/hooks/useAudioRecorder';
@@ -51,7 +55,6 @@ export default function InterviewPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Audio recording hook
   const {
     isRecording,
     audioLevel,
@@ -61,9 +64,7 @@ export default function InterviewPage() {
   } = useAudioRecorder({
     timeSlice: 500,
     onChunk: (chunk: AudioChunk) => {
-      // Send audio chunk to server for real-time transcription
       if (wsRef.current?.isConnected) {
-        // Convert blob to base64 and send
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = (reader.result as string).split(',')[1];
@@ -73,12 +74,10 @@ export default function InterviewPage() {
       }
     },
     onStop: async (blob: Blob, duration: number) => {
-      // Final transcription will come from server
       console.log(`Recording stopped: ${duration}s`);
     },
   });
 
-  // Audio playback hook for AI responses
   const {
     isPlaying: isAudioPlaying,
     loadBase64: playAudioBase64,
@@ -86,45 +85,35 @@ export default function InterviewPage() {
     setVolume,
   } = useAudioPlayer({
     autoPlay: true,
-    onEnded: () => {
-      // Audio playback completed
-    },
+    onEnded: () => {},
   });
 
-  // Fetch interview details
   const { data: interview } = useQuery({
     queryKey: ['interview', interviewId],
     queryFn: () => api.interviews.get(interviewId),
   });
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentAIResponse]);
 
-  // Timer
   useEffect(() => {
     if (isConnected && !isPaused && !isCompleted) {
       timerRef.current = setInterval(() => {
         setElapsedTime((prev) => prev + 1);
       }, 1000);
     }
-
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isConnected, isPaused, isCompleted]);
 
-  // Handle WebSocket messages
   const handleWSMessage = useCallback((response: WSResponse) => {
     switch (response.type) {
       case 'ai_response':
         if (response.payload.isPartial) {
           setCurrentAIResponse((prev) => prev + (response.payload.content || ''));
         } else if (response.payload.isFinal) {
-          // Final message - add to messages
           setMessages((prev) => [
             ...prev,
             {
@@ -136,13 +125,10 @@ export default function InterviewPage() {
           ]);
           setCurrentAIResponse('');
           setIsLoading(false);
-
-          // Play audio response if available and not muted
           if (response.payload.audio && !isAudioMuted) {
             playAudioBase64(response.payload.audio, 'audio/mp3');
           }
         } else {
-          // Non-streaming response
           setMessages((prev) => [
             ...prev,
             {
@@ -153,8 +139,6 @@ export default function InterviewPage() {
             },
           ]);
           setIsLoading(false);
-
-          // Play audio response if available and not muted
           if (response.payload.audio && !isAudioMuted) {
             playAudioBase64(response.payload.audio, 'audio/mp3');
           }
@@ -164,7 +148,6 @@ export default function InterviewPage() {
       case 'transcription':
         if (response.payload.speaker === 'interviewee') {
           if (response.payload.isFinal) {
-            // Final transcription - add as user message
             if (response.payload.text) {
               setMessages((prev) => [
                 ...prev,
@@ -179,18 +162,15 @@ export default function InterviewPage() {
               setIsLoading(true);
             }
           } else {
-            // Partial transcription - show in real-time
             setTranscribingText(response.payload.text || '');
           }
         }
         break;
 
       case 'status':
-        if (response.payload.status === 'paused') {
-          setIsPaused(true);
-        } else if (response.payload.status === 'resumed') {
-          setIsPaused(false);
-        } else if (response.payload.status === 'completed') {
+        if (response.payload.status === 'paused') setIsPaused(true);
+        else if (response.payload.status === 'resumed') setIsPaused(false);
+        else if (response.payload.status === 'completed') {
           setIsCompleted(true);
           setIsConnected(false);
         }
@@ -203,76 +183,41 @@ export default function InterviewPage() {
     }
   }, [currentAIResponse]);
 
-  // Connect WebSocket
   useEffect(() => {
     if (!interviewId) return;
-
     const ws = createInterviewWebSocket(interviewId);
     wsRef.current = ws;
-
-    ws.onOpen = () => {
-      setIsConnected(true);
-    };
-
-    ws.onClose = () => {
-      setIsConnected(false);
-    };
-
+    ws.onOpen = () => setIsConnected(true);
+    ws.onClose = () => setIsConnected(false);
     ws.onMessage = handleWSMessage;
-
-    ws.onError = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
+    ws.onError = (error) => console.error('WebSocket error:', error);
     ws.connect();
-
-    return () => {
-      ws.disconnect();
-    };
+    return () => ws.disconnect();
   }, [interviewId, handleWSMessage]);
 
-  // Send message
   const sendMessage = () => {
     if (!inputValue.trim() || !wsRef.current?.isConnected || isLoading) return;
-
-    // Add user message to UI
     setMessages((prev) => [
       ...prev,
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        content: inputValue,
-        timestamp: new Date(),
-      },
+      { id: Date.now().toString(), role: 'user', content: inputValue, timestamp: new Date() },
     ]);
-
-    // Send via WebSocket
     wsRef.current.sendMessage(inputValue);
     setInputValue('');
     setIsLoading(true);
   };
 
-  // Pause/Resume
   const togglePause = () => {
     if (!wsRef.current?.isConnected) return;
-
-    if (isPaused) {
-      wsRef.current.sendControl('resume');
-    } else {
-      wsRef.current.sendControl('pause');
-    }
+    wsRef.current.sendControl(isPaused ? 'resume' : 'pause');
   };
 
-  // End interview
   const endInterview = () => {
     if (!wsRef.current?.isConnected) return;
-
     if (window.confirm('インタビューを終了しますか？')) {
       wsRef.current.sendControl('end');
     }
   };
 
-  // Format time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -280,191 +225,195 @@ export default function InterviewPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-secondary-50">
-      {/* Header */}
-      <header className="h-16 bg-white border-b border-secondary-200 flex items-center justify-between px-6">
+    <div className="flex flex-col h-screen bg-[rgb(var(--bg))]">
+      {/* ヘッダー */}
+      <header className="h-16 glass-strong border-b border-surface-200 dark:border-surface-800 flex items-center justify-between px-6 z-10">
         <div className="flex items-center gap-4">
-          <MessageSquare className="w-6 h-6 text-primary-600" />
+          <button
+            onClick={() => router.back()}
+            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="w-8 h-8 rounded-lg bg-accent-500/10 flex items-center justify-center">
+            <Zap className="w-4 h-4 text-accent-500" />
+          </div>
           <div>
-            <h1 className="font-semibold text-secondary-900">
+            <h1 className="font-semibold text-surface-900 dark:text-surface-50 text-sm">
               {interview?.task?.name || 'インタビュー'}
             </h1>
-            <p className="text-sm text-secondary-500">
+            <p className="text-xs text-surface-400">
               {interview?.language === 'ja' ? '日本語' : interview?.language}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Timer */}
-          <div className="flex items-center gap-2 text-secondary-600">
-            <Clock className="w-5 h-5" />
-            <span className="font-mono">{formatTime(elapsedTime)}</span>
+        <div className="flex items-center gap-3">
+          {/* タイマー */}
+          <div className="flex items-center gap-2 text-surface-500 dark:text-surface-400">
+            <Clock className="w-4 h-4" />
+            <span className="font-mono text-sm">{formatTime(elapsedTime)}</span>
           </div>
 
-          {/* Connection status */}
-          <div
-            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-              isConnected
-                ? 'bg-green-100 text-green-700'
-                : 'bg-secondary-100 text-secondary-700'
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                isConnected ? 'bg-green-500' : 'bg-secondary-400'
-              }`}
-            />
-            {isConnected ? '接続中' : '未接続'}
-          </div>
+          {/* 接続ステータス */}
+          <Badge variant={isConnected ? 'success' : 'default'}>
+            <span className="flex items-center gap-1.5">
+              <span className={cn(
+                'w-1.5 h-1.5 rounded-full',
+                isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-surface-400'
+              )} />
+              {isConnected ? '接続中' : '未接続'}
+            </span>
+          </Badge>
 
-          {/* Controls */}
-          <div className="flex items-center gap-2">
+          {/* コントロール */}
+          <div className="flex items-center gap-1 ml-2">
             <button
               onClick={togglePause}
               disabled={!isConnected || isCompleted}
-              className="p-2 rounded-lg hover:bg-secondary-100 transition disabled:opacity-50"
+              className="p-2 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors disabled:opacity-50"
               title={isPaused ? '再開' : '一時停止'}
             >
-              {isPaused ? (
-                <Play className="w-5 h-5 text-secondary-600" />
-              ) : (
-                <Pause className="w-5 h-5 text-secondary-600" />
-              )}
+              {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
             </button>
             <button
               onClick={endInterview}
               disabled={!isConnected || isCompleted}
-              className="p-2 rounded-lg hover:bg-red-100 transition disabled:opacity-50"
+              className="p-2 rounded-lg text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
               title="終了"
             >
-              <Square className="w-5 h-5 text-red-600" />
+              <Square className="w-5 h-5" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Messages */}
+      {/* メッセージエリア */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex gap-3 ${
-              message.role === 'user' ? 'flex-row-reverse' : ''
-            }`}
-          >
+        <div className="max-w-3xl mx-auto space-y-4">
+          {messages.map((message) => (
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.role === 'ai'
-                  ? 'bg-primary-100'
-                  : 'bg-secondary-100'
-              }`}
+              key={message.id}
+              className={cn('flex gap-3', message.role === 'user' && 'flex-row-reverse')}
             >
-              {message.role === 'ai' ? (
-                <Bot className="w-5 h-5 text-primary-600" />
-              ) : (
-                <User className="w-5 h-5 text-secondary-600" />
-              )}
-            </div>
-            <div
-              className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                message.role === 'ai'
-                  ? 'bg-white border border-secondary-200'
-                  : 'bg-primary-600 text-white'
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{message.content}</p>
-              <p
-                className={`text-xs mt-1 ${
-                  message.role === 'ai' ? 'text-secondary-400' : 'text-primary-200'
-                }`}
+              <div
+                className={cn(
+                  'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                  message.role === 'ai'
+                    ? 'bg-accent-500/10'
+                    : 'bg-surface-100 dark:bg-surface-800'
+                )}
               >
-                {message.timestamp.toLocaleTimeString('ja-JP', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
+                {message.role === 'ai' ? (
+                  <Zap className="w-4 h-4 text-accent-500" />
+                ) : (
+                  <User className="w-4 h-4 text-surface-500" />
+                )}
+              </div>
+              <div
+                className={cn(
+                  'max-w-[70%] rounded-2xl px-4 py-3',
+                  message.role === 'ai'
+                    ? 'glass rounded-tl-sm'
+                    : 'bg-accent-500/10 dark:bg-accent-500/20 rounded-tr-sm'
+                )}
+              >
+                <p className="whitespace-pre-wrap text-surface-800 dark:text-surface-200 text-sm leading-relaxed">
+                  {message.content}
+                </p>
+                <p className="text-[10px] mt-1.5 text-surface-400">
+                  {message.timestamp.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {/* Streaming AI response */}
-        {currentAIResponse && (
-          <div className="flex gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary-100">
-              <Bot className="w-5 h-5 text-primary-600" />
+          {/* ストリーミング中のAI応答 */}
+          {currentAIResponse && (
+            <div className="flex gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-500/10">
+                <Zap className="w-4 h-4 text-accent-500" />
+              </div>
+              <div className="max-w-[70%] glass rounded-2xl rounded-tl-sm px-4 py-3">
+                <p className="whitespace-pre-wrap text-surface-800 dark:text-surface-200 text-sm leading-relaxed">
+                  {currentAIResponse}
+                </p>
+                <Loader2 className="w-3 h-3 animate-spin text-accent-500 mt-2" />
+              </div>
             </div>
-            <div className="max-w-[70%] rounded-2xl px-4 py-3 bg-white border border-secondary-200">
-              <p className="whitespace-pre-wrap">{currentAIResponse}</p>
-              <Loader2 className="w-4 h-4 animate-spin text-secondary-400 mt-2" />
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Loading indicator */}
-        {isLoading && !currentAIResponse && (
-          <div className="flex gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary-100">
-              <Bot className="w-5 h-5 text-primary-600" />
+          {/* ローディング */}
+          {isLoading && !currentAIResponse && (
+            <div className="flex gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-500/10">
+                <Zap className="w-4 h-4 text-accent-500" />
+              </div>
+              <div className="glass rounded-2xl rounded-tl-sm px-4 py-3">
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 h-1.5 bg-accent-500 rounded-full animate-bounce"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="rounded-2xl px-4 py-3 bg-white border border-secondary-200">
-              <Loader2 className="w-5 h-5 animate-spin text-secondary-400" />
+          )}
+
+          {/* 完了メッセージ */}
+          {isCompleted && (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-6 h-6 text-emerald-500" />
+              </div>
+              <p className="text-surface-500 dark:text-surface-400 mb-4">インタビューが完了しました</p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-6 py-2.5 bg-gradient-to-r from-accent-500 to-accent-600 text-white rounded-lg font-medium hover:from-accent-600 hover:to-accent-700 transition-all shadow-lg shadow-accent-500/20"
+              >
+                ダッシュボードに戻る
+              </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Completed message */}
-        {isCompleted && (
-          <div className="text-center py-8">
-            <p className="text-secondary-500">インタビューが完了しました</p>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-            >
-              ダッシュボードに戻る
-            </button>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      {/* Input area */}
+      {/* 入力エリア */}
       {!isCompleted && (
-        <div className="bg-white border-t border-secondary-200 p-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Real-time transcription display */}
+        <div className="border-t border-surface-200 dark:border-surface-800 bg-[rgb(var(--bg-elevated))] p-4">
+          <div className="max-w-3xl mx-auto">
+            {/* リアルタイム文字起こし */}
             {transcribingText && (
-              <div className="mb-2 px-4 py-2 bg-secondary-50 rounded-lg text-secondary-600 italic">
+              <div className="mb-2 px-4 py-2 bg-surface-50 dark:bg-surface-800 rounded-lg text-surface-500 dark:text-surface-400 text-sm italic">
                 {transcribingText}...
               </div>
             )}
 
-            <div className="flex gap-4 items-center">
-              {/* Audio mute toggle */}
+            <div className="flex gap-3 items-center">
+              {/* 音声ミュート */}
               <button
                 onClick={() => {
                   setIsAudioMuted(!isAudioMuted);
                   setVolume(isAudioMuted ? 1 : 0);
-                  if (!isAudioMuted && isAudioPlaying) {
-                    stopAudio();
-                  }
+                  if (!isAudioMuted && isAudioPlaying) stopAudio();
                 }}
-                className={`p-3 rounded-lg transition ${
+                className={cn(
+                  'p-2.5 rounded-lg transition-colors',
                   isAudioMuted
-                    ? 'bg-secondary-100 text-secondary-400'
-                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                }`}
+                    ? 'text-surface-400 bg-surface-100 dark:bg-surface-800'
+                    : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
+                )}
                 title={isAudioMuted ? '音声を有効にする' : '音声をミュート'}
               >
-                {isAudioMuted ? (
-                  <VolumeX className="w-5 h-5" />
-                ) : (
-                  <Volume2 className="w-5 h-5" />
-                )}
+                {isAudioMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
 
-              {/* Input mode: Text or Voice */}
+              {/* テキスト / 音声入力 */}
               {inputMode === 'text' ? (
                 <>
                   <input
@@ -478,106 +427,81 @@ export default function InterviewPage() {
                       }
                     }}
                     placeholder={
-                      isPaused
-                        ? 'インタビューが一時停止中です'
-                        : isConnected
-                        ? 'メッセージを入力...'
-                        : '接続中...'
+                      isPaused ? '一時停止中...' : isConnected ? 'メッセージを入力...' : '接続中...'
                     }
                     disabled={!isConnected || isPaused || isLoading}
-                    className="flex-1 px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-secondary-50 disabled:text-secondary-400"
+                    className="flex-1 px-4 py-3 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-600 rounded-xl text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500 disabled:opacity-50 transition-all text-sm"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!isConnected || isPaused || isLoading || !inputValue.trim()}
-                    className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:bg-secondary-300 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-5 py-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white rounded-xl hover:from-accent-600 hover:to-accent-700 transition-all shadow-lg shadow-accent-500/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4" />
                     送信
                   </button>
                 </>
               ) : (
                 <>
-                  {/* Voice input mode */}
                   <div className="flex-1 flex items-center justify-center gap-4">
                     {isRecording ? (
                       <>
-                        {/* Audio level visualization */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0.5">
                           {[...Array(10)].map((_, i) => (
                             <div
                               key={i}
-                              className={`w-1 rounded-full transition-all ${
-                                audioLevel * 10 > i
-                                  ? 'bg-red-500'
-                                  : 'bg-secondary-200'
-                              }`}
+                              className={cn(
+                                'w-1 rounded-full transition-all',
+                                audioLevel * 10 > i ? 'bg-red-500' : 'bg-surface-200 dark:bg-surface-700'
+                              )}
                               style={{ height: `${8 + i * 2}px` }}
                             />
                           ))}
                         </div>
-                        <span className="font-mono text-secondary-600">
-                          {Math.floor(recordingDuration / 60)
-                            .toString()
-                            .padStart(2, '0')}
-                          :
-                          {Math.floor(recordingDuration % 60)
-                            .toString()
-                            .padStart(2, '0')}
+                        <span className="font-mono text-sm text-surface-500 dark:text-surface-400">
+                          {Math.floor(recordingDuration / 60).toString().padStart(2, '0')}:
+                          {Math.floor(recordingDuration % 60).toString().padStart(2, '0')}
                         </span>
-                        <span className="text-red-500 animate-pulse">録音中</span>
+                        <span className="text-red-500 text-sm animate-pulse">録音中</span>
                       </>
                     ) : (
-                      <span className="text-secondary-500">
-                        マイクボタンを押して話してください
-                      </span>
+                      <span className="text-surface-400 text-sm">マイクボタンを押して話してください</span>
                     )}
                   </div>
                   <button
                     onClick={async () => {
-                      if (isRecording) {
-                        await stopRecording();
-                      } else {
-                        await startRecording();
-                      }
+                      if (isRecording) await stopRecording();
+                      else await startRecording();
                     }}
                     disabled={!isConnected || isPaused}
-                    className={`p-4 rounded-full transition ${
+                    className={cn(
+                      'p-3.5 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed',
                       isRecording
                         ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30'
-                        : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30'
-                    } disabled:bg-secondary-300 disabled:cursor-not-allowed`}
-                  >
-                    {isRecording ? (
-                      <Square className="w-6 h-6" />
-                    ) : (
-                      <Mic className="w-6 h-6" />
+                        : 'bg-gradient-to-r from-accent-500 to-accent-600 text-white hover:from-accent-600 hover:to-accent-700 shadow-lg shadow-accent-500/25'
                     )}
+                  >
+                    {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                   </button>
                 </>
               )}
 
-              {/* Toggle input mode */}
+              {/* 入力モード切替 */}
               <button
                 onClick={() => {
-                  if (isRecording) {
-                    stopRecording();
-                  }
+                  if (isRecording) stopRecording();
                   setInputMode(inputMode === 'text' ? 'voice' : 'text');
                 }}
                 disabled={!isConnected || isPaused}
-                className={`p-3 rounded-lg transition ${
+                className={cn(
+                  'p-2.5 rounded-lg transition-colors disabled:opacity-50',
                   inputMode === 'voice'
-                    ? 'bg-primary-100 text-primary-600'
-                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                } disabled:opacity-50`}
+                    ? 'bg-accent-500/10 text-accent-500'
+                    : 'text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'
+                )}
                 title={inputMode === 'text' ? '音声入力に切替' : 'テキスト入力に切替'}
               >
-                {inputMode === 'text' ? (
-                  <Mic className="w-5 h-5" />
-                ) : (
-                  <MicOff className="w-5 h-5" />
-                )}
+                {inputMode === 'text' ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
             </div>
           </div>

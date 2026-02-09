@@ -17,6 +17,8 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
 import { Button, Modal, ModalBody, ModalFooter, Input, Select } from '@/components/ui';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Template {
   id: string;
@@ -108,18 +110,18 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">
             テンプレート管理
           </h1>
-          <p className="text-secondary-600 mt-1">
+          <p className="text-surface-500 dark:text-surface-400 mt-1">
             インタビュー質問テンプレートを管理します
           </p>
         </div>
         <Button
+          variant="accent"
           leftIcon={<Plus className="w-5 h-5" />}
           onClick={() => setIsCreateModalOpen(true)}
         >
@@ -127,67 +129,60 @@ export default function TemplatesPage() {
         </Button>
       </div>
 
-      {/* Templates Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl border border-secondary-200 p-6 animate-pulse"
-            >
-              <div className="h-6 bg-secondary-200 rounded w-3/4 mb-4" />
-              <div className="h-4 bg-secondary-200 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-secondary-200 rounded w-full" />
-            </div>
+            <Card key={i} className="p-6">
+              <div className="animate-pulse">
+                <div className="h-6 bg-surface-200 dark:bg-surface-700 rounded w-3/4 mb-4" />
+                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2 mb-2" />
+                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-full" />
+              </div>
+            </Card>
           ))}
         </div>
       ) : data?.items?.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data.items.map((template: Template) => (
-            <div
-              key={template.id}
-              className="bg-white rounded-xl border border-secondary-200 hover:border-primary-300 hover:shadow-md transition group"
-            >
+            <Card key={template.id} hover className="group">
               <Link href={`/templates/${template.id}`} className="block p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-2 bg-primary-100 rounded-lg">
-                    <FileText className="w-5 h-5 text-primary-600" />
+                  <div className="p-2 bg-accent-500/10 rounded-lg">
+                    <FileText className="w-5 h-5 text-accent-500" />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <Badge variant={template.is_published ? 'success' : 'default'}>
                     {template.is_published ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                      <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         公開中
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-secondary-100 text-secondary-600">
+                      <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         下書き
                       </span>
                     )}
-                  </div>
+                  </Badge>
                 </div>
-                <h3 className="font-semibold text-secondary-900 mb-1">
+                <h3 className="font-semibold text-surface-900 dark:text-surface-50 mb-1 group-hover:text-accent-500 transition-colors">
                   {template.name}
                 </h3>
-                <p className="text-sm text-secondary-500 mb-3">
+                <p className="text-sm text-surface-500 dark:text-surface-400 mb-3">
                   {USE_CASE_LABELS[template.use_case_type] || template.use_case_type}
                 </p>
                 {template.description && (
-                  <p className="text-sm text-secondary-600 line-clamp-2 mb-3">
+                  <p className="text-sm text-surface-500 dark:text-surface-400 line-clamp-2 mb-3">
                     {template.description}
                   </p>
                 )}
-                <div className="flex items-center justify-between text-sm text-secondary-500">
+                <div className="flex items-center justify-between text-sm text-surface-400">
                   <span>{template.questions?.length || 0}問</span>
                   <span>v{template.version}</span>
                 </div>
               </Link>
-              <div className="border-t border-secondary-100 px-4 py-3 flex justify-between items-center">
-                <span className="text-xs text-secondary-500">
-                  {format(new Date(template.updated_at), 'yyyy/MM/dd更新', {
-                    locale: ja,
-                  })}
+              <div className="border-t border-surface-200 dark:border-surface-700 px-4 py-3 flex justify-between items-center">
+                <span className="text-xs text-surface-400">
+                  {format(new Date(template.updated_at), 'yyyy/MM/dd更新', { locale: ja })}
                 </span>
                 <div className="relative">
                   <button
@@ -195,18 +190,18 @@ export default function TemplatesPage() {
                       e.preventDefault();
                       setOpenMenuId(openMenuId === template.id ? null : template.id);
                     }}
-                    className="p-1 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded"
+                    className="p-1 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded transition-colors"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
                   {openMenuId === template.id && (
-                    <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-secondary-200 py-1 z-10">
+                    <div className="absolute right-0 bottom-full mb-1 w-40 bg-white dark:bg-surface-850 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 py-1 z-10 animate-scale-in">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           cloneMutation.mutate(template.id);
                         }}
-                        className="w-full px-4 py-2 text-left text-sm text-secondary-700 hover:bg-secondary-50 flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800 flex items-center gap-2"
                       >
                         <Copy className="w-4 h-4" />
                         複製
@@ -216,7 +211,7 @@ export default function TemplatesPage() {
                           e.preventDefault();
                           handleDelete(template);
                         }}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
                         削除
@@ -225,25 +220,24 @@ export default function TemplatesPage() {
                   )}
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-secondary-200 p-12 text-center">
-          <FileText className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-secondary-900 mb-2">
+        <Card className="p-12 text-center">
+          <FileText className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
             テンプレートがありません
           </h3>
-          <p className="text-secondary-500 mb-6">
+          <p className="text-surface-500 dark:text-surface-400 mb-6">
             最初のテンプレートを作成しましょう
           </p>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Button variant="accent" onClick={() => setIsCreateModalOpen(true)}>
             テンプレートを作成
           </Button>
-        </div>
+        </Card>
       )}
 
-      {/* Create Template Modal */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -254,9 +248,7 @@ export default function TemplatesPage() {
             <Input
               label="テンプレート名"
               value={newTemplate.name}
-              onChange={(e) =>
-                setNewTemplate({ ...newTemplate, name: e.target.value })
-              }
+              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
               placeholder="例：コンプライアンス意識調査 2024年版"
               required
             />
@@ -264,16 +256,12 @@ export default function TemplatesPage() {
               label="ユースケースタイプ"
               options={USE_CASE_OPTIONS}
               value={newTemplate.useCaseType}
-              onChange={(e) =>
-                setNewTemplate({ ...newTemplate, useCaseType: e.target.value })
-              }
+              onChange={(e) => setNewTemplate({ ...newTemplate, useCaseType: e.target.value })}
             />
             <Input
               label="説明"
               value={newTemplate.description}
-              onChange={(e) =>
-                setNewTemplate({ ...newTemplate, description: e.target.value })
-              }
+              onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
               placeholder="テンプレートの説明（任意）"
             />
           </div>
@@ -283,6 +271,7 @@ export default function TemplatesPage() {
             キャンセル
           </Button>
           <Button
+            variant="accent"
             onClick={() => createMutation.mutate()}
             isLoading={createMutation.isPending}
             disabled={!newTemplate.name}
@@ -292,7 +281,6 @@ export default function TemplatesPage() {
         </ModalFooter>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -300,7 +288,7 @@ export default function TemplatesPage() {
         size="sm"
       >
         <ModalBody>
-          <p className="text-secondary-600">
+          <p className="text-surface-500 dark:text-surface-400">
             「{selectedTemplate?.name}」を削除しますか？
             この操作は取り消せません。
           </p>
@@ -310,8 +298,7 @@ export default function TemplatesPage() {
             キャンセル
           </Button>
           <Button
-            variant="outline"
-            className="text-red-600 border-red-300 hover:bg-red-50"
+            variant="danger"
             onClick={() => selectedTemplate && deleteMutation.mutate(selectedTemplate.id)}
             isLoading={deleteMutation.isPending}
           >

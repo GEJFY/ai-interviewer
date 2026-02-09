@@ -427,7 +427,7 @@ class StructuredLogger(logging.Logger):
             logger.performance(
                 operation="ai_inference",
                 duration_ms=duration_ms,
-                metadata={"model": "gpt-4", "tokens": 150}
+                metadata={"model": "gpt-5-nano", "tokens": 150}
             )
         """
         log_data = {
@@ -547,8 +547,8 @@ class StructuredLogger(logging.Logger):
 logger.debug(
     "AI provider request",
     extra={
-        "provider": "azure_openai",
-        "model": "gpt-4",
+        "provider": "azure",
+        "model": "gpt-5-nano",
         "messages_count": len(messages),
         "temperature": 0.7,
     }

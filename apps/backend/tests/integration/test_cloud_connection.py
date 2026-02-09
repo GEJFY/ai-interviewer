@@ -43,7 +43,7 @@ class TestAzureAIFoundryConnection:
         return {
             "endpoint": os.getenv("AZURE_OPENAI_ENDPOINT", "https://test.openai.azure.com/"),
             "api_key": os.getenv("AZURE_OPENAI_API_KEY", "test-key"),
-            "api_version": "2026-01-15-preview",
+            "api_version": "2025-12-01-preview",
         }
 
     @pytest.mark.asyncio
@@ -464,6 +464,7 @@ class TestConnectionSummary:
             "azure_openai",
             "aws_bedrock",
             "gcp_vertex",
+            "local",
         }
 
         assert expected_providers.issubset(providers)

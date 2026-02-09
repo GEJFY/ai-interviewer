@@ -47,7 +47,7 @@ LOG_LEVEL=INFO
 JSON_LOGS=true
 
 # AI Provider
-AI_PROVIDER=azure_openai
+AI_PROVIDER=azure
 AZURE_OPENAI_ENDPOINT=https://your-prod-resource.openai.azure.com/
 AZURE_OPENAI_API_KEY=<本番用APIキー>
 

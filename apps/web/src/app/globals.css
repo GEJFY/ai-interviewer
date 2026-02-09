@@ -2,53 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ライトモード */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 241, 245, 249;
+  --bg: 250 250 250;
+  --bg-elevated: 255 255 255;
+  --bg-subtle: 244 244 245;
+  --text: 24 24 27;
+  --text-muted: 113 113 122;
+  --border: 228 228 231;
+  --accent: 245 158 11;
+  --accent-muted: 251 191 36;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 15, 23, 42;
-    --background-end-rgb: 30, 41, 59;
-  }
+/* ダークモード */
+.dark {
+  --bg: 9 9 11;
+  --bg-elevated: 24 24 27;
+  --bg-subtle: 39 39 42;
+  --text: 250 250 250;
+  --text-muted: 161 161 170;
+  --border: 63 63 70;
+  --accent: 251 191 36;
+  --accent-muted: 245 158 11;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: rgb(var(--text));
+  background-color: rgb(var(--bg));
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .glass {
+    background: rgba(var(--bg-elevated), 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(var(--border), 0.5);
+  }
+
+  .glass-strong {
+    background: rgba(var(--bg-elevated), 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(var(--border), 0.6);
+  }
+
+  .accent-glow {
+    box-shadow: 0 0 20px rgba(var(--accent), 0.15);
+  }
+
+  .accent-glow-strong {
+    box-shadow: 0 0 30px rgba(var(--accent), 0.25);
+  }
 }
 
 @layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: theme('colors.secondary.300') theme('colors.secondary.100');
+    scrollbar-color: rgb(var(--border)) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: theme('colors.secondary.100');
-    border-radius: 4px;
+    background: transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: theme('colors.secondary.300');
-    border-radius: 4px;
+    background: rgb(var(--border));
+    border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.secondary.400');
+    background: rgb(var(--text-muted));
   }
 }

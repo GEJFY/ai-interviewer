@@ -16,6 +16,7 @@ from grc_backend.api.routes import (
     reports,
     knowledge,
     health,
+    models,
 )
 from grc_backend.api.websocket import interview_ws
 from grc_core.database import init_database, get_database
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(templates.router, prefix="/api/v1/templates", tags=["Templates"])
     app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
     app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["Knowledge"])
+    app.include_router(models.router, prefix="/api/v1/models", tags=["Models"])
 
     # WebSocket endpoint
     app.include_router(interview_ws.router, prefix="/api/v1/interviews", tags=["WebSocket"])

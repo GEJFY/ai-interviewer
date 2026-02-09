@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
 import { Button, Modal, ModalBody, ModalFooter, Select } from '@/components/ui';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Report {
   id: string;
@@ -44,10 +46,7 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
 
 const REPORT_TYPE_OPTIONS = [
   { value: '', label: 'すべてのタイプ' },
-  ...Object.entries(REPORT_TYPE_LABELS).map(([value, label]) => ({
-    value,
-    label,
-  })),
+  ...Object.entries(REPORT_TYPE_LABELS).map(([value, label]) => ({ value, label })),
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -109,50 +108,30 @@ function ReportsContent() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      draft: 'bg-secondary-100 text-secondary-700',
-      review: 'bg-amber-100 text-amber-700',
-      approved: 'bg-green-100 text-green-700',
-      published: 'bg-blue-100 text-blue-700',
-    };
-    const icons = {
-      draft: <Clock className="w-3 h-3" />,
-      review: <AlertCircle className="w-3 h-3" />,
-      approved: <CheckCircle2 className="w-3 h-3" />,
-      published: <CheckCircle2 className="w-3 h-3" />,
-    };
-    return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-          styles[status as keyof typeof styles] || styles.draft
-        }`}
-      >
-        {icons[status as keyof typeof icons]}
-        {STATUS_LABELS[status] || status}
-      </span>
-    );
+  const statusVariant = (status: string) => {
+    if (status === 'approved' || status === 'published') return 'success';
+    if (status === 'review') return 'warning';
+    return 'default';
   };
 
   const getReportIcon = (type: string) => {
     switch (type) {
       case 'rcm':
       case 'audit_workpaper':
-        return <FileSpreadsheet className="w-5 h-5 text-green-600" />;
+        return <FileSpreadsheet className="w-5 h-5 text-emerald-500" />;
       case 'process_document':
-        return <File className="w-5 h-5 text-blue-600" />;
+        return <File className="w-5 h-5 text-blue-500" />;
       default:
-        return <FileText className="w-5 h-5 text-primary-600" />;
+        return <FileText className="w-5 h-5 text-accent-500" />;
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">レポート</h1>
-          <p className="text-secondary-600 mt-1">
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">レポート</h1>
+          <p className="text-surface-500 dark:text-surface-400 mt-1">
             {interviewId
               ? '指定インタビューのレポート'
               : taskId
@@ -169,6 +148,7 @@ function ReportsContent() {
             更新
           </Button>
           <Button
+            variant="accent"
             leftIcon={<FileText className="w-5 h-5" />}
             onClick={() => setIsGenerateModalOpen(true)}
           >
@@ -178,8 +158,8 @@ function ReportsContent() {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-4 bg-white rounded-xl border border-secondary-200 p-4">
-        <Filter className="w-5 h-5 text-secondary-400" />
+      <Card className="flex items-center gap-4 p-4">
+        <Filter className="w-5 h-5 text-surface-400" />
         <div className="w-64">
           <Select
             options={REPORT_TYPE_OPTIONS}
@@ -189,69 +169,56 @@ function ReportsContent() {
           />
         </div>
         {(interviewId || taskId) && (
-          <Link href="/reports" className="text-sm text-primary-600 hover:text-primary-700">
+          <Link href="/reports" className="text-sm text-accent-500 hover:text-accent-600 transition-colors">
             フィルターをクリア
           </Link>
         )}
-      </div>
+      </Card>
 
       {/* Reports List */}
-      <div className="bg-white rounded-xl border border-secondary-200">
+      <Card>
         {isLoading ? (
           <div className="p-6">
             <div className="animate-pulse space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-20 bg-secondary-100 rounded" />
+                <div key={i} className="h-20 bg-surface-100 dark:bg-surface-800 rounded" />
               ))}
             </div>
           </div>
         ) : data?.items?.length > 0 ? (
-          <div className="divide-y divide-secondary-100">
+          <div className="divide-y divide-surface-100 dark:divide-surface-800">
             {data.items.map((report: Report) => (
               <div
                 key={report.id}
-                className="flex items-center gap-4 px-6 py-4 hover:bg-secondary-50 transition"
+                className="flex items-center gap-4 px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors"
               >
-                <div className="p-2 bg-secondary-100 rounded-lg">
+                <div className="p-2 bg-surface-100 dark:bg-surface-800 rounded-lg">
                   {getReportIcon(report.report_type)}
                 </div>
                 <Link href={`/reports/${report.id}`} className="flex-1 min-w-0">
-                  <p className="font-medium text-secondary-900">{report.title}</p>
-                  <div className="flex items-center gap-4 text-sm text-secondary-500">
-                    <span>
-                      {REPORT_TYPE_LABELS[report.report_type] || report.report_type}
-                    </span>
-                    <span>
-                      {format(new Date(report.created_at), 'yyyy/MM/dd HH:mm', {
-                        locale: ja,
-                      })}
-                    </span>
+                  <p className="font-medium text-surface-900 dark:text-surface-100">{report.title}</p>
+                  <div className="flex items-center gap-4 text-sm text-surface-500 dark:text-surface-400">
+                    <span>{REPORT_TYPE_LABELS[report.report_type] || report.report_type}</span>
+                    <span>{format(new Date(report.created_at), 'yyyy/MM/dd HH:mm', { locale: ja })}</span>
                   </div>
                 </Link>
                 <div className="flex items-center gap-4">
-                  {getStatusBadge(report.status)}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleExport(report, 'pdf')}
-                      className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-lg transition"
-                      title="PDF出力"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleExport(report, 'docx')}
-                      className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-lg transition"
-                      title="Word出力"
-                    >
-                      <File className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleExport(report, 'xlsx')}
-                      className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-lg transition"
-                      title="Excel出力"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                    </button>
+                  <Badge variant={statusVariant(report.status)}>
+                    {STATUS_LABELS[report.status] || report.status}
+                  </Badge>
+                  <div className="flex items-center gap-1">
+                    {['pdf', 'docx', 'xlsx'].map((fmt) => (
+                      <button
+                        key={fmt}
+                        onClick={() => handleExport(report, fmt)}
+                        className="p-2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-lg transition-colors"
+                        title={`${fmt.toUpperCase()}出力`}
+                      >
+                        {fmt === 'pdf' ? <Download className="w-4 h-4" /> :
+                         fmt === 'docx' ? <File className="w-4 h-4" /> :
+                         <FileSpreadsheet className="w-4 h-4" />}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -259,19 +226,19 @@ function ReportsContent() {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <FileText className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-secondary-900 mb-2">
+            <FileText className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
               レポートがありません
             </h3>
-            <p className="text-secondary-500 mb-6">
+            <p className="text-surface-500 dark:text-surface-400 mb-6">
               インタビュー完了後にレポートを生成できます
             </p>
-            <Button onClick={() => setIsGenerateModalOpen(true)}>
+            <Button variant="accent" onClick={() => setIsGenerateModalOpen(true)}>
               レポートを生成
             </Button>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Generate Report Modal */}
       <Modal
@@ -281,35 +248,26 @@ function ReportsContent() {
       >
         <ModalBody>
           <div className="space-y-4">
-            <p className="text-secondary-600">
+            <p className="text-surface-500 dark:text-surface-400">
               AIが自動的にレポートを生成します。生成後に内容を確認・編集できます。
             </p>
             <Select
               label="レポートタイプ"
-              options={Object.entries(REPORT_TYPE_LABELS).map(([value, label]) => ({
-                value,
-                label,
-              }))}
+              options={Object.entries(REPORT_TYPE_LABELS).map(([value, label]) => ({ value, label }))}
               value={selectedReportType}
               onChange={(e) => setSelectedReportType(e.target.value)}
             />
-            <div className="bg-secondary-50 rounded-lg p-4">
-              <h4 className="font-medium text-secondary-900 mb-2">
+            <div className="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+              <h4 className="font-medium text-surface-900 dark:text-surface-50 mb-2">
                 {REPORT_TYPE_LABELS[selectedReportType]}
               </h4>
-              <p className="text-sm text-secondary-600">
-                {selectedReportType === 'summary' &&
-                  'インタビュー内容を要約し、主要なポイントをまとめます。'}
-                {selectedReportType === 'process_document' &&
-                  '業務プロセスを可視化した業務記述書を作成します。'}
-                {selectedReportType === 'rcm' &&
-                  'リスクと統制の対応関係を整理したRCMを作成します。'}
-                {selectedReportType === 'audit_workpaper' &&
-                  '監査手続の結果をまとめた監査調書を作成します。'}
-                {selectedReportType === 'compliance_report' &&
-                  'コンプライアンス状況の分析レポートを作成します。'}
-                {selectedReportType === 'analysis' &&
-                  'インタビュー結果の詳細分析レポートを作成します。'}
+              <p className="text-sm text-surface-500 dark:text-surface-400">
+                {selectedReportType === 'summary' && 'インタビュー内容を要約し、主要なポイントをまとめます。'}
+                {selectedReportType === 'process_document' && '業務プロセスを可視化した業務記述書を作成します。'}
+                {selectedReportType === 'rcm' && 'リスクと統制の対応関係を整理したRCMを作成します。'}
+                {selectedReportType === 'audit_workpaper' && '監査手続の結果をまとめた監査調書を作成します。'}
+                {selectedReportType === 'compliance_report' && 'コンプライアンス状況の分析レポートを作成します。'}
+                {selectedReportType === 'analysis' && 'インタビュー結果の詳細分析レポートを作成します。'}
               </p>
             </div>
           </div>
@@ -319,6 +277,7 @@ function ReportsContent() {
             キャンセル
           </Button>
           <Button
+            variant="accent"
             onClick={() => generateMutation.mutate()}
             isLoading={generateMutation.isPending}
           >
@@ -332,18 +291,18 @@ function ReportsContent() {
 
 export default function ReportsPage() {
   return (
-    <Suspense
+    <React.Suspense
       fallback={
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
           <div className="animate-pulse">
-            <div className="h-8 bg-secondary-200 rounded w-1/4 mb-2" />
-            <div className="h-4 bg-secondary-200 rounded w-1/2" />
+            <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4 mb-2" />
+            <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2" />
           </div>
-          <div className="h-64 bg-secondary-200 rounded" />
+          <div className="h-64 bg-surface-200 dark:bg-surface-700 rounded" />
         </div>
       }
     >
       <ReportsContent />
-    </Suspense>
+    </React.Suspense>
   );
 }

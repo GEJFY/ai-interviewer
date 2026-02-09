@@ -2,19 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   FolderKanban,
   ClipboardList,
-  MessageSquare,
   FileText,
   FileBarChart,
+  Search,
   Settings,
   LogOut,
-  Search,
   Bell,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/cn';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const navigation = [
   { name: 'ダッシュボード', href: '/dashboard', icon: LayoutDashboard },
@@ -31,80 +35,103 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-[rgb(var(--bg))]">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-secondary-200">
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-secondary-200">
-            <Link href="/dashboard" className="text-xl font-bold text-primary-600">
-              AI Interview
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-30 flex flex-col border-r border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-950 transition-all duration-300',
+          collapsed ? 'w-16' : 'w-64'
+        )}
+      >
+        {/* ロゴ */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-surface-200 dark:border-surface-800">
+          {!collapsed && (
+            <Link href="/dashboard" className="text-lg font-bold text-surface-900 dark:text-surface-50 truncate">
+              AI Interview<span className="text-accent-500">.</span>
             </Link>
-          </div>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          >
+            {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          </button>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-1">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition',
-                    isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
-                  )}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
+        {/* ナビゲーション */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-surface-50'
+                    : 'text-surface-500 hover:bg-surface-50 dark:hover:bg-surface-900 hover:text-surface-700 dark:hover:text-surface-300'
+                )}
+                title={collapsed ? item.name : undefined}
+              >
+                {/* アクティブインジケーター */}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-accent-500 rounded-r" />
+                )}
+                <item.icon className={cn('w-5 h-5 flex-shrink-0', isActive && 'text-accent-500')} />
+                {!collapsed && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
 
-          {/* User menu */}
-          <div className="p-4 border-t border-secondary-200">
-            <Link
-              href="/settings"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900 transition"
-            >
-              <Settings className="w-5 h-5" />
-              設定
-            </Link>
-            <button
-              onClick={() => {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                window.location.href = '/login';
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900 transition"
-            >
-              <LogOut className="w-5 h-5" />
-              ログアウト
-            </button>
-          </div>
+        {/* フッター */}
+        <div className="p-3 border-t border-surface-200 dark:border-surface-800 space-y-1">
+          {!collapsed && (
+            <div className="flex items-center justify-between px-3 py-1 mb-2">
+              <ThemeToggle />
+              <LanguageSelector compact />
+            </div>
+          )}
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-surface-500 hover:bg-surface-50 dark:hover:bg-surface-900 hover:text-surface-700 dark:hover:text-surface-300 transition-colors"
+            title={collapsed ? '設定' : undefined}
+          >
+            <Settings className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span>設定</span>}
+          </Link>
+          <button
+            onClick={() => {
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refresh_token');
+              window.location.href = '/login';
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-surface-500 hover:bg-surface-50 dark:hover:bg-surface-900 hover:text-surface-700 dark:hover:text-surface-300 transition-colors"
+            title={collapsed ? 'ログアウト' : undefined}
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span>ログアウト</span>}
+          </button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="pl-64">
-        {/* Top bar */}
-        <header className="h-16 bg-white border-b border-secondary-200 flex items-center justify-between px-8">
-          <div className="flex-1">
-            {/* Breadcrumb or search could go here */}
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 rounded-lg transition">
+      {/* メインコンテンツ */}
+      <div className={cn('transition-all duration-300', collapsed ? 'pl-16' : 'pl-64')}>
+        {/* トップバー */}
+        <header className="sticky top-0 z-20 h-16 glass-strong flex items-center justify-between px-8">
+          <div className="flex-1" />
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-lg transition-colors relative">
               <Bell className="w-5 h-5" />
             </button>
           </div>
         </header>
 
-        {/* Page content */}
+        {/* ページコンテンツ */}
         <main className="p-8">{children}</main>
       </div>
     </div>

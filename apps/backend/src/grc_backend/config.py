@@ -1,8 +1,9 @@
 """Application configuration."""
 
+import json
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,27 +39,47 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8000"]
     )
 
-    # AI Provider
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except (json.JSONDecodeError, TypeError):
+                pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+
+    # AI Provider (azure, aws, gcp, local)
     ai_provider: str = Field(default="azure")
 
     # Azure OpenAI
     azure_openai_api_key: str = Field(default="")
     azure_openai_endpoint: str = Field(default="")
-    azure_openai_deployment_name: str = Field(default="gpt-4")
-    azure_openai_api_version: str = Field(default="2024-02-01")
+    azure_openai_deployment_name: str = Field(default="gpt-5-nano")
+    azure_openai_api_version: str = Field(default="2025-12-01-preview")
 
     # AWS Bedrock
     aws_access_key_id: str = Field(default="")
     aws_secret_access_key: str = Field(default="")
     aws_region: str = Field(default="ap-northeast-1")
     aws_bedrock_model_id: str = Field(
-        default="anthropic.claude-3-sonnet-20240229-v1:0"
+        default="anthropic.claude-sonnet-4-5-20250929-v1:0"
     )
 
     # GCP Vertex AI
     gcp_project_id: str = Field(default="")
     gcp_location: str = Field(default="asia-northeast1")
     google_application_credentials: str = Field(default="")
+
+    # Ollama (Local LLM)
+    ollama_base_url: str = Field(default="http://localhost:11434")
+    ollama_model: str = Field(default="gemma3:1b")
+    ollama_embedding_model: str = Field(default="nomic-embed-text")
 
     # Speech Provider (azure, aws, gcp)
     speech_provider: str = Field(default="azure")

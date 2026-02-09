@@ -127,7 +127,35 @@ OPENAI_MODELS = {
         latency_class=LatencyClass.ULTRA_FAST,  # Excellent for real-time
         description="Ultra-fast GPT-4o for real-time dialogue",
     ),
+    # GPT-5 Mini - Cost-effective (2026)
+    "gpt-5-mini": ModelConfig(
+        model_id="gpt-5-mini",
+        display_name="GPT-5 Mini",
+        provider="openai",
+        tier=ModelTier.STANDARD,
+        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        context_window=256000,
+        max_output_tokens=16384,
+        input_cost_per_1k=0.0005,
+        output_cost_per_1k=0.002,
+        latency_class=LatencyClass.FAST,
+        description="Balanced GPT-5 for cost-effective interactive use",
+    ),
     # o-Series - Reasoning models (NOT for real-time - use for analysis)
+    "o4-mini": ModelConfig(
+        model_id="o4-mini",
+        display_name="o4 Mini",
+        provider="openai",
+        tier=ModelTier.STANDARD,
+        capabilities=[ModelCapability.CHAT, ModelCapability.REASONING, ModelCapability.CODE],
+        context_window=200000,
+        max_output_tokens=100000,
+        input_cost_per_1k=0.0011,
+        output_cost_per_1k=0.0044,
+        supports_streaming=False,
+        latency_class=LatencyClass.SLOW,
+        description="Cost-effective reasoning model (not for real-time)",
+    ),
     "o3": ModelConfig(
         model_id="o3",
         display_name="o3",
@@ -458,6 +486,20 @@ AWS_BEDROCK_MODELS = {
         latency_class=LatencyClass.ULTRA_FAST,  # Excellent for real-time
         description="Ultra-fast Nova Lite for real-time dialogue",
     ),
+    # Amazon Nova Micro - Ultra-low cost
+    "amazon-nova-micro": ModelConfig(
+        model_id="amazon.nova-micro-v1:0",
+        display_name="Amazon Nova Micro",
+        provider="aws_bedrock",
+        tier=ModelTier.ECONOMY,
+        capabilities=[ModelCapability.CHAT, ModelCapability.REALTIME],
+        context_window=128000,
+        max_output_tokens=5000,
+        input_cost_per_1k=0.000035,
+        output_cost_per_1k=0.00014,
+        latency_class=LatencyClass.ULTRA_FAST,
+        description="Ultra-low cost text-only model for simple tasks",
+    ),
     # Llama Series
     "meta-llama-4-70b": ModelConfig(
         model_id="meta.llama4-70b-instruct-v1:0",
@@ -533,6 +575,59 @@ GCP_VERTEX_MODELS = {
         latency_class=LatencyClass.ULTRA_FAST,  # Excellent for real-time
         description="Ultra-fast Gemini for real-time interview",
     ),
+    # Gemini 2.5 Series - GA (2025-2026)
+    "gemini-2.5-pro": ModelConfig(
+        model_id="gemini-2.5-pro",
+        display_name="Gemini 2.5 Pro",
+        provider="gcp_vertex",
+        tier=ModelTier.PREMIUM,
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.AUDIO,
+            ModelCapability.REASONING,
+            ModelCapability.CODE,
+            ModelCapability.MULTIMODAL,
+        ],
+        context_window=1000000,
+        max_output_tokens=65536,
+        input_cost_per_1k=0.00125,
+        output_cost_per_1k=0.01,
+        latency_class=LatencyClass.STANDARD,
+        description="GA version Gemini 2.5 Pro with thinking capabilities",
+    ),
+    "gemini-2.5-flash": ModelConfig(
+        model_id="gemini-2.5-flash",
+        display_name="Gemini 2.5 Flash",
+        provider="gcp_vertex",
+        tier=ModelTier.STANDARD,
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.AUDIO,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
+        context_window=1000000,
+        max_output_tokens=65536,
+        input_cost_per_1k=0.00015,
+        output_cost_per_1k=0.0006,
+        latency_class=LatencyClass.FAST,
+        description="GA version fast and cost-effective with thinking",
+    ),
+    "gemini-2.5-flash-lite": ModelConfig(
+        model_id="gemini-2.5-flash-lite",
+        display_name="Gemini 2.5 Flash Lite",
+        provider="gcp_vertex",
+        tier=ModelTier.ECONOMY,
+        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.REALTIME],
+        context_window=1000000,
+        max_output_tokens=65536,
+        input_cost_per_1k=0.0,
+        output_cost_per_1k=0.0,
+        latency_class=LatencyClass.ULTRA_FAST,
+        description="Ultra-fast and free GA model for high-volume tasks",
+    ),
     # Gemini 2.0 Series - Still widely used
     "gemini-2.0-flash": ModelConfig(
         model_id="gemini-2.0-flash",
@@ -563,6 +658,80 @@ GCP_VERTEX_MODELS = {
 }
 
 # =============================================================================
+# Local LLM Models (Ollama)
+# =============================================================================
+
+LOCAL_MODELS = {
+    "gemma3-1b": ModelConfig(
+        model_id="gemma3:1b",
+        display_name="Gemma 3 1B",
+        provider="local",
+        tier=ModelTier.ECONOMY,
+        capabilities=[ModelCapability.CHAT, ModelCapability.REALTIME],
+        context_window=32768,
+        max_output_tokens=8192,
+        input_cost_per_1k=0.0,
+        output_cost_per_1k=0.0,
+        latency_class=LatencyClass.FAST,
+        description="Ultra-lightweight local model for testing (1B params)",
+    ),
+    "gemma3-4b": ModelConfig(
+        model_id="gemma3:4b",
+        display_name="Gemma 3 4B",
+        provider="local",
+        tier=ModelTier.ECONOMY,
+        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.REALTIME],
+        context_window=128000,
+        max_output_tokens=8192,
+        input_cost_per_1k=0.0,
+        output_cost_per_1k=0.0,
+        latency_class=LatencyClass.FAST,
+        description="Compact local model with vision support (4B params)",
+    ),
+    "phi4": ModelConfig(
+        model_id="phi4",
+        display_name="Phi-4 14B",
+        provider="local",
+        tier=ModelTier.STANDARD,
+        capabilities=[ModelCapability.CHAT, ModelCapability.CODE, ModelCapability.REASONING],
+        context_window=16384,
+        max_output_tokens=4096,
+        input_cost_per_1k=0.0,
+        output_cost_per_1k=0.0,
+        latency_class=LatencyClass.STANDARD,
+        description="High-quality local model for code and reasoning (14B params)",
+    ),
+    "llama3.2-1b": ModelConfig(
+        model_id="llama3.2:1b",
+        display_name="Llama 3.2 1B",
+        provider="local",
+        tier=ModelTier.ECONOMY,
+        capabilities=[ModelCapability.CHAT, ModelCapability.REALTIME],
+        context_window=131072,
+        max_output_tokens=4096,
+        input_cost_per_1k=0.0,
+        output_cost_per_1k=0.0,
+        latency_class=LatencyClass.ULTRA_FAST,
+        description="Ultra-lightweight Llama for rapid testing (1B params)",
+    ),
+    "nomic-embed-text": ModelConfig(
+        model_id="nomic-embed-text",
+        display_name="Nomic Embed Text",
+        provider="local",
+        tier=ModelTier.ECONOMY,
+        capabilities=[ModelCapability.EMBEDDING],
+        context_window=8192,
+        max_output_tokens=0,
+        input_cost_per_1k=0.0,
+        output_cost_per_1k=0.0,
+        supports_json_mode=False,
+        supports_streaming=False,
+        supports_tools=False,
+        description="Local embedding model for semantic search",
+    ),
+}
+
+# =============================================================================
 # All Models Registry
 # =============================================================================
 
@@ -572,6 +741,7 @@ ALL_MODELS: dict[str, ModelConfig] = {
     **AZURE_OPENAI_MODELS,
     **AWS_BEDROCK_MODELS,
     **GCP_VERTEX_MODELS,
+    **LOCAL_MODELS,
 }
 
 
@@ -734,6 +904,12 @@ RECOMMENDED_MODELS = {
     "multimodal_analysis": "gemini-3.0-pro-preview",  # Best multimodal with 2M context
     "code_generation": "gpt-5.2",  # Strong code capabilities
     "long_document": "gemini-3.0-pro-preview",  # 2M context window
+
+    # Local LLM (開発・テスト用)
+    "local_test": "gemma3-1b",  # 最軽量テスト用
+    "local_quality": "phi4",  # ローカル高品質
+    "local_realtime": "llama3.2-1b",  # ローカル超高速
+    "local_embedding": "nomic-embed-text",  # ローカルエンベディング
 }
 
 
@@ -789,6 +965,8 @@ PROVIDER_CAPABILITIES = {
         "latest_model": "gemini-3.0-pro-preview",
         "fast_model": "gemini-3.0-flash-preview",
         "economy_model": "gemini-3.0-flash-lite",
+        "ga_model": "gemini-2.5-pro",  # GA安定版
+        "ga_fast_model": "gemini-2.5-flash",  # GA高速版
         "realtime_model": "gemini-3.0-flash-lite",  # ULTRA_FAST for dialogue
         "realtime_premium": "gemini-3.0-flash-preview",  # FAST for quality dialogue
         "supports_vision": True,
@@ -796,6 +974,17 @@ PROVIDER_CAPABILITIES = {
         "supports_tools": True,
         "max_context": 2000000,
         "supports_realtime": True,
+    },
+    "local": {
+        "latest_model": "phi4",
+        "economy_model": "gemma3-1b",
+        "realtime_model": "llama3.2-1b",  # ULTRA_FAST for dialogue
+        "embedding_model": "nomic-embed-text",
+        "supports_vision": False,
+        "supports_audio": False,
+        "supports_tools": False,
+        "supports_realtime": True,
+        "requires_ollama": True,
     },
 }
 

@@ -85,7 +85,7 @@ DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/aiinterviewer
 REDIS_URL=redis://localhost:6379
 
 # AI Provider (選択)
-AI_PROVIDER=azure_openai  # azure_openai | aws_bedrock | gcp_vertex | anthropic
+AI_PROVIDER=azure  # azure | aws | gcp | local
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-api-key
 
