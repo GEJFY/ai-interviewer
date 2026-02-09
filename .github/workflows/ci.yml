@@ -407,6 +407,7 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

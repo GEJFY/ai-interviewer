@@ -210,13 +210,13 @@ resource "aws_secretsmanager_secret_version" "db_password" {
 }
 
 resource "aws_db_instance" "main" {
-  identifier           = "${var.resource_prefix}-db-${var.suffix}"
-  engine               = "postgres"
-  engine_version       = "16.3"
-  instance_class       = var.environment == "prod" ? "db.r6g.large" : "db.t4g.micro"
-  allocated_storage    = 20
+  identifier            = "${var.resource_prefix}-db-${var.suffix}"
+  engine                = "postgres"
+  engine_version        = "16.3"
+  instance_class        = var.environment == "prod" ? "db.r6g.large" : "db.t4g.micro"
+  allocated_storage     = 20
   max_allocated_storage = 100
-  storage_type         = "gp3"
+  storage_type          = "gp3"
 
   db_name  = "aiinterviewer"
   username = "aiinterviewer"
@@ -225,10 +225,10 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
-  multi_az               = var.environment == "prod"
+  multi_az                = var.environment == "prod"
   backup_retention_period = var.environment == "prod" ? 35 : 7
-  skip_final_snapshot    = var.environment != "prod"
-  deletion_protection    = var.environment == "prod"
+  skip_final_snapshot     = var.environment != "prod"
+  deletion_protection     = var.environment == "prod"
 
   performance_insights_enabled = var.environment == "prod"
 
@@ -537,7 +537,7 @@ resource "aws_cognito_user_pool_client" "web" {
   name         = "${var.resource_prefix}-web-client"
   user_pool_id = aws_cognito_user_pool.main.id
 
-  generate_secret     = false
+  generate_secret = false
   explicit_auth_flows = [
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"

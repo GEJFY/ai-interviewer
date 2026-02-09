@@ -142,19 +142,19 @@ resource "random_password" "db_password" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                          = "${var.resource_prefix}-db-${var.suffix}"
-  resource_group_name           = azurerm_resource_group.main.name
-  location                      = azurerm_resource_group.main.location
-  version                       = "16"
-  delegated_subnet_id           = azurerm_subnet.db.id
-  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
-  administrator_login           = "aiinterviewer"
-  administrator_password        = random_password.db_password.result
-  zone                          = "1"
-  storage_mb                    = 32768
-  sku_name                      = var.environment == "prod" ? "GP_Standard_D4s_v3" : "B_Standard_B2s"
-  backup_retention_days         = var.environment == "prod" ? 35 : 7
-  geo_redundant_backup_enabled  = var.environment == "prod"
+  name                         = "${var.resource_prefix}-db-${var.suffix}"
+  resource_group_name          = azurerm_resource_group.main.name
+  location                     = azurerm_resource_group.main.location
+  version                      = "16"
+  delegated_subnet_id          = azurerm_subnet.db.id
+  private_dns_zone_id          = azurerm_private_dns_zone.postgres.id
+  administrator_login          = "aiinterviewer"
+  administrator_password       = random_password.db_password.result
+  zone                         = "1"
+  storage_mb                   = 32768
+  sku_name                     = var.environment == "prod" ? "GP_Standard_D4s_v3" : "B_Standard_B2s"
+  backup_retention_days        = var.environment == "prod" ? 35 : 7
+  geo_redundant_backup_enabled = var.environment == "prod"
 
   tags = var.tags
 
@@ -388,13 +388,13 @@ resource "azurerm_linux_web_app" "api" {
   https_only                = true
 
   site_config {
-    always_on                         = var.environment == "prod"
-    health_check_path                 = "/api/v1/health"
+    always_on                               = var.environment == "prod"
+    health_check_path                       = "/api/v1/health"
     container_registry_use_managed_identity = true
 
     application_stack {
-      docker_image_name        = "ai-interviewer-api:latest"
-      docker_registry_url      = "https://${azurerm_container_registry.main.login_server}"
+      docker_image_name   = "ai-interviewer-api:latest"
+      docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
     }
   }
 
@@ -509,7 +509,7 @@ resource "azurerm_monitor_metric_alert" "api_response_time" {
     metric_name      = "HttpResponseTime"
     aggregation      = "Average"
     operator         = "GreaterThan"
-    threshold        = 5  # 5 seconds
+    threshold        = 5 # 5 seconds
   }
 
   action {
