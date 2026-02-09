@@ -3,29 +3,22 @@
 テスト対象: packages/@grc/core/src/grc_core/schemas/
 """
 
-from datetime import datetime
-
 import pytest
 from pydantic import ValidationError
 
 from grc_core.enums import (
-    InterviewStatus,
-    ProjectStatus,
-    TaskStatus,
     UseCaseType,
     UserRole,
 )
 from grc_core.schemas import (
     BaseSchema,
     InterviewCreate,
-    KnowledgeItemCreate,
     KnowledgeSearchRequest,
     PaginatedResponse,
     ProjectCreate,
     TaskCreate,
     TemplateCreate,
     UserCreate,
-    UserRead,
 )
 
 

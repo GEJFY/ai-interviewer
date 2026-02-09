@@ -3,8 +3,6 @@
 テスト対象: packages/@grc/ai/src/grc_ai/base.py
 """
 
-import pytest
-
 from grc_ai.base import (
     AIProvider,
     ChatChunk,

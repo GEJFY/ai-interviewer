@@ -3,12 +3,11 @@
 テスト対象: packages/@grc/ai/src/grc_ai/dialogue/interview_agent.py
 """
 
-import json
 from unittest.mock import AsyncMock
 
 import pytest
 
-from grc_ai.base import ChatChunk, ChatMessage, ChatResponse, MessageRole
+from grc_ai.base import ChatResponse
 from grc_ai.dialogue.interview_agent import (
     DialogueTurn,
     InterviewAgent,
@@ -169,7 +168,7 @@ class TestInterviewAgent:
             finish_reason="stop",
         )
         await agent.start()
-        result = await agent.end()
+        await agent.end()
         assert agent.is_completed is True
 
     @pytest.mark.asyncio
