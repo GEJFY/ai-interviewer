@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // output: 'standalone', // Enable for production Docker builds
+  output: 'standalone',
 
   // Environment variables
   env: {
