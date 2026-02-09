@@ -113,24 +113,20 @@ terraform apply -var-file=environments/prod/terraform.tfvars
 
 `environments/prod/terraform.tfvars`:
 ```hcl
+# 環境
+environment    = "prod"
+
+# プロジェクト名
+project_name   = "ai-interviewer"
+
 # クラウドプロバイダー
 cloud_provider = "azure"
+
+# リージョン
+region         = "japaneast"
+
+# AIプロバイダー
 ai_provider    = "azure_openai"
-
-# 環境
-environment     = "prod"
-resource_prefix = "ai-interviewer"
-location        = "japaneast"
-
-# アラート通知先
-alert_email = "admin@your-company.com"
-
-# タグ
-tags = {
-  Project     = "AI Interview Tool"
-  Environment = "Production"
-  Owner       = "Go Yoshizawa"
-}
 ```
 
 ### 2.4 アプリケーションのデプロイ
@@ -321,7 +317,45 @@ GCP_PROJECT_ID: プロジェクトID
 GCP_REGION: asia-northeast1
 ```
 
-### 5.2 デプロイの実行
+### 5.2 GitHub Container Registry (GHCR)
+
+CDパイプラインは、DockerイメージをGitHub Container Registry (GHCR) に自動的にプッシュします。
+
+- イメージは semverバージョン、Git SHA、および `latest`（mainブランチのみ）でタグ付けされます
+- GHCRの認証にはGitHub Token（`GITHUB_TOKEN`）を使用するため、追加のクレデンシャル設定は不要です
+- バックエンドとフロントエンドの2つのイメージがビルド・プッシュされます
+
+#### 手動でイメージを取得する場合
+
+```bash
+# 認証（GitHub Personal Access Token必要）
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# イメージの取得
+docker pull ghcr.io/<org>/ai-interviewer-backend:latest
+docker pull ghcr.io/<org>/ai-interviewer-web:latest
+```
+
+### 5.3 CI/CDデプロイフロー
+
+```
+git push (main branch)
+    |
+build-and-push ジョブ
+    |-- バックエンドDockerイメージビルド
+    |-- フロントエンドDockerイメージビルド
+    +-- GHCR にプッシュ（タグ: バージョン, SHA, latest）
+    |
+deploy-[azure|aws|gcp] ジョブ（選択したプロバイダー）
+    |-- Azure: App Service + Static Web Apps
+    |-- AWS: ECS Fargate サービス更新
+    +-- GCP: Cloud Run デプロイ
+    |
+notify ジョブ
+    +-- デプロイ結果通知
+```
+
+### 5.4 デプロイの実行
 
 #### 自動デプロイ
 - `main` ブランチへのマージで自動デプロイ
@@ -348,10 +382,11 @@ GCP_REGION: asia-northeast1
 
 ### 6.2 アラート通知先
 
-Terraformの `alert_email` 変数で設定：
-```hcl
-alert_email = "admin@your-company.com"
-```
+各クラウドプロバイダーのモニタリングサービスで通知先を設定してください：
+
+- Azure: Application Insights のアラートルール
+- AWS: CloudWatch Alarms + SNS
+- GCP: Cloud Monitoring のアラートポリシー
 
 Slackやteamsへの通知も可能（要追加設定）
 
@@ -434,4 +469,4 @@ gcloud run services update-traffic ai-interviewer-backend --to-revisions=前リ�
 
 - [セットアップガイド](./SETUP.md) - 開発環境のセットアップ
 - [開発ガイド](./DEVELOPMENT.md) - 開発ワークフロー
-- [セキュリティガイド](./SECURITY.md) - セキュリティベストプラクティス
+- [セキュリティ仕様書](../specifications/SECURITY.md) - セキュリティベストプラクティス

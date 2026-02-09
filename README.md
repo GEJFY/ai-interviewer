@@ -14,18 +14,20 @@ GRCアドバイザリー業務向けAIインタビューシステム
 ## 技術スタック (2026年最新版)
 
 ### Backend
+
 | パッケージ | バージョン | 説明 |
-|-----------|-----------|------|
+| ---------- | ---------- | ---- |
 | Python | 3.12+ | ランタイム |
-| FastAPI | 0.115.0 | Web フレームワーク |
+| FastAPI | 0.115.6+ | Web フレームワーク |
 | Pydantic | 2.10.0 | データバリデーション |
-| SQLAlchemy | 2.0.36 | ORM (async対応) |
+| SQLAlchemy | 2.0.37+ | ORM (async対応) |
 | PostgreSQL | 16 | データベース (pgvector対応) |
 | Redis | 7.x | キャッシュ・キュー |
 
 ### Frontend
+
 | パッケージ | バージョン | 説明 |
-|-----------|-----------|------|
+| ---------- | ---------- | ---- |
 | Next.js | 15.1.0 | Reactフレームワーク (Turbopack対応) |
 | React | 19.0.0 | UIライブラリ |
 | TanStack Query | 5.62.0 | サーバー状態管理 |
@@ -33,8 +35,9 @@ GRCアドバイザリー業務向けAIインタビューシステム
 | Tailwind CSS | 3.4.17 | スタイリング |
 
 ### Mobile
+
 | パッケージ | バージョン | 説明 |
-|-----------|-----------|------|
+| ---------- | ---------- | ---- |
 | Expo | 52.0.0 | React Native フレームワーク |
 | React Native | 0.76.5 | モバイルUI |
 | Expo Router | 4.0.0 | ナビゲーション |
@@ -42,7 +45,7 @@ GRCアドバイザリー業務向けAIインタビューシステム
 ### AI/LLM (マルチプロバイダー対応) - 2026年最新モデル
 
 | プロバイダー | 最新フラッグシップ | エコノミー | 用途 |
-|-------------|------------------|-----------|------|
+| ------------ | ------------------ | ---------- | ---- |
 | Azure AI Foundry | GPT-5.2, Claude Sonnet 4.6 Opus | GPT-5 Nano | エンタープライズ向け |
 | OpenAI | GPT-5.2, o3 | GPT-5 Nano | 汎用・推論 |
 | Anthropic | Claude Sonnet 4.6 Opus | Claude 4.6 Haiku | インタビュー対話 |
@@ -79,6 +82,7 @@ cp .env.example .env
 ```
 
 必須環境変数:
+
 ```env
 # Database
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/aiinterviewer
@@ -127,18 +131,21 @@ cd ../..
 ### 6. 開発サーバーの起動
 
 **Backend:**
+
 ```bash
 cd apps/backend
 uvicorn grc_backend.main:app --reload --port 8000
 ```
 
 **Frontend (Web):**
+
 ```bash
 cd apps/web
 pnpm dev
 ```
 
 **Frontend (Mobile):**
+
 ```bash
 cd apps/mobile
 pnpm start
@@ -146,13 +153,28 @@ pnpm start
 
 ### 7. アクセス
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/api/docs
+起動方法によってポート番号が異なります。
+
+| 起動方法                    | Backend | Frontend | 説明             |
+| --------------------------- | ------- | -------- | ---------------- |
+| Direct (uvicorn / pnpm dev) | 8000    | 3000     | ローカル直接起動 |
+| Docker (docker-compose up)  | 8001    | 3001     | Docker経由の起動 |
+
+Direct 起動の場合:
+
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:8000>
+- API Docs: <http://localhost:8000/api/docs>
+
+Docker 起動の場合:
+
+- Frontend: <http://localhost:3001>
+- Backend API: <http://localhost:8001>
+- API Docs: <http://localhost:8001/api/docs>
 
 ## プロジェクト構造
 
-```
+```text
 ai-interviewer/
 ├── apps/
 │   ├── backend/                 # FastAPI バックエンド
@@ -194,26 +216,97 @@ ai-interviewer/
 
 ## API エンドポイント
 
+### Auth (`/api/v1/auth`)
+
 | エンドポイント | メソッド | 説明 |
-|---------------|---------|------|
-| `/api/v1/health` | GET | ヘルスチェック |
+| -------------- | -------- | ---- |
 | `/api/v1/auth/login` | POST | ログイン |
+| `/api/v1/auth/register` | POST | ユーザー登録 |
+| `/api/v1/auth/refresh` | POST | トークンリフレッシュ |
 | `/api/v1/auth/me` | GET | 現在のユーザー情報 |
-| `/api/v1/projects` | GET/POST | 案件一覧・作成 |
-| `/api/v1/projects/{id}` | GET/PUT/DELETE | 案件詳細・更新・削除 |
-| `/api/v1/tasks` | GET/POST | タスク一覧・作成 |
-| `/api/v1/interviews` | GET/POST | インタビュー一覧・作成 |
+
+### Projects (`/api/v1/projects`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/projects` | GET | 案件一覧 |
+| `/api/v1/projects` | POST | 案件作成 |
+| `/api/v1/projects/{id}` | GET | 案件詳細 |
+| `/api/v1/projects/{id}` | PUT | 案件更新 |
+| `/api/v1/projects/{id}` | DELETE | 案件削除 |
+
+### Tasks (`/api/v1/tasks`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/tasks` | GET | タスク一覧 |
+| `/api/v1/tasks` | POST | タスク作成 |
+| `/api/v1/tasks/{id}` | GET | タスク詳細 |
+| `/api/v1/tasks/{id}` | PUT | タスク更新 |
+| `/api/v1/tasks/{id}` | DELETE | タスク削除 |
+
+### Interviews (`/api/v1/interviews`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/interviews` | GET | インタビュー一覧 |
+| `/api/v1/interviews` | POST | インタビュー作成 |
+| `/api/v1/interviews/{id}` | GET | インタビュー詳細 |
+| `/api/v1/interviews/{id}` | PUT | インタビュー更新 |
 | `/api/v1/interviews/{id}/start` | POST | インタビュー開始 |
+| `/api/v1/interviews/{id}/pause` | POST | インタビュー一時停止 |
+| `/api/v1/interviews/{id}/resume` | POST | インタビュー再開 |
 | `/api/v1/interviews/{id}/complete` | POST | インタビュー完了 |
-| `/api/v1/interviews/{id}/transcript` | GET/PUT | 文字起こし取得・編集 |
-| `/api/v1/templates` | GET/POST | テンプレート管理 |
+| `/api/v1/interviews/{id}/transcript` | GET | 文字起こし取得 |
+
+### Templates (`/api/v1/templates`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/templates` | GET | テンプレート一覧 |
+| `/api/v1/templates` | POST | テンプレート作成 |
+| `/api/v1/templates/{id}` | GET | テンプレート詳細 |
+| `/api/v1/templates/{id}` | PUT | テンプレート更新 |
+| `/api/v1/templates/{id}` | DELETE | テンプレート削除 |
+| `/api/v1/templates/{id}/clone` | POST | テンプレート複製 |
+| `/api/v1/templates/{id}/publish` | POST | テンプレート公開 |
+| `/api/v1/templates/{id}/unpublish` | POST | テンプレート非公開 |
+
+### Reports (`/api/v1/reports`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/reports` | GET | レポート一覧 |
 | `/api/v1/reports/generate` | POST | レポート生成 |
+| `/api/v1/reports/{id}` | GET | レポート詳細 |
+| `/api/v1/reports/{id}` | PUT | レポート更新 |
 | `/api/v1/reports/{id}/export` | GET | レポートエクスポート |
+| `/api/v1/reports/{id}/submit-review` | POST | レビュー提出 |
+| `/api/v1/reports/{id}/approve` | POST | レポート承認 |
+
+### Knowledge (`/api/v1/knowledge`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/knowledge` | GET | ナレッジ一覧 |
+| `/api/v1/knowledge` | POST | ナレッジ登録 |
 | `/api/v1/knowledge/search` | POST | ナレッジ検索 (RAG) |
+| `/api/v1/knowledge/{id}` | GET | ナレッジ詳細 |
+| `/api/v1/knowledge/{id}` | DELETE | ナレッジ削除 |
+
+### Models (`/api/v1/models`)
+
+| エンドポイント | メソッド | 説明 |
+| -------------- | -------- | ---- |
+| `/api/v1/models` | GET | モデル一覧 |
+| `/api/v1/models/recommended` | GET | 推奨モデル取得 |
+| `/api/v1/models/providers` | GET | プロバイダー一覧 |
+| `/api/v1/models/test-connection` | POST | 接続テスト |
 
 ### WebSocket
+
 | エンドポイント | 説明 |
-|---------------|------|
+| -------------- | ---- |
 | `/api/v1/interviews/{id}/stream` | リアルタイムインタビュー対話 |
 
 ## LLMモデル選択 (2026年最新版)
@@ -223,7 +316,7 @@ ai-interviewer/
 インタビュー対話では**レイテンシ（応答速度）**が重要です。自然な会話体験を実現するため、モデルを用途別に使い分けます。
 
 | レイテンシクラス | TTFT目標 | 用途 | 推奨モデル |
-|---------------|---------|------|-----------|
+| ---------------- | -------- | ---- | ---------- |
 | **ULTRA_FAST** | <200ms | リアルタイム対話 | Claude 4.6 Haiku, GPT-5 Nano, Gemini Flash Lite |
 | **FAST** | 200-500ms | 高品質対話 | Claude 4.6 Sonnet, GPT-4o, Gemini 3.0 Flash |
 | **STANDARD** | 500ms-1s | 分析・レポート | GPT-5.2, Gemini 3.0 Pro |
@@ -270,7 +363,7 @@ RECOMMENDED_MODELS = {
 ### 価格帯・レイテンシ別モデル
 
 | Tier | モデル例 | 入力/1K | 出力/1K | レイテンシ | コンテキスト |
-|------|---------|--------|--------|-----------|------------|
+| ---- | -------- | ------- | ------- | ---------- | ------------ |
 | Economy | GPT-5 Nano, Claude 4.6 Haiku | ~$0.0001 | ~$0.0004 | ULTRA_FAST | 128K-200K |
 | Standard | GPT-4o, Gemini 2.0 Flash | ~$0.001 | ~$0.004 | FAST | 128K-1M |
 | Premium | Claude 4.6 Sonnet, Gemini 3.0 Flash | ~$0.004 | ~$0.02 | FAST | 400K-1M |
@@ -288,6 +381,14 @@ pytest tests/integration/ -v
 
 # カバレッジ
 pytest tests/ --cov=src/grc_backend --cov-report=html
+
+# AIパッケージテスト
+cd packages/@grc/ai
+pytest tests/ -v
+
+# Coreパッケージテスト
+cd packages/@grc/core
+pytest tests/ -v
 
 # フロントエンドテスト
 cd apps/web
@@ -315,6 +416,7 @@ terraform apply -var-file=environments/prod/terraform.tfvars
 ```
 
 ### プロバイダー選択
+
 ```hcl
 # terraform.tfvars
 cloud_provider = "azure"      # azure | aws | gcp
@@ -389,24 +491,22 @@ docker-compose -f docker-compose.prod.yml up -d --scale backend=3
 ## ドキュメント
 
 ### ガイド（初心者向け）
+
 - [セットアップガイド](docs/guides/SETUP.md) - 開発環境の構築手順
 - [開発ガイド](docs/guides/DEVELOPMENT.md) - コーディング規約、テスト方法
 - [デプロイガイド](docs/guides/DEPLOYMENT.md) - 本番環境へのデプロイ
 
 ### エンタープライズ仕様書（学習用テキスト）
+
 - [ログ管理仕様書](docs/specifications/LOGGING.md) - 構造化ログ、相関ID、マスキング
 - [エラー処理仕様書](docs/specifications/ERROR_HANDLING.md) - エラー階層、リトライ、サーキットブレーカー
 - [セキュリティ仕様書](docs/specifications/SECURITY.md) - JWT認証、RBAC、OWASP対策
 - [インフラ仕様書](docs/specifications/INFRASTRUCTURE.md) - Docker、CI/CD、Terraform
 - [AIプロバイダー仕様書](docs/specifications/AI_PROVIDERS.md) - マルチクラウドAI、音声サービス
 
-### リファレンス
-- [アーキテクチャ設計](docs/architecture/)
-- [API仕様](docs/api/)
-
 ## ライセンス
 
-**Proprietary - All Rights Reserved**
+Proprietary - All Rights Reserved
 
 本ソフトウェアは Go Yoshizawa の独占的所有物です。
 Go Yoshizawa による明示的な書面による許可なく、本ソフトウェアを使用、複製、改変、配布することは一切禁止されています。
