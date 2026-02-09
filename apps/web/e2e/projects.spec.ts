@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Project Management', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel(/メール|Email/i).fill('admin@example.com');
-    await page.getByLabel(/パスワード|Password/i).fill('password123');
+    await page.getByLabel(/メール|Email/i).first().fill('admin@example.com');
+    await page.getByLabel(/パスワード|Password/i).first().fill('password123');
     await page.getByRole('button', { name: /ログイン|Sign in/i }).click();
     await page.waitForURL(/dashboard|\//);
   });
@@ -19,7 +19,7 @@ test.describe('Project Management', () => {
     await page.getByRole('button', { name: /新規|作成|New/i }).click();
 
     // モーダルが表示されること
-    await expect(page.getByText(/プロジェクト名|Project Name/i)).toBeVisible();
+    await expect(page.getByText(/プロジェクト名|Project Name/i).first()).toBeVisible();
   });
 
   test('should navigate to project detail', async ({ page }) => {

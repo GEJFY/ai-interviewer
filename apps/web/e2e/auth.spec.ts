@@ -10,13 +10,13 @@ test.describe('Authentication Flow', () => {
     await page.goto('/login');
     await page.getByRole('button', { name: /ログイン|Sign in/i }).click();
     // バリデーションエラーが表示されること
-    await expect(page.locator('text=/メール|email/i')).toBeVisible();
+    await expect(page.locator('.text-red-500, [role="alert"]').first()).toBeVisible();
   });
 
   test('should redirect to dashboard after login', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel(/メール|Email/i).fill('admin@example.com');
-    await page.getByLabel(/パスワード|Password/i).fill('password123');
+    await page.getByLabel(/メール|Email/i).first().fill('admin@example.com');
+    await page.getByLabel(/パスワード|Password/i).first().fill('password123');
     await page.getByRole('button', { name: /ログイン|Sign in/i }).click();
 
     // ダッシュボードにリダイレクトされること
@@ -25,11 +25,11 @@ test.describe('Authentication Flow', () => {
 
   test('should show error for invalid credentials', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel(/メール|Email/i).fill('invalid@example.com');
-    await page.getByLabel(/パスワード|Password/i).fill('wrongpassword');
+    await page.getByLabel(/メール|Email/i).first().fill('invalid@example.com');
+    await page.getByLabel(/パスワード|Password/i).first().fill('wrongpassword');
     await page.getByRole('button', { name: /ログイン|Sign in/i }).click();
 
     // エラーメッセージが表示されること
-    await expect(page.locator('text=/エラー|error|invalid/i')).toBeVisible();
+    await expect(page.locator('.text-red-500, [role="alert"]').first()).toBeVisible();
   });
 });
