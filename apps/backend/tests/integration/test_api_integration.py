@@ -29,8 +29,7 @@ def mock_ai_provider():
     """Mock AI provider for testing."""
     provider = AsyncMock()
     provider.chat.return_value = MagicMock(
-        content="テスト応答メッセージ",
-        usage={"prompt_tokens": 100, "completion_tokens": 50}
+        content="テスト応答メッセージ", usage={"prompt_tokens": 100, "completion_tokens": 50}
     )
     provider.stream_chat.return_value = AsyncMock()
     provider.embed.return_value = [0.1] * 1536
@@ -41,10 +40,7 @@ def mock_ai_provider():
 def mock_speech_provider():
     """Mock speech provider for testing."""
     provider = AsyncMock()
-    provider.transcribe.return_value = MagicMock(
-        text="テスト音声文字起こし",
-        confidence=0.95
-    )
+    provider.transcribe.return_value = MagicMock(text="テスト音声文字起こし", confidence=0.95)
     provider.synthesize.return_value = b"audio_data"
     return provider
 
@@ -78,16 +74,13 @@ class TestAuthenticationFlow:
     @pytest.mark.asyncio
     async def test_login_with_valid_credentials(self):
         """Login should return JWT tokens for valid credentials."""
-        test_credentials = {
-            "email": "test@example.com",
-            "password": "TestPassword123!"
-        }
+        test_credentials = {"email": "test@example.com", "password": "TestPassword123!"}
 
         # Mock implementation test
         expected_response = {
             "access_token": "mock_access_token",
             "refresh_token": "mock_refresh_token",
-            "token_type": "bearer"
+            "token_type": "bearer",
         }
 
         # Verify token structure would be present
@@ -122,7 +115,7 @@ class TestProjectsCRUD:
             "description": "内部統制評価のためのテストプロジェクト",
             "client_name": "テスト株式会社",
             "start_date": "2026-01-01",
-            "end_date": "2026-03-31"
+            "end_date": "2026-03-31",
         }
 
         # Verify project data structure
@@ -132,12 +125,7 @@ class TestProjectsCRUD:
     @pytest.mark.asyncio
     async def test_list_projects_with_pagination(self):
         """List projects should support pagination."""
-        expected_response = {
-            "items": [],
-            "total": 0,
-            "page": 1,
-            "page_size": 20
-        }
+        expected_response = {"items": [], "total": 0, "page": 1, "page_size": 20}
 
         assert "items" in expected_response
         assert "total" in expected_response
@@ -151,10 +139,7 @@ class TestProjectsCRUD:
     @pytest.mark.asyncio
     async def test_update_project(self):
         """Update project should modify the resource."""
-        update_data = {
-            "name": "更新されたプロジェクト名",
-            "status": "completed"
-        }
+        update_data = {"name": "更新されたプロジェクト名", "status": "completed"}
         assert "name" in update_data
 
     @pytest.mark.asyncio
@@ -169,11 +154,7 @@ class TestInterviewWorkflow:
     @pytest.mark.asyncio
     async def test_create_interview_for_task(self):
         """Creating an interview should link it to a task."""
-        interview_data = {
-            "task_id": str(uuid4()),
-            "interviewee_id": str(uuid4()),
-            "language": "ja"
-        }
+        interview_data = {"task_id": str(uuid4()), "interviewee_id": str(uuid4()), "language": "ja"}
 
         assert "task_id" in interview_data
 
@@ -189,9 +170,7 @@ class TestInterviewWorkflow:
         user_message = "毎月5営業日までに決算を締めています"
 
         # Mock AI response
-        ai_response = await mock_ai_provider.chat([
-            {"role": "user", "content": user_message}
-        ])
+        ai_response = await mock_ai_provider.chat([{"role": "user", "content": user_message}])
 
         assert ai_response.content is not None
 
@@ -232,11 +211,7 @@ class TestReportGeneration:
     @pytest.mark.asyncio
     async def test_generate_rcm_matrix(self):
         """RCM (Risk Control Matrix) should be generated."""
-        rcm_structure = {
-            "risks": [],
-            "controls": [],
-            "matrix": []
-        }
+        rcm_structure = {"risks": [], "controls": [], "matrix": []}
 
         assert "risks" in rcm_structure
         assert "controls" in rcm_structure
@@ -273,7 +248,7 @@ class TestKnowledgeSearch:
         """RAG context should be built from relevant knowledge."""
         context_items = [
             {"content": "関連ナレッジ1", "score": 0.95},
-            {"content": "関連ナレッジ2", "score": 0.88}
+            {"content": "関連ナレッジ2", "score": 0.88},
         ]
 
         assert len(context_items) > 0
@@ -346,7 +321,7 @@ class TestAuditLogging:
             "action": "interview.start",
             "resource_type": "interview",
             "resource_id": str(uuid4()),
-            "details": {"language": "ja"}
+            "details": {"language": "ja"},
         }
 
         assert "user_id" in audit_entry
@@ -374,12 +349,7 @@ class TestWebSocketCommunication:
     @pytest.mark.asyncio
     async def test_realtime_message_exchange(self):
         """Real-time messages should be exchanged via WebSocket."""
-        message = {
-            "type": "message",
-            "payload": {
-                "content": "テストメッセージ"
-            }
-        }
+        message = {"type": "message", "payload": {"content": "テストメッセージ"}}
 
         assert message["type"] == "message"
 
@@ -397,11 +367,7 @@ class TestErrorHandling:
         """Validation errors should return 422 with details."""
         error_response = {
             "detail": [
-                {
-                    "loc": ["body", "name"],
-                    "msg": "field required",
-                    "type": "value_error.missing"
-                }
+                {"loc": ["body", "name"], "msg": "field required", "type": "value_error.missing"}
             ]
         }
 
@@ -455,10 +421,7 @@ class TestPerformance:
     @pytest.mark.asyncio
     async def test_large_transcript_handling(self):
         """Large interview transcripts should be handled efficiently."""
-        large_transcript = [
-            {"speaker": "ai", "content": "質問" * 100}
-            for _ in range(100)
-        ]
+        large_transcript = [{"speaker": "ai", "content": "質問" * 100} for _ in range(100)]
 
         assert len(large_transcript) == 100
 

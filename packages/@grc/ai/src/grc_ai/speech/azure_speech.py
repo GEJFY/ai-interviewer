@@ -77,9 +77,7 @@ class AzureSpeechToText(BaseSpeechToText):
         audio_stream.close()
 
         # Perform recognition
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, recognizer.recognize_once
-        )
+        result = await asyncio.get_event_loop().run_in_executor(None, recognizer.recognize_once)
 
         if result.reason == speechsdk.ResultReason.RecognizedSpeech:
             return TranscriptionResult(
@@ -149,9 +147,7 @@ class AzureSpeechToText(BaseSpeechToText):
 
         def on_session_stopped(evt):
             """Handle session end."""
-            asyncio.get_event_loop().call_soon_threadsafe(
-                result_queue.put_nowait, None
-            )
+            asyncio.get_event_loop().call_soon_threadsafe(result_queue.put_nowait, None)
 
         # Connect event handlers
         recognizer.recognizing.connect(on_recognizing)

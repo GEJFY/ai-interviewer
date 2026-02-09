@@ -75,9 +75,7 @@ class InterviewAgent:
 
     def _build_messages(self) -> list[ChatMessage]:
         """Build message list for the AI provider."""
-        messages = [
-            ChatMessage(role=MessageRole.SYSTEM, content=self.system_prompt)
-        ]
+        messages = [ChatMessage(role=MessageRole.SYSTEM, content=self.system_prompt)]
 
         for turn in self.history:
             role = MessageRole.ASSISTANT if turn.role == "ai" else MessageRole.USER
@@ -88,6 +86,7 @@ class InterviewAgent:
     def _get_timestamp(self) -> int:
         """Get current timestamp in milliseconds."""
         import time
+
         return int(time.time() * 1000)
 
     async def start(self) -> str:
@@ -104,7 +103,9 @@ class InterviewAgent:
             interviewer_name="AI インタビュアー",
             purpose=self.context.interview_purpose,
             estimated_duration="約15-30分",
-            anonymity_note="このインタビューは匿名です。" if self.context.is_anonymous else "回答は記録されます。",
+            anonymity_note="このインタビューは匿名です。"
+            if self.context.is_anonymous
+            else "回答は記録されます。",
         )
 
         messages = [
@@ -256,8 +257,7 @@ class InterviewAgent:
         """
         # Build transcript text
         transcript_text = "\n\n".join(
-            f"{'AI' if turn.role == 'ai' else '回答者'}: {turn.content}"
-            for turn in self.history
+            f"{'AI' if turn.role == 'ai' else '回答者'}: {turn.content}" for turn in self.history
         )
 
         prompt = PromptManager.SUMMARIZE_INTERVIEW.format(

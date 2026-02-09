@@ -38,23 +38,17 @@ class InterviewTask(Base, TimestampMixin):
     )
 
     target_count: Mapped[int] = mapped_column(Integer, default=1)
-    deadline: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[TaskStatus] = mapped_column(
         String(50), nullable=False, default=TaskStatus.PENDING
     )
 
     # Settings: anonymous_mode, language, etc.
-    settings: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, default=dict, server_default="{}"
-    )
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
 
     # Relationships
     project: Mapped["Project"] = relationship("Project", back_populates="tasks")
-    template: Mapped["Template | None"] = relationship(
-        "Template", back_populates="tasks"
-    )
+    template: Mapped["Template | None"] = relationship("Template", back_populates="tasks")
     created_by_user: Mapped["User | None"] = relationship(
         "User", back_populates="created_tasks", foreign_keys=[created_by]
     )

@@ -49,9 +49,7 @@ class SynthesisService:
             **provider_config: Provider-specific configuration
         """
         self.provider_type = (
-            SpeechProviderType(provider_type)
-            if isinstance(provider_type, str)
-            else provider_type
+            SpeechProviderType(provider_type) if isinstance(provider_type, str) else provider_type
         )
         self.provider_config = provider_config
         self._default_voices: dict[SpeechLanguage, str] = {}

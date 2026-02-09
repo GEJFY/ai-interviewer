@@ -128,9 +128,7 @@ class GCPTranslate(BaseTranslation):
         translation = response.translations[0]
         detected_lang = None
         if translation.detected_language_code:
-            detected_lang = self._normalize_language_code(
-                translation.detected_language_code
-            )
+            detected_lang = self._normalize_language_code(translation.detected_language_code)
 
         return TranslationResult(
             source_text=text,

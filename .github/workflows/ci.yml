@@ -332,7 +332,16 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8001
           NEXT_PUBLIC_WS_URL: ws://localhost:8001
-        run: pnpm build
+        run: pnpm --filter web build
+
+      - name: Start frontend server
+        working-directory: apps/web
+        run: |
+          npx next start -p 3001 &
+          sleep 5
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8001
+          NEXT_PUBLIC_WS_URL: ws://localhost:8001
 
       - name: Run E2E tests
         working-directory: apps/web
@@ -416,6 +425,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
 
       - name: Run Gitleaks secret scan
         uses: gitleaks/gitleaks-action@v2
@@ -491,11 +501,51 @@ jobs:
     steps:
       - name: Check all jobs
         run: |
-          if [[ "${{ needs.backend-test.result }}" != "success" ]] || \
-             [[ "${{ needs.frontend-test.result }}" != "success" ]] || \
-             [[ "${{ needs.frontend-build.result }}" != "success" ]] || \
-             [[ "${{ needs.docker-build.result }}" != "success" ]]; then
-            echo "One or more jobs failed"
+          echo "=== CI Job Results ==="
+          echo "backend-test:            ${{ needs.backend-test.result }}"
+          echo "frontend-test:           ${{ needs.frontend-test.result }}"
+          echo "frontend-build:          ${{ needs.frontend-build.result }}"
+          echo "docker-build:            ${{ needs.docker-build.result }}"
+          echo "terraform-validate:      ${{ needs.terraform-validate.result }}"
+          echo "security-scan:           ${{ needs.security-scan.result }}"
+          echo "integration-test-ollama: ${{ needs.integration-test-ollama.result }}"
+          echo "e2e-test:                ${{ needs.e2e-test.result }}"
+          echo ""
+
+          # Required jobs (must succeed)
+          FAILED=false
+          for job in backend-test frontend-test frontend-build docker-build terraform-validate; do
+            result="${{ needs.backend-test.result }}"
+            case "$job" in
+              backend-test) result="${{ needs.backend-test.result }}" ;;
+              frontend-test) result="${{ needs.frontend-test.result }}" ;;
+              frontend-build) result="${{ needs.frontend-build.result }}" ;;
+              docker-build) result="${{ needs.docker-build.result }}" ;;
+              terraform-validate) result="${{ needs.terraform-validate.result }}" ;;
+            esac
+            if [[ "$result" != "success" ]]; then
+              echo "FAIL: $job ($result)"
+              FAILED=true
+            fi
+          done
+
+          # Advisory jobs (warn but don't block)
+          for job in security-scan integration-test-ollama e2e-test; do
+            result=""
+            case "$job" in
+              security-scan) result="${{ needs.security-scan.result }}" ;;
+              integration-test-ollama) result="${{ needs.integration-test-ollama.result }}" ;;
+              e2e-test) result="${{ needs.e2e-test.result }}" ;;
+            esac
+            if [[ "$result" != "success" ]]; then
+              echo "WARN: $job ($result) - non-blocking"
+            fi
+          done
+
+          if [[ "$FAILED" == "true" ]]; then
+            echo ""
+            echo "One or more required jobs failed"
             exit 1
           fi
-          echo "All CI jobs passed!"
+          echo ""
+          echo "All required CI jobs passed!"

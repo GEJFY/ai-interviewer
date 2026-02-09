@@ -47,6 +47,4 @@ class TranscriptEntry(Base):
     )
 
     # Relationships
-    interview: Mapped["Interview"] = relationship(
-        "Interview", back_populates="transcript_entries"
-    )
+    interview: Mapped["Interview"] = relationship("Interview", back_populates="transcript_entries")

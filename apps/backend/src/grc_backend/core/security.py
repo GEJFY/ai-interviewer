@@ -52,15 +52,19 @@ class SecurityConfig:
     hsts_enabled: bool = True
     hsts_max_age: int = 31536000  # 1 year
     csp_enabled: bool = True
-    csp_policy: str = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    csp_policy: str = (
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    )
 
     # Request validation
     max_request_size: int = 10 * 1024 * 1024  # 10MB
-    allowed_content_types: list[str] = field(default_factory=lambda: [
-        "application/json",
-        "multipart/form-data",
-        "application/x-www-form-urlencoded",
-    ])
+    allowed_content_types: list[str] = field(
+        default_factory=lambda: [
+            "application/json",
+            "multipart/form-data",
+            "application/x-www-form-urlencoded",
+        ]
+    )
 
     # Debug mode (disable in production!)
     debug: bool = False

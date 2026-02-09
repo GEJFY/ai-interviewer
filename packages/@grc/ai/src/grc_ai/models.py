@@ -91,7 +91,12 @@ OPENAI_MODELS = {
         display_name="GPT-5 Nano",
         provider="openai",
         tier=ModelTier.ECONOMY,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
         context_window=128000,
         max_output_tokens=16384,
         input_cost_per_1k=0.0001,
@@ -132,7 +137,12 @@ OPENAI_MODELS = {
         display_name="GPT-5 Mini",
         provider="openai",
         tier=ModelTier.STANDARD,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
         context_window=256000,
         max_output_tokens=16384,
         input_cost_per_1k=0.0005,
@@ -319,7 +329,12 @@ AZURE_OPENAI_MODELS = {
         display_name="Azure GPT-5 Nano",
         provider="azure_openai",
         tier=ModelTier.ECONOMY,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
         context_window=128000,
         max_output_tokens=16384,
         input_cost_per_1k=0.0001,
@@ -351,7 +366,12 @@ AZURE_OPENAI_MODELS = {
         display_name="Azure Claude 4.6 Sonnet",
         provider="azure_openai",
         tier=ModelTier.PREMIUM,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
         context_window=400000,
         max_output_tokens=16384,
         input_cost_per_1k=0.004,
@@ -405,7 +425,12 @@ AWS_BEDROCK_MODELS = {
         display_name="Claude 4.6 Sonnet (Bedrock)",
         provider="aws_bedrock",
         tier=ModelTier.PREMIUM,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
         context_window=400000,
         max_output_tokens=16384,
         input_cost_per_1k=0.004,
@@ -566,7 +591,12 @@ GCP_VERTEX_MODELS = {
         display_name="Gemini 3.0 Flash Lite",
         provider="gcp_vertex",
         tier=ModelTier.ECONOMY,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.CODE, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.CODE,
+            ModelCapability.REALTIME,
+        ],
         context_window=500000,
         max_output_tokens=8192,
         input_cost_per_1k=0.0001,
@@ -633,7 +663,12 @@ GCP_VERTEX_MODELS = {
         display_name="Gemini 2.0 Flash",
         provider="gcp_vertex",
         tier=ModelTier.STANDARD,
-        capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.AUDIO, ModelCapability.REALTIME],
+        capabilities=[
+            ModelCapability.CHAT,
+            ModelCapability.VISION,
+            ModelCapability.AUDIO,
+            ModelCapability.REALTIME,
+        ],
         context_window=1000000,
         max_output_tokens=8192,
         input_cost_per_1k=0.0,  # Free tier available
@@ -783,7 +818,8 @@ def get_realtime_models(provider: str | None = None) -> list[ModelConfig]:
     """
     suitable_latencies = {LatencyClass.ULTRA_FAST, LatencyClass.FAST}
     models = [
-        m for m in ALL_MODELS.values()
+        m
+        for m in ALL_MODELS.values()
         if m.latency_class in suitable_latencies
         and ModelCapability.REALTIME in m.capabilities
         and (provider is None or m.provider == provider)
@@ -840,9 +876,9 @@ def get_recommended_model(
         Recommended ModelConfig or None
     """
     candidates = [
-        m for m in ALL_MODELS.values()
-        if capability in m.capabilities
-        and (provider is None or m.provider == provider)
+        m
+        for m in ALL_MODELS.values()
+        if capability in m.capabilities and (provider is None or m.provider == provider)
     ]
 
     if not candidates:
@@ -868,7 +904,6 @@ RECOMMENDED_MODELS = {
     "interview_dialogue": "claude-4.6-haiku",  # ULTRA_FAST - Best for real-time interview
     "interview_dialogue_premium": "claude-4.6-sonnet",  # FAST - Higher quality dialogue
     "quick_response": "gpt-5-nano",  # ULTRA_FAST - Ultra-low latency
-
     # Provider-specific real-time recommendations
     "azure_realtime": "azure-gpt-5-nano",  # ULTRA_FAST on Azure
     "azure_realtime_premium": "azure-claude-4.6-sonnet",  # FAST on Azure
@@ -876,7 +911,6 @@ RECOMMENDED_MODELS = {
     "aws_realtime_premium": "bedrock-claude-4.6-sonnet",  # FAST on Bedrock
     "gcp_realtime": "gemini-3.0-flash-lite",  # ULTRA_FAST on GCP
     "gcp_realtime_premium": "gemini-3.0-flash-preview",  # FAST on GCP
-
     # =========================================================================
     # POST-INTERVIEW ANALYSIS (Latency Not Critical)
     # For report generation, deep analysis - use flagship models
@@ -885,25 +919,21 @@ RECOMMENDED_MODELS = {
     "complex_analysis": "o3",  # Deep reasoning (async/batch)
     "interview_summary": "claude-sonnet-4.6-opus",  # Best quality summary
     "post_analysis": "claude-sonnet-4.6-opus",  # Deep post-interview analysis
-
     # =========================================================================
     # GENERAL PURPOSE
     # =========================================================================
     "embedding": "text-embedding-3-large",  # Best semantic search
     "cost_effective": "gpt-5-nano",  # Ultra budget-friendly
-
     # Provider-specific flagship (for analysis, not real-time)
     "azure_flagship": "azure-gpt-5.2",
     "azure_claude": "azure-claude-sonnet-4.6-opus",
     "aws_flagship": "bedrock-claude-sonnet-4.6-opus",
     "gcp_flagship": "gemini-3.0-pro-preview",
     "gcp_fast": "gemini-3.0-flash-preview",
-
     # Use-case specific
     "multimodal_analysis": "gemini-3.0-pro-preview",  # Best multimodal with 2M context
     "code_generation": "gpt-5.2",  # Strong code capabilities
     "long_document": "gemini-3.0-pro-preview",  # 2M context window
-
     # Local LLM (開発・テスト用)
     "local_test": "gemma3-1b",  # 最軽量テスト用
     "local_quality": "phi4",  # ローカル高品質

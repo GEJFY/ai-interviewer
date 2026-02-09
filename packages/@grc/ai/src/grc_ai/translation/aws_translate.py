@@ -121,9 +121,7 @@ class AWSTranslate(BaseTranslation):
 
         detected_lang = None
         if source_code == "auto":
-            detected_lang = self._normalize_language_code(
-                response.get("SourceLanguageCode", "")
-            )
+            detected_lang = self._normalize_language_code(response.get("SourceLanguageCode", ""))
 
         return TranslationResult(
             source_text=text,
@@ -156,9 +154,7 @@ class AWSTranslate(BaseTranslation):
             return []
 
         # Execute translations in parallel
-        tasks = [
-            self.translate(text, target_language, source_language) for text in texts
-        ]
+        tasks = [self.translate(text, target_language, source_language) for text in texts]
         return await asyncio.gather(*tasks)
 
     async def detect_language(self, text: str) -> DetectionResult:
@@ -207,9 +203,7 @@ class AWSTranslate(BaseTranslation):
             List of supported TranslationLanguage values
         """
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, self._translate_client.list_languages
-        )
+        response = await loop.run_in_executor(None, self._translate_client.list_languages)
 
         supported = []
         for lang in response.get("Languages", []):

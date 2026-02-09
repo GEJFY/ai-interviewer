@@ -35,9 +35,7 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = Field(default=7)
 
     # CORS
-    cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"]
-    )
+    cors_origins: list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -67,9 +65,7 @@ class Settings(BaseSettings):
     aws_access_key_id: str = Field(default="")
     aws_secret_access_key: str = Field(default="")
     aws_region: str = Field(default="ap-northeast-1")
-    aws_bedrock_model_id: str = Field(
-        default="anthropic.claude-sonnet-4-5-20250929-v1:0"
-    )
+    aws_bedrock_model_id: str = Field(default="anthropic.claude-sonnet-4-5-20250929-v1:0")
 
     # GCP Vertex AI
     gcp_project_id: str = Field(default="")

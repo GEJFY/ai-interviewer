@@ -85,9 +85,7 @@ class GCPSpeechToText(BaseSpeechToText):
         }
 
         config = speech.RecognitionConfig(
-            encoding=encoding_map.get(
-                format, speech.RecognitionConfig.AudioEncoding.LINEAR16
-            ),
+            encoding=encoding_map.get(format, speech.RecognitionConfig.AudioEncoding.LINEAR16),
             sample_rate_hertz=sample_rate,
             language_code=self.LANGUAGE_MAPPING.get(language, "ja-JP"),
             enable_automatic_punctuation=True,
@@ -143,9 +141,7 @@ class GCPSpeechToText(BaseSpeechToText):
         }
 
         config = speech.RecognitionConfig(
-            encoding=encoding_map.get(
-                format, speech.RecognitionConfig.AudioEncoding.LINEAR16
-            ),
+            encoding=encoding_map.get(format, speech.RecognitionConfig.AudioEncoding.LINEAR16),
             sample_rate_hertz=sample_rate,
             language_code=self.LANGUAGE_MAPPING.get(language, "ja-JP"),
             enable_automatic_punctuation=True,

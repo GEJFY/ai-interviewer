@@ -14,6 +14,7 @@ import pytest
 
 class MockMessage:
     """Mock message for testing."""
+
     def __init__(self, content: str, role: str = "assistant"):
         self.content = content
         self.role = role
@@ -21,6 +22,7 @@ class MockMessage:
 
 class MockChatResponse:
     """Mock chat response for testing."""
+
     def __init__(self, content: str, usage: dict | None = None):
         self.content = content
         self.usage = usage or {"prompt_tokens": 100, "completion_tokens": 50}
@@ -37,7 +39,7 @@ class TestAIProviderAbstraction:
             "provider": "azure_openai",
             "endpoint": "https://test.openai.azure.com/",
             "api_key": "test-key",
-            "deployment_name": "gpt-4o"
+            "deployment_name": "gpt-4o",
         }
 
         # Verify config structure
@@ -51,7 +53,7 @@ class TestAIProviderAbstraction:
         config = {
             "provider": "aws_bedrock",
             "region": "us-east-1",
-            "model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0"
+            "model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
         }
 
         assert config["provider"] == "aws_bedrock"
@@ -64,7 +66,7 @@ class TestAIProviderAbstraction:
             "provider": "gcp_vertex",
             "project_id": "test-project",
             "location": "asia-northeast1",
-            "model": "gemini-2.0-flash"
+            "model": "gemini-2.0-flash",
         }
 
         assert config["provider"] == "gcp_vertex"
@@ -76,7 +78,7 @@ class TestAIProviderAbstraction:
         config = {
             "provider": "anthropic",
             "api_key": "test-anthropic-key",
-            "model": "claude-3-5-sonnet-20241022"
+            "model": "claude-3-5-sonnet-20241022",
         }
 
         assert config["provider"] == "anthropic"
@@ -144,7 +146,7 @@ class TestChatCompletion:
         """Sample messages for testing."""
         return [
             {"role": "system", "content": "あなたはAIインタビュアーです。"},
-            {"role": "user", "content": "月次決算の手順を教えてください。"}
+            {"role": "user", "content": "月次決算の手順を教えてください。"},
         ]
 
     @pytest.mark.asyncio
@@ -164,9 +166,7 @@ class TestChatCompletion:
     async def test_aws_bedrock_chat(self, mock_messages):
         """AWS Bedrock chat completion should work."""
         mock_provider = AsyncMock()
-        mock_provider.chat.return_value = MockChatResponse(
-            content="Claude からの応答です。"
-        )
+        mock_provider.chat.return_value = MockChatResponse(content="Claude からの応答です。")
 
         result = await mock_provider.chat(mock_messages)
 
@@ -176,9 +176,7 @@ class TestChatCompletion:
     async def test_gcp_vertex_chat(self, mock_messages):
         """GCP Vertex AI chat completion should work."""
         mock_provider = AsyncMock()
-        mock_provider.chat.return_value = MockChatResponse(
-            content="Gemini からの応答です。"
-        )
+        mock_provider.chat.return_value = MockChatResponse(content="Gemini からの応答です。")
 
         result = await mock_provider.chat(mock_messages)
 
@@ -219,6 +217,7 @@ class TestStreamingChat:
     @pytest.mark.asyncio
     async def test_streaming_handles_interruption(self):
         """Streaming should handle interruption gracefully."""
+
         async def mock_stream_with_error():
             yield MagicMock(content="開始")
             yield MagicMock(content="中間")
@@ -253,11 +252,7 @@ class TestEmbeddings:
         mock_provider = AsyncMock()
         mock_provider.embed_batch.return_value = [[0.1] * 1536 for _ in range(3)]
 
-        texts = [
-            "テキスト1",
-            "テキスト2",
-            "テキスト3"
-        ]
+        texts = ["テキスト1", "テキスト2", "テキスト3"]
 
         embeddings = await mock_provider.embed_batch(texts)
 
@@ -270,11 +265,7 @@ class TestModelSelection:
 
     def test_model_tier_selection(self):
         """Model should be selectable by tier."""
-        from grc_ai.models import (
-            ModelTier,
-            get_recommended_model,
-            ModelCapability
-        )
+        from grc_ai.models import ModelTier, get_recommended_model, ModelCapability
 
         # Test economy tier
         economy_model = get_recommended_model(tier=ModelTier.ECONOMY)
@@ -287,10 +278,7 @@ class TestModelSelection:
 
     def test_model_capability_filter(self):
         """Models should be filterable by capability."""
-        from grc_ai.models import (
-            get_recommended_model,
-            ModelCapability
-        )
+        from grc_ai.models import get_recommended_model, ModelCapability
 
         # Test embedding capability
         embedding_model = get_recommended_model(capability=ModelCapability.EMBEDDING)
@@ -329,9 +317,7 @@ class TestProviderFallback:
         primary_provider.chat.side_effect = Exception("Primary provider failed")
 
         secondary_provider = AsyncMock()
-        secondary_provider.chat.return_value = MockChatResponse(
-            content="フォールバック応答"
-        )
+        secondary_provider.chat.return_value = MockChatResponse(content="フォールバック応答")
 
         # Simulate fallback logic
         try:
@@ -411,11 +397,7 @@ class TestCostTracking:
 
     def test_token_counting(self):
         """Tokens should be counted correctly."""
-        usage = {
-            "prompt_tokens": 150,
-            "completion_tokens": 75,
-            "total_tokens": 225
-        }
+        usage = {"prompt_tokens": 150, "completion_tokens": 75, "total_tokens": 225}
 
         assert usage["total_tokens"] == usage["prompt_tokens"] + usage["completion_tokens"]
 

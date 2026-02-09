@@ -21,9 +21,7 @@ class AuditLog(Base):
 
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     resource_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    resource_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False), nullable=True
-    )
+    resource_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
 
     # Action details (before/after state, parameters, etc.)
     details: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)

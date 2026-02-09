@@ -56,9 +56,7 @@ class AWSSpeechToText(BaseSpeechToText):
                 if self.config.aws_access_key_id:
                     session_kwargs["aws_access_key_id"] = self.config.aws_access_key_id
                 if self.config.aws_secret_access_key:
-                    session_kwargs["aws_secret_access_key"] = (
-                        self.config.aws_secret_access_key
-                    )
+                    session_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
 
                 session = boto3.Session(**session_kwargs)
                 self._transcribe_client = session.client(
@@ -204,14 +202,10 @@ class AWSTextToSpeech(BaseTextToSpeech):
                 if self.config.aws_access_key_id:
                     session_kwargs["aws_access_key_id"] = self.config.aws_access_key_id
                 if self.config.aws_secret_access_key:
-                    session_kwargs["aws_secret_access_key"] = (
-                        self.config.aws_secret_access_key
-                    )
+                    session_kwargs["aws_secret_access_key"] = self.config.aws_secret_access_key
 
                 session = boto3.Session(**session_kwargs)
-                self._polly_client = session.client(
-                    "polly", region_name=self.config.region
-                )
+                self._polly_client = session.client("polly", region_name=self.config.region)
             except ImportError:
                 raise ImportError(
                     "boto3 is required for AWS services. Install with: pip install boto3"
@@ -230,7 +224,9 @@ class AWSTextToSpeech(BaseTextToSpeech):
         client = self._get_client()
 
         # Set voice
-        voice = voice_id or self.NEURAL_VOICES.get(language, self.DEFAULT_VOICES.get(language, "Joanna"))
+        voice = voice_id or self.NEURAL_VOICES.get(
+            language, self.DEFAULT_VOICES.get(language, "Joanna")
+        )
 
         # Map format to Polly output format
         format_mapping = {

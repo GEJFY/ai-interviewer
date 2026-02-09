@@ -57,7 +57,9 @@ class TestOllamaProviderChat:
             "prompt_eval_count": 30,
         }
 
-        with patch.object(provider.client, "chat", new_callable=AsyncMock, return_value=mock_response):
+        with patch.object(
+            provider.client, "chat", new_callable=AsyncMock, return_value=mock_response
+        ):
             response = await provider.chat(sample_messages)
 
         assert response.content == "月次決算の手順は以下の通りです。"
@@ -77,7 +79,9 @@ class TestOllamaProviderChat:
             "prompt_eval_count": 20,
         }
 
-        with patch.object(provider.client, "chat", new_callable=AsyncMock, return_value=mock_response) as mock_chat:
+        with patch.object(
+            provider.client, "chat", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_chat:
             await provider.chat(sample_messages, model="phi4")
 
         call_args = mock_chat.call_args
@@ -106,7 +110,9 @@ class TestOllamaProviderStreamChat:
             for chunk in chunks:
                 yield chunk
 
-        with patch.object(provider.client, "chat", new_callable=AsyncMock, return_value=mock_stream()):
+        with patch.object(
+            provider.client, "chat", new_callable=AsyncMock, return_value=mock_stream()
+        ):
             collected = []
             async for chunk in provider.stream_chat(messages):
                 collected.append(chunk)
@@ -133,7 +139,9 @@ class TestOllamaProviderEmbed:
             "prompt_eval_count": 5,
         }
 
-        with patch.object(provider.client, "embed", new_callable=AsyncMock, return_value=mock_response):
+        with patch.object(
+            provider.client, "embed", new_callable=AsyncMock, return_value=mock_response
+        ):
             response = await provider.embed("テストテキスト")
 
         assert len(response.embedding) == 4
@@ -147,7 +155,9 @@ class TestOllamaProviderEmbed:
             "prompt_eval_count": 10,
         }
 
-        with patch.object(provider.client, "embed", new_callable=AsyncMock, return_value=mock_response):
+        with patch.object(
+            provider.client, "embed", new_callable=AsyncMock, return_value=mock_response
+        ):
             responses = await provider.embed_batch(["テキスト1", "テキスト2"])
 
         assert len(responses) == 2

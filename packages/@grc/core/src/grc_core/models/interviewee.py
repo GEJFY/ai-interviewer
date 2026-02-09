@@ -46,6 +46,4 @@ class Interviewee(Base):
     organization: Mapped["Organization | None"] = relationship(
         "Organization", back_populates="interviewees"
     )
-    interviews: Mapped[list["Interview"]] = relationship(
-        "Interview", back_populates="interviewee"
-    )
+    interviews: Mapped[list["Interview"]] = relationship("Interview", back_populates="interviewee")

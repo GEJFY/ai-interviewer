@@ -2,16 +2,13 @@
 
 import logging
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from grc_ai.models import (
     ALL_MODELS,
     PROVIDER_CAPABILITIES,
     RECOMMENDED_MODELS,
     ModelCapability,
     ModelTier,
-    get_models_by_capability,
-    get_models_by_provider,
-    get_models_by_tier,
     get_realtime_models,
 )
 from pydantic import BaseModel
@@ -92,22 +89,32 @@ async def list_models(
     realtime_only: bool = Query(False, description="Only real-time suitable models"),
 ) -> ModelsListResponse:
     """全モデル一覧を取得（フィルタ可能）。"""
+    # 全モデルから開始し、各条件で順次フィルタ
+    models = list(ALL_MODELS.values())
+
     if realtime_only:
         models = get_realtime_models(provider)
-    elif provider:
-        models = get_models_by_provider(provider)
-    elif tier:
-        models = get_models_by_tier(ModelTier(tier))
-    elif capability:
-        models = get_models_by_capability(ModelCapability(capability))
     else:
-        models = list(ALL_MODELS.values())
-
-    # 複数条件の追加フィルタ
-    if provider and not realtime_only:
-        models = [m for m in models if m.provider == provider]
-    if tier and not (tier and not provider and not capability):
-        models = [m for m in models if m.tier.value == tier]
+        if provider:
+            models = [m for m in models if m.provider == provider]
+        if tier:
+            try:
+                tier_enum = ModelTier(tier)
+            except ValueError as err:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid tier: '{tier}'. Valid values: {[t.value for t in ModelTier]}",
+                ) from err
+            models = [m for m in models if m.tier == tier_enum]
+        if capability:
+            try:
+                cap_enum = ModelCapability(capability)
+            except ValueError as err:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid capability: '{capability}'. Valid values: {[c.value for c in ModelCapability]}",
+                ) from err
+            models = [m for m in models if cap_enum in m.capabilities]
 
     model_responses = [
         ModelResponse(

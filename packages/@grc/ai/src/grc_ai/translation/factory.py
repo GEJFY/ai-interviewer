@@ -53,11 +53,7 @@ def create_translator(
         ...     project_id="your-project",
         ... )
     """
-    provider_type = (
-        TranslationProviderType(provider)
-        if isinstance(provider, str)
-        else provider
-    )
+    provider_type = TranslationProviderType(provider) if isinstance(provider, str) else provider
 
     match provider_type:
         case TranslationProviderType.AZURE:
@@ -69,9 +65,7 @@ def create_translator(
             config_obj = AzureTranslatorConfig(
                 subscription_key=config.get("subscription_key", ""),
                 region=config.get("region", "japaneast"),
-                endpoint=config.get(
-                    "endpoint", "https://api.cognitive.microsofttranslator.com"
-                ),
+                endpoint=config.get("endpoint", "https://api.cognitive.microsofttranslator.com"),
             )
             default_source = config.get("default_source")
             if default_source and isinstance(default_source, str):

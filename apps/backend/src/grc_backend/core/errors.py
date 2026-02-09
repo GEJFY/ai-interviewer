@@ -91,8 +91,7 @@ class AppError(Exception):
 
         if self.details:
             response["error"]["details"] = [
-                {"field": d.field, "message": d.message, "code": d.code}
-                for d in self.details
+                {"field": d.field, "message": d.message, "code": d.code} for d in self.details
             ]
 
         if self.retry_after:

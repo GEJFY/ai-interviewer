@@ -350,9 +350,15 @@ class AuditService:
             for event in events:
                 event_dict = asdict(event)
                 event_dict["event_id"] = str(event_dict["event_id"])
-                event_dict["user_id"] = str(event_dict["user_id"]) if event_dict["user_id"] else None
-                event_dict["resource_id"] = str(event_dict["resource_id"]) if event_dict["resource_id"] else None
-                event_dict["organization_id"] = str(event_dict["organization_id"]) if event_dict["organization_id"] else None
+                event_dict["user_id"] = (
+                    str(event_dict["user_id"]) if event_dict["user_id"] else None
+                )
+                event_dict["resource_id"] = (
+                    str(event_dict["resource_id"]) if event_dict["resource_id"] else None
+                )
+                event_dict["organization_id"] = (
+                    str(event_dict["organization_id"]) if event_dict["organization_id"] else None
+                )
                 event_dict["timestamp"] = event_dict["timestamp"].isoformat()
                 event_dict["action"] = event_dict["action"].value
                 event_dict["severity"] = event_dict["severity"].value
@@ -368,24 +374,35 @@ class AuditService:
             writer = csv.writer(output)
 
             # Header
-            writer.writerow([
-                "timestamp", "action", "user_email", "resource_type",
-                "resource_id", "success", "severity", "ip_address", "details"
-            ])
+            writer.writerow(
+                [
+                    "timestamp",
+                    "action",
+                    "user_email",
+                    "resource_type",
+                    "resource_id",
+                    "success",
+                    "severity",
+                    "ip_address",
+                    "details",
+                ]
+            )
 
             # Data
             for event in events:
-                writer.writerow([
-                    event.timestamp.isoformat(),
-                    event.action.value,
-                    event.user_email,
-                    event.resource_type,
-                    str(event.resource_id) if event.resource_id else "",
-                    event.success,
-                    event.severity.value,
-                    event.ip_address,
-                    json.dumps(event.details),
-                ])
+                writer.writerow(
+                    [
+                        event.timestamp.isoformat(),
+                        event.action.value,
+                        event.user_email,
+                        event.resource_type,
+                        str(event.resource_id) if event.resource_id else "",
+                        event.success,
+                        event.severity.value,
+                        event.ip_address,
+                        json.dumps(event.details),
+                    ]
+                )
 
             return output.getvalue().encode("utf-8")
 

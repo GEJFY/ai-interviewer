@@ -45,10 +45,7 @@ class OllamaProvider(AIProvider):
         """Generate a chat completion using Ollama."""
         model_name = model or self.config.model_name
 
-        ollama_messages = [
-            {"role": msg.role.value, "content": msg.content}
-            for msg in messages
-        ]
+        ollama_messages = [{"role": msg.role.value, "content": msg.content} for msg in messages]
 
         response = await self.client.chat(
             model=model_name,
@@ -87,10 +84,7 @@ class OllamaProvider(AIProvider):
         """Stream a chat completion using Ollama."""
         model_name = model or self.config.model_name
 
-        ollama_messages = [
-            {"role": msg.role.value, "content": msg.content}
-            for msg in messages
-        ]
+        ollama_messages = [{"role": msg.role.value, "content": msg.content} for msg in messages]
 
         stream = await self.client.chat(
             model=model_name,

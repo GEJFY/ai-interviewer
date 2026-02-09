@@ -56,9 +56,7 @@ class TranscriptionService:
             **provider_config: Provider-specific configuration
         """
         self.provider_type = (
-            SpeechProviderType(provider_type)
-            if isinstance(provider_type, str)
-            else provider_type
+            SpeechProviderType(provider_type) if isinstance(provider_type, str) else provider_type
         )
         self.provider_config = provider_config
         self._sessions: dict[UUID, TranscriptionSession] = {}
@@ -101,9 +99,7 @@ class TranscriptionService:
         if on_transcription:
             self._callbacks[session_id].append(on_transcription)
 
-        logger.info(
-            f"Started transcription session {session_id} for interview {interview_id}"
-        )
+        logger.info(f"Started transcription session {session_id} for interview {interview_id}")
         return session_id
 
     async def add_audio_chunk(

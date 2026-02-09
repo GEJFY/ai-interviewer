@@ -18,6 +18,7 @@ import pytest
 # Mock response classes
 class MockChatResponse:
     """Mock chat response for testing."""
+
     def __init__(self, content: str, model: str):
         self.content = content
         self.model = model
@@ -26,6 +27,7 @@ class MockChatResponse:
 
 class MockEmbeddingResponse:
     """Mock embedding response for testing."""
+
     def __init__(self, dimensions: int = 1536):
         self.embedding = [0.1] * dimensions
 
@@ -33,6 +35,7 @@ class MockEmbeddingResponse:
 # =============================================================================
 # Azure AI Foundry Tests
 # =============================================================================
+
 
 class TestAzureAIFoundryConnection:
     """Test Azure AI Foundry connectivity and models."""
@@ -51,13 +54,11 @@ class TestAzureAIFoundryConnection:
         """Test GPT-5.2 model connection on Azure."""
         mock_client = AsyncMock()
         mock_client.chat.completions.create.return_value = MockChatResponse(
-            content="GPT-5.2からの応答です。",
-            model="gpt-5.2"
+            content="GPT-5.2からの応答です。", model="gpt-5.2"
         )
 
         result = await mock_client.chat.completions.create(
-            model="gpt-5.2",
-            messages=[{"role": "user", "content": "テスト"}]
+            model="gpt-5.2", messages=[{"role": "user", "content": "テスト"}]
         )
 
         assert result.content is not None
@@ -68,13 +69,11 @@ class TestAzureAIFoundryConnection:
         """Test GPT-5 Nano model connection on Azure."""
         mock_client = AsyncMock()
         mock_client.chat.completions.create.return_value = MockChatResponse(
-            content="GPT-5 Nanoからの高速応答です。",
-            model="gpt-5-nano"
+            content="GPT-5 Nanoからの高速応答です。", model="gpt-5-nano"
         )
 
         result = await mock_client.chat.completions.create(
-            model="gpt-5-nano",
-            messages=[{"role": "user", "content": "テスト"}]
+            model="gpt-5-nano", messages=[{"role": "user", "content": "テスト"}]
         )
 
         assert result.content is not None
@@ -86,12 +85,11 @@ class TestAzureAIFoundryConnection:
         mock_client = AsyncMock()
         mock_client.chat.completions.create.return_value = MockChatResponse(
             content="Claude Sonnet 4.6 Opus (Azure AI Foundry)からの応答です。",
-            model="claude-sonnet-4.6-opus"
+            model="claude-sonnet-4.6-opus",
         )
 
         result = await mock_client.chat.completions.create(
-            model="claude-sonnet-4.6-opus",
-            messages=[{"role": "user", "content": "テスト"}]
+            model="claude-sonnet-4.6-opus", messages=[{"role": "user", "content": "テスト"}]
         )
 
         assert result.content is not None
@@ -111,6 +109,7 @@ class TestAzureAIFoundryConnection:
 
         # Verify model configuration
         from grc_ai.models import get_models_by_provider
+
         azure_models = get_models_by_provider("azure_openai")
 
         model_ids = [m.model_id for m in azure_models]
@@ -137,6 +136,7 @@ class TestAzureAIFoundryConnection:
 # AWS Bedrock Tests
 # =============================================================================
 
+
 class TestAWSBedrockConnection:
     """Test AWS Bedrock connectivity and models."""
 
@@ -154,12 +154,14 @@ class TestAWSBedrockConnection:
         """Test Claude Sonnet 4.6 Opus on AWS Bedrock."""
         mock_client = AsyncMock()
         mock_client.invoke_model.return_value = {
-            "body": MagicMock(read=lambda: b'{"content": [{"text": "Claude Sonnet 4.6 Opus (Bedrock)"}]}')
+            "body": MagicMock(
+                read=lambda: b'{"content": [{"text": "Claude Sonnet 4.6 Opus (Bedrock)"}]}'
+            )
         }
 
         response = await mock_client.invoke_model(
             modelId="anthropic.claude-sonnet-4.6-opus-v1:0",
-            body=b'{"messages": [{"role": "user", "content": "test"}]}'
+            body=b'{"messages": [{"role": "user", "content": "test"}]}',
         )
 
         assert response is not None
@@ -169,12 +171,14 @@ class TestAWSBedrockConnection:
         """Test Claude 4.6 Sonnet on AWS Bedrock."""
         mock_client = AsyncMock()
         mock_client.invoke_model.return_value = {
-            "body": MagicMock(read=lambda: b'{"content": [{"text": "Claude 4.6 Sonnet (Bedrock)"}]}')
+            "body": MagicMock(
+                read=lambda: b'{"content": [{"text": "Claude 4.6 Sonnet (Bedrock)"}]}'
+            )
         }
 
         response = await mock_client.invoke_model(
             modelId="anthropic.claude-4.6-sonnet-v1:0",
-            body=b'{"messages": [{"role": "user", "content": "test"}]}'
+            body=b'{"messages": [{"role": "user", "content": "test"}]}',
         )
 
         assert response is not None
@@ -189,7 +193,7 @@ class TestAWSBedrockConnection:
 
         response = await mock_client.invoke_model(
             modelId="anthropic.claude-4.6-haiku-v1:0",
-            body=b'{"messages": [{"role": "user", "content": "test"}]}'
+            body=b'{"messages": [{"role": "user", "content": "test"}]}',
         )
 
         assert response is not None
@@ -204,7 +208,7 @@ class TestAWSBedrockConnection:
 
         response = await mock_client.invoke_model(
             modelId="amazon.nova-premier-v1:0",
-            body=b'{"messages": [{"role": "user", "content": "test"}]}'
+            body=b'{"messages": [{"role": "user", "content": "test"}]}',
         )
 
         assert response is not None
@@ -213,6 +217,7 @@ class TestAWSBedrockConnection:
     async def test_bedrock_model_listing(self, bedrock_config):
         """Test listing available models on AWS Bedrock."""
         from grc_ai.models import get_models_by_provider
+
         bedrock_models = get_models_by_provider("aws_bedrock")
 
         assert len(bedrock_models) > 0
@@ -243,6 +248,7 @@ class TestAWSBedrockConnection:
 # =============================================================================
 # GCP Vertex AI Tests
 # =============================================================================
+
 
 class TestGCPVertexAIConnection:
     """Test GCP Vertex AI connectivity and models."""
@@ -308,6 +314,7 @@ class TestGCPVertexAIConnection:
     async def test_vertex_model_listing(self, vertex_config):
         """Test listing available models on GCP Vertex AI."""
         from grc_ai.models import get_models_by_provider
+
         vertex_models = get_models_by_provider("gcp_vertex")
 
         assert len(vertex_models) > 0
@@ -325,10 +332,12 @@ class TestGCPVertexAIConnection:
         )
 
         # Simulate multimodal input (image + text)
-        result = await mock_model.generate_content_async([
-            {"type": "text", "text": "この画像を説明してください"},
-            {"type": "image", "data": b"mock_image_data"}
-        ])
+        result = await mock_model.generate_content_async(
+            [
+                {"type": "text", "text": "この画像を説明してください"},
+                {"type": "image", "data": b"mock_image_data"},
+            ]
+        )
 
         assert result.text is not None
 
@@ -345,6 +354,7 @@ class TestGCPVertexAIConnection:
 # =============================================================================
 # Multi-Cloud Provider Switching Tests
 # =============================================================================
+
 
 class TestMultiCloudProviderSwitching:
     """Test switching between cloud providers."""
@@ -398,6 +408,7 @@ class TestMultiCloudProviderSwitching:
 # Model Capability Tests
 # =============================================================================
 
+
 class TestModelCapabilities:
     """Test model capabilities and features."""
 
@@ -409,8 +420,7 @@ class TestModelCapabilities:
 
         # At least some flagship models should have reasoning
         reasoning_models = [
-            m for m in flagship_models
-            if ModelCapability.REASONING in m.capabilities
+            m for m in flagship_models if ModelCapability.REASONING in m.capabilities
         ]
         assert len(reasoning_models) > 0
 
@@ -447,6 +457,7 @@ class TestModelCapabilities:
 # =============================================================================
 # Integration Test Summary
 # =============================================================================
+
 
 class TestConnectionSummary:
     """Summary tests for all connections."""

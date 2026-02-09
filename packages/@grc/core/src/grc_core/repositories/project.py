@@ -19,9 +19,7 @@ class ProjectRepository(BaseRepository[Project]):
     async def get_with_tasks(self, id: str) -> Project | None:
         """Get project with its tasks."""
         result = await self.session.execute(
-            select(Project)
-            .where(Project.id == id)
-            .options(selectinload(Project.tasks))
+            select(Project).where(Project.id == id).options(selectinload(Project.tasks))
         )
         return result.scalar_one_or_none()
 
@@ -46,9 +44,7 @@ class ProjectRepository(BaseRepository[Project]):
     async def get_task_counts(self, project_id: str) -> dict[str, int]:
         """Get task counts for a project."""
         total = await self.session.execute(
-            select(func.count(InterviewTask.id)).where(
-                InterviewTask.project_id == project_id
-            )
+            select(func.count(InterviewTask.id)).where(InterviewTask.project_id == project_id)
         )
         completed = await self.session.execute(
             select(func.count(InterviewTask.id)).where(

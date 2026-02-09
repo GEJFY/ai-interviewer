@@ -190,9 +190,7 @@ class AzureTranslator(BaseTranslation):
                 detected = item.get("detectedLanguage", {})
                 detected_lang = None
                 if detected:
-                    detected_lang = self._normalize_language_code(
-                        detected.get("language", "")
-                    )
+                    detected_lang = self._normalize_language_code(detected.get("language", ""))
 
                 results.append(
                     TranslationResult(

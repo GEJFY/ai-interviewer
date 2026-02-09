@@ -115,10 +115,10 @@ async def interview_websocket(
         manager.set_agent(interview_id, agent)
 
         # Send status
-        await manager.send_message(interview_id, {
-            "type": "status",
-            "payload": {"status": "connected", "interview_id": interview_id}
-        })
+        await manager.send_message(
+            interview_id,
+            {"type": "status", "payload": {"status": "connected", "interview_id": interview_id}},
+        )
 
         # Start interview if not already started
         if interview.status == InterviewStatus.SCHEDULED:
@@ -138,10 +138,9 @@ async def interview_websocket(
             await db.commit()
 
             # Send opening message
-            await manager.send_message(interview_id, {
-                "type": "ai_response",
-                "payload": {"content": opening}
-            })
+            await manager.send_message(
+                interview_id, {"type": "ai_response", "payload": {"content": opening}}
+            )
 
         # Main message loop
         while True:
@@ -155,6 +154,7 @@ async def interview_websocket(
 
                 # Save user message to transcript
                 import time
+
                 timestamp = int(time.time() * 1000)
 
                 await interview_repo.add_transcript_entry(
@@ -165,27 +165,33 @@ async def interview_websocket(
                 )
 
                 # Send transcription confirmation
-                await manager.send_message(interview_id, {
-                    "type": "transcription",
-                    "payload": {
-                        "speaker": "interviewee",
-                        "text": user_content,
-                        "timestamp": timestamp,
-                        "isFinal": True,
-                    }
-                })
+                await manager.send_message(
+                    interview_id,
+                    {
+                        "type": "transcription",
+                        "payload": {
+                            "speaker": "interviewee",
+                            "text": user_content,
+                            "timestamp": timestamp,
+                            "isFinal": True,
+                        },
+                    },
+                )
 
                 # Get AI response (streaming)
                 full_response = ""
                 async for chunk in agent.respond_stream(user_content):
                     full_response += chunk
-                    await manager.send_message(interview_id, {
-                        "type": "ai_response",
-                        "payload": {
-                            "content": chunk,
-                            "isPartial": True,
-                        }
-                    })
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "ai_response",
+                            "payload": {
+                                "content": chunk,
+                                "isPartial": True,
+                            },
+                        },
+                    )
 
                 # Save AI response to transcript
                 await interview_repo.add_transcript_entry(
@@ -198,14 +204,17 @@ async def interview_websocket(
                 await db.commit()
 
                 # Send completion signal
-                await manager.send_message(interview_id, {
-                    "type": "ai_response",
-                    "payload": {
-                        "content": "",
-                        "isPartial": False,
-                        "isFinal": True,
-                    }
-                })
+                await manager.send_message(
+                    interview_id,
+                    {
+                        "type": "ai_response",
+                        "payload": {
+                            "content": "",
+                            "isPartial": False,
+                            "isFinal": True,
+                        },
+                    },
+                )
 
             elif msg_type == "control":
                 action = payload.get("action")
@@ -213,18 +222,16 @@ async def interview_websocket(
                 if action == "pause":
                     await interview_repo.pause(interview_id)
                     await db.commit()
-                    await manager.send_message(interview_id, {
-                        "type": "status",
-                        "payload": {"status": "paused"}
-                    })
+                    await manager.send_message(
+                        interview_id, {"type": "status", "payload": {"status": "paused"}}
+                    )
 
                 elif action == "resume":
                     await interview_repo.resume(interview_id)
                     await db.commit()
-                    await manager.send_message(interview_id, {
-                        "type": "status",
-                        "payload": {"status": "resumed"}
-                    })
+                    await manager.send_message(
+                        interview_id, {"type": "status", "payload": {"status": "resumed"}}
+                    )
 
                 elif action == "end":
                     # End interview
@@ -252,36 +259,38 @@ async def interview_websocket(
 
                     await db.commit()
 
-                    await manager.send_message(interview_id, {
-                        "type": "ai_response",
-                        "payload": {"content": closing}
-                    })
+                    await manager.send_message(
+                        interview_id, {"type": "ai_response", "payload": {"content": closing}}
+                    )
 
-                    await manager.send_message(interview_id, {
-                        "type": "status",
-                        "payload": {
-                            "status": "completed",
-                            "summary": summary,
-                        }
-                    })
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "status",
+                            "payload": {
+                                "status": "completed",
+                                "summary": summary,
+                            },
+                        },
+                    )
 
                     break
 
             elif msg_type == "audio_chunk":
                 # Audio processing (Phase 2)
-                await manager.send_message(interview_id, {
-                    "type": "error",
-                    "payload": {"message": "Audio processing not yet implemented"}
-                })
+                await manager.send_message(
+                    interview_id,
+                    {
+                        "type": "error",
+                        "payload": {"message": "Audio processing not yet implemented"},
+                    },
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(interview_id)
 
     except Exception as e:
-        await manager.send_message(interview_id, {
-            "type": "error",
-            "payload": {"message": str(e)}
-        })
+        await manager.send_message(interview_id, {"type": "error", "payload": {"message": str(e)}})
         manager.disconnect(interview_id)
 
     finally:

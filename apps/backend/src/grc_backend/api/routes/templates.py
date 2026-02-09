@@ -116,7 +116,9 @@ async def update_template(
 
     update_data = template_data.model_dump(exclude_unset=True)
     if "questions" in update_data and update_data["questions"]:
-        update_data["questions"] = [q.model_dump() if hasattr(q, 'model_dump') else q for q in update_data["questions"]]
+        update_data["questions"] = [
+            q.model_dump() if hasattr(q, "model_dump") else q for q in update_data["questions"]
+        ]
 
     # Increment version
     update_data["version"] = template.version + 1

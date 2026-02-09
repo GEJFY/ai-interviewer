@@ -1,6 +1,5 @@
 """Model catalog unit tests."""
 
-
 from grc_ai.models import (
     ALL_MODELS,
     LOCAL_MODELS,
@@ -33,12 +32,16 @@ class TestModelCatalog:
             assert model.provider, f"{model_id}: provider is empty"
             assert isinstance(model.tier, ModelTier), f"{model_id}: invalid tier"
             assert len(model.capabilities) > 0, f"{model_id}: no capabilities"
-            assert model.context_window > 0 or model.model_id.startswith("nomic"), f"{model_id}: invalid context_window"
+            assert model.context_window > 0 or model.model_id.startswith("nomic"), (
+                f"{model_id}: invalid context_window"
+            )
 
     def test_all_models_valid_latency_class(self):
         """全モデルに有効なlatency_classがあること。"""
         for model_id, model in ALL_MODELS.items():
-            assert isinstance(model.latency_class, LatencyClass), f"{model_id}: invalid latency_class"
+            assert isinstance(model.latency_class, LatencyClass), (
+                f"{model_id}: invalid latency_class"
+            )
 
     def test_local_models_zero_cost(self):
         """ローカルモデルのコストが0であること。"""
@@ -137,7 +140,9 @@ class TestRecommendedModels:
     def test_recommended_models_exist_in_catalog(self):
         """推奨モデルがカタログに存在すること。"""
         for use_case, model_id in RECOMMENDED_MODELS.items():
-            assert model_id in ALL_MODELS, f"Recommended model '{model_id}' for '{use_case}' not in catalog"
+            assert model_id in ALL_MODELS, (
+                f"Recommended model '{model_id}' for '{use_case}' not in catalog"
+            )
 
 
 class TestProviderCapabilities:

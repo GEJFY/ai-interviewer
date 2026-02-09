@@ -234,12 +234,12 @@ async def _generate_report_content(
 }}""",
     }
 
-    prompt = prompts.get(report_type, prompts[ReportType.SUMMARY]).format(
-        transcript=transcript
-    )
+    prompt = prompts.get(report_type, prompts[ReportType.SUMMARY]).format(transcript=transcript)
 
     messages = [
-        ChatMessage(role=MessageRole.SYSTEM, content="JSONフォーマットで出力してください。説明は不要です。"),
+        ChatMessage(
+            role=MessageRole.SYSTEM, content="JSONフォーマットで出力してください。説明は不要です。"
+        ),
         ChatMessage(role=MessageRole.USER, content=prompt),
     ]
 
@@ -277,6 +277,7 @@ async def get_report(
 
 class ReportUpdateRequest(BaseModel):
     """Request model for updating report content."""
+
     content: dict[str, Any] | None = None
     title: str | None = None
 

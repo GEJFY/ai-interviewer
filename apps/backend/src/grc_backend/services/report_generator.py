@@ -440,9 +440,7 @@ class ReportGeneratorService:
         if format == ExportFormat.JSON:
             import json
 
-            return json.dumps(report.content, ensure_ascii=False, indent=2).encode(
-                "utf-8"
-            )
+            return json.dumps(report.content, ensure_ascii=False, indent=2).encode("utf-8")
 
         elif format == ExportFormat.MARKDOWN:
             return self._export_to_markdown(report).encode("utf-8")
@@ -509,9 +507,7 @@ class ReportGeneratorService:
             if "items" in content:
                 lines.append("## Risk Control Matrix")
                 lines.append("")
-                lines.append(
-                    "| Risk ID | Risk Description | Control | Residual Risk |"
-                )
+                lines.append("| Risk ID | Risk Description | Control | Residual Risk |")
                 lines.append("|---------|------------------|---------|---------------|")
                 for item in content["items"]:
                     lines.append(
