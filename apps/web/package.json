@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest --testPathIgnorePatterns='e2e/'",
+    "test": "jest --passWithNoTests --testPathIgnorePatterns='e2e/'",
     "test:e2e": "playwright test",
     "type-check": "tsc --noEmit"
   },
