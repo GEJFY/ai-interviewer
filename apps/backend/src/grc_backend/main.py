@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from grc_core.database import init_database
 
 from grc_backend.api.routes import (
     auth,
@@ -20,6 +19,7 @@ from grc_backend.api.routes import (
 )
 from grc_backend.api.websocket import interview_ws
 from grc_backend.config import get_settings
+from grc_core.database import init_database
 
 
 @asynccontextmanager

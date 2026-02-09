@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
+
 from grc_ai.base import ChatMessage, MessageRole
 from grc_ai.config import OllamaConfig
 from grc_ai.providers.ollama_provider import OllamaProvider

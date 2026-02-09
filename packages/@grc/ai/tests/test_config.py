@@ -14,7 +14,6 @@ from grc_ai.config import (
     OllamaConfig,
 )
 
-
 # --- AzureOpenAIConfig テスト ---
 
 

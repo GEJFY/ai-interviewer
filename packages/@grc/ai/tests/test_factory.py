@@ -10,7 +10,6 @@ import pytest
 from grc_ai.config import AIConfig, AWSBedrockConfig, AzureOpenAIConfig, GCPVertexConfig
 from grc_ai.factory import AIProviderType, create_ai_provider
 
-
 # --- AIProviderType テスト ---
 
 

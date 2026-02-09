@@ -21,7 +21,6 @@ from grc_core.schemas import (
     UserCreate,
 )
 
-
 # --- BaseSchema テスト ---
 
 

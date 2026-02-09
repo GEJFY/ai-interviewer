@@ -15,7 +15,6 @@ from grc_ai.dialogue.interview_agent import (
 )
 from grc_ai.dialogue.prompts import PromptManager, PromptTemplate
 
-
 # --- テストフィクスチャ ---
 
 

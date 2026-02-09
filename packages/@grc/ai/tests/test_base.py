@@ -12,7 +12,6 @@ from grc_ai.base import (
     MessageRole,
 )
 
-
 # --- MessageRole テスト ---
 
 
