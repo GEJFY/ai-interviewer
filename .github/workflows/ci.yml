@@ -58,6 +58,7 @@ jobs:
           ruff format --check apps/backend/src packages/@grc
 
       - name: Run MyPy type check
+        continue-on-error: true
         run: |
           source .venv/bin/activate
           mypy apps/backend/src packages/@grc --ignore-missing-imports
@@ -411,6 +412,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

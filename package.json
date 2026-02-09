@@ -9,6 +9,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "pnpm -r clean && rimraf node_modules"
   },
