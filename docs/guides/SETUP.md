@@ -463,6 +463,30 @@ pytest tests/ -v
 
 > **注意**: Pythonのテストを実行する前に、仮想環境が有効化されていることを確認してください（プロンプトに `(.venv)` が表示されているか）。
 
+### 8.5 デモ環境の起動
+
+セットアップ完了後、デモデータを使って全機能を体験できます。
+
+```bash
+# Docker Composeで起動（デモデータは SEED_DEMO=true で自動投入）
+docker-compose up -d
+
+# デモデータの手動投入（直接起動の場合）
+python -m grc_backend.demo seed
+
+# デモデータの状態確認
+curl http://localhost:8001/api/v1/demo/status
+```
+
+デモ用ログインアカウント（パスワード: `demo1234`）:
+
+- `admin@demo.example.com` (管理者)
+- `manager@demo.example.com` (マネージャー)
+- `interviewer@demo.example.com` (インタビュアー)
+- `viewer@demo.example.com` (閲覧者)
+
+詳細なデモ手順は [デモ手順書](DEMO.md) を参照してください。
+
 ---
 
 ## 9. トラブルシューティング

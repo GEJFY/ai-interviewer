@@ -539,6 +539,28 @@ GET session:xxxxx
 EXIT
 ```
 
+### 6.5 デモデータの管理
+
+開発時にデモデータを使用して動作確認を行えます。
+
+```bash
+# デモデータの投入
+python -m grc_backend.demo seed
+
+# デモデータのリセット（削除→再投入）
+python -m grc_backend.demo reset
+
+# デモデータの状態確認
+python -m grc_backend.demo status
+
+# API経由でも操作可能（development環境のみ）
+curl -X POST http://localhost:8000/api/v1/demo/seed
+curl -X POST http://localhost:8000/api/v1/demo/reset
+curl http://localhost:8000/api/v1/demo/status
+```
+
+Docker環境では `SEED_DEMO=true` で起動時に自動投入されます。
+
 ---
 
 ## 7. CI/CD パイプライン

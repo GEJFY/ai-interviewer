@@ -1,5 +1,7 @@
 """FastAPI application entry point."""
 
+import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -8,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from grc_backend.api.routes import (
     auth,
+    demo,
     health,
     interviews,
     knowledge,
@@ -21,6 +24,8 @@ from grc_backend.api.websocket import interview_ws
 from grc_backend.config import get_settings
 from grc_core.database import init_database
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -33,6 +38,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Create tables in development
     if settings.is_development:
         await db.create_tables()
+
+        # Auto-seed demo data when SEED_DEMO is enabled
+        if os.environ.get("SEED_DEMO", "").lower() in ("true", "1", "yes"):
+            from grc_backend.demo.seeder import DemoSeeder
+
+            seeder = DemoSeeder(db)
+            if not await seeder.is_seeded():
+                result = await seeder.seed()
+                logger.info(f"Demo data auto-seeded: {result}")
 
     yield
 
@@ -75,6 +89,10 @@ def create_app() -> FastAPI:
 
     # WebSocket endpoint
     app.include_router(interview_ws.router, prefix="/api/v1/interviews", tags=["WebSocket"])
+
+    # Demo endpoints (non-production only)
+    if not settings.is_production:
+        app.include_router(demo.router, prefix="/api/v1/demo", tags=["Demo"])
 
     return app
 

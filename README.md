@@ -488,6 +488,38 @@ docker-compose -f docker-compose.prod.yml up -d
 docker-compose -f docker-compose.prod.yml up -d --scale backend=3
 ```
 
+## デモ
+
+デモ環境を使って、本ツールの全機能を体験できます。
+
+### クイックスタート
+
+```bash
+# Docker Composeで起動（デモデータ自動投入）
+docker-compose up -d
+
+# ブラウザでアクセス
+# http://localhost:3001
+```
+
+### デモログイン
+
+| メール | パスワード | ロール |
+|--------|-----------|--------|
+| admin@demo.example.com | demo1234 | 管理者 |
+| manager@demo.example.com | demo1234 | マネージャー |
+| interviewer@demo.example.com | demo1234 | インタビュアー |
+| viewer@demo.example.com | demo1234 | 閲覧者 |
+
+### デモデータ
+
+- **3件**のプロジェクト（J-SOX内部統制、コンプライアンス調査、サイバーリスク）
+- **7件**のタスク、**5件**のインタビュー（完了3件含む）
+- 完了インタビューにはフルトランスクリプトとAI分析結果付き
+- **5件**のレポート（業務記述書、RCM、監査調書等）
+
+詳細は [デモ手順書](docs/guides/DEMO.md) を参照してください。
+
 ## ドキュメント
 
 ### ガイド（初心者向け）
@@ -495,6 +527,7 @@ docker-compose -f docker-compose.prod.yml up -d --scale backend=3
 - [セットアップガイド](docs/guides/SETUP.md) - 開発環境の構築手順
 - [開発ガイド](docs/guides/DEVELOPMENT.md) - コーディング規約、テスト方法
 - [デプロイガイド](docs/guides/DEPLOYMENT.md) - 本番環境へのデプロイ
+- [デモ手順書](docs/guides/DEMO.md) - デモ環境の構築と手順
 
 ### エンタープライズ仕様書（学習用テキスト）
 
