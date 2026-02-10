@@ -40,9 +40,7 @@ class DemoSeeder:
     async def is_seeded(self) -> bool:
         """デモ組織が既に存在するか確認。"""
         async with self.db.session() as session:
-            result = await session.execute(
-                select(Organization).where(Organization.id == ORG_ID)
-            )
+            result = await session.execute(select(Organization).where(Organization.id == ORG_ID))
             return result.scalar_one_or_none() is not None
 
     async def seed(self) -> dict:
@@ -136,12 +134,8 @@ class DemoSeeder:
             await self._delete_by_org(session, Template)
             await self._delete_projects(session)
             await self._delete_users(session)
-            await session.execute(
-                select(Organization).where(Organization.id == ORG_ID)
-            )
-            result = await session.execute(
-                select(Organization).where(Organization.id == ORG_ID)
-            )
+            await session.execute(select(Organization).where(Organization.id == ORG_ID))
+            result = await session.execute(select(Organization).where(Organization.id == ORG_ID))
             org = result.scalar_one_or_none()
             if org:
                 await session.delete(org)
@@ -150,18 +144,14 @@ class DemoSeeder:
 
     async def _delete_by_org(self, session: AsyncSession, model: type) -> None:
         """organization_idでフィルタして削除。"""
-        result = await session.execute(
-            select(model).where(model.organization_id == ORG_ID)
-        )
+        result = await session.execute(select(model).where(model.organization_id == ORG_ID))
         for obj in result.scalars().all():
             await session.delete(obj)
 
     async def _delete_reports(self, session: AsyncSession) -> None:
         """デモタスクに紐づくレポートを削除。"""
         task_ids = [t["id"] for t in DEMO_DATA["tasks"]]
-        result = await session.execute(
-            select(Report).where(Report.task_id.in_(task_ids))
-        )
+        result = await session.execute(select(Report).where(Report.task_id.in_(task_ids)))
         for obj in result.scalars().all():
             await session.delete(obj)
 
@@ -169,9 +159,7 @@ class DemoSeeder:
         """デモインタビューに紐づくトランスクリプトを削除。"""
         interview_ids = [i["id"] for i in DEMO_DATA["interviews"]]
         result = await session.execute(
-            select(TranscriptEntry).where(
-                TranscriptEntry.interview_id.in_(interview_ids)
-            )
+            select(TranscriptEntry).where(TranscriptEntry.interview_id.in_(interview_ids))
         )
         for obj in result.scalars().all():
             await session.delete(obj)
@@ -179,9 +167,7 @@ class DemoSeeder:
     async def _delete_interviews(self, session: AsyncSession) -> None:
         """デモタスクに紐づくインタビューを削除。"""
         task_ids = [t["id"] for t in DEMO_DATA["tasks"]]
-        result = await session.execute(
-            select(Interview).where(Interview.task_id.in_(task_ids))
-        )
+        result = await session.execute(select(Interview).where(Interview.task_id.in_(task_ids)))
         for obj in result.scalars().all():
             await session.delete(obj)
 
@@ -196,17 +182,13 @@ class DemoSeeder:
 
     async def _delete_projects(self, session: AsyncSession) -> None:
         """デモ組織に紐づくプロジェクトを削除。"""
-        result = await session.execute(
-            select(Project).where(Project.organization_id == ORG_ID)
-        )
+        result = await session.execute(select(Project).where(Project.organization_id == ORG_ID))
         for obj in result.scalars().all():
             await session.delete(obj)
 
     async def _delete_users(self, session: AsyncSession) -> None:
         """デモ組織に紐づくユーザーを削除。"""
-        result = await session.execute(
-            select(User).where(User.organization_id == ORG_ID)
-        )
+        result = await session.execute(select(User).where(User.organization_id == ORG_ID))
         for obj in result.scalars().all():
             await session.delete(obj)
 
@@ -218,31 +200,19 @@ class DemoSeeder:
         async with self.db.session() as session:
             counts = {}
             counts["users"] = len(
-                (
-                    await session.execute(
-                        select(User).where(User.organization_id == ORG_ID)
-                    )
-                )
+                (await session.execute(select(User).where(User.organization_id == ORG_ID)))
                 .scalars()
                 .all()
             )
             counts["projects"] = len(
-                (
-                    await session.execute(
-                        select(Project).where(Project.organization_id == ORG_ID)
-                    )
-                )
+                (await session.execute(select(Project).where(Project.organization_id == ORG_ID)))
                 .scalars()
                 .all()
             )
 
             task_ids = [t["id"] for t in DEMO_DATA["tasks"]]
             counts["interviews"] = len(
-                (
-                    await session.execute(
-                        select(Interview).where(Interview.task_id.in_(task_ids))
-                    )
-                )
+                (await session.execute(select(Interview).where(Interview.task_id.in_(task_ids))))
                 .scalars()
                 .all()
             )

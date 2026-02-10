@@ -76,6 +76,7 @@ DEMO_PASSWORD = "demo1234"
 
 # --- トランスクリプト定義 ---
 
+
 def _purchase_transcript() -> list[dict]:
     """購買プロセス内部統制ヒアリング トランスクリプト。"""
     entries = [
@@ -391,8 +392,7 @@ def _compliance_mgr_transcript() -> list[dict]:
         {
             "speaker": "AI",
             "content": (
-                "個人情報管理と贈収賄リスクが主要な懸念事項ですね。"
-                "ご協力ありがとうございました。"
+                "個人情報管理と贈収賄リスクが主要な懸念事項ですね。ご協力ありがとうございました。"
             ),
             "timestamp_ms": 255000,
         },
@@ -1202,8 +1202,7 @@ DEMO_DATA = {
                 "process_name": "購買プロセス",
                 "process_owner": "購買部 部長",
                 "overview": (
-                    "購買申請→承認→発注→検収→支払いの一連の購買プロセス。"
-                    "SAPにより一元管理。"
+                    "購買申請→承認→発注→検収→支払いの一連の購買プロセス。SAPにより一元管理。"
                 ),
                 "steps": [
                     {
