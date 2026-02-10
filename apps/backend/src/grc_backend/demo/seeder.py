@@ -87,8 +87,10 @@ class DemoSeeder:
             interview_count = 0
             transcript_count = 0
             for itv_data in DEMO_DATA["interviews"]:
-                transcript_entries = itv_data.pop("transcript", [])
-                session.add(Interview(**itv_data))
+                # Non-mutating: extract transcript without modifying DEMO_DATA
+                transcript_entries = itv_data.get("transcript", [])
+                interview_fields = {k: v for k, v in itv_data.items() if k != "transcript"}
+                session.add(Interview(**interview_fields))
                 interview_count += 1
 
                 for entry in transcript_entries:

@@ -165,7 +165,7 @@ class TestDemoDataCompleteness:
         """トランスクリプトエントリが必須フィールドを持つこと。"""
         for itv in DEMO_DATA["interviews"]:
             for entry in itv.get("transcript", []):
-                assert entry["speaker"] in ("AI", "INTERVIEWEE", "INTERVIEWER")
+                assert entry["speaker"] in ("ai", "interviewee", "interviewer")
                 assert entry["content"]
                 assert "timestamp_ms" in entry
 

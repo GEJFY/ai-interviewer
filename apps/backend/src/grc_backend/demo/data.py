@@ -6,62 +6,62 @@ GRC Advisory AIヒアリングシステムのデモデータ。
 
 from datetime import UTC, date, datetime, timedelta
 
-# --- 固定UUID (再現性のため) ---
+# --- 固定UUID (再現性のため、全hex文字のみ使用) ---
 
 # Organization
 ORG_ID = "d0000000-0000-0000-0000-000000000001"
 
 # Users
-USER_ADMIN_ID = "u0000000-0000-0000-0000-000000000001"
-USER_MANAGER_ID = "u0000000-0000-0000-0000-000000000002"
-USER_INTERVIEWER_ID = "u0000000-0000-0000-0000-000000000003"
-USER_VIEWER_ID = "u0000000-0000-0000-0000-000000000004"
+USER_ADMIN_ID = "a0000001-0000-0000-0000-000000000001"
+USER_MANAGER_ID = "a0000002-0000-0000-0000-000000000002"
+USER_INTERVIEWER_ID = "a0000003-0000-0000-0000-000000000003"
+USER_VIEWER_ID = "a0000004-0000-0000-0000-000000000004"
 
 # Projects
-PROJECT_JSOX_ID = "p0000000-0000-0000-0000-000000000001"
-PROJECT_COMPLIANCE_ID = "p0000000-0000-0000-0000-000000000002"
-PROJECT_CYBER_ID = "p0000000-0000-0000-0000-000000000003"
+PROJECT_JSOX_ID = "b0000001-0000-0000-0000-000000000001"
+PROJECT_COMPLIANCE_ID = "b0000002-0000-0000-0000-000000000002"
+PROJECT_CYBER_ID = "b0000003-0000-0000-0000-000000000003"
 
 # Templates
-TPL_CONTROL_EVAL_ID = "t0000000-0000-0000-0000-000000000001"
-TPL_PROCESS_REVIEW_ID = "t0000000-0000-0000-0000-000000000002"
-TPL_COMPLIANCE_ID = "t0000000-0000-0000-0000-000000000003"
-TPL_CYBER_RISK_ID = "t0000000-0000-0000-0000-000000000004"
+TPL_CONTROL_EVAL_ID = "c0000001-0000-0000-0000-000000000001"
+TPL_PROCESS_REVIEW_ID = "c0000002-0000-0000-0000-000000000002"
+TPL_COMPLIANCE_ID = "c0000003-0000-0000-0000-000000000003"
+TPL_CYBER_RISK_ID = "c0000004-0000-0000-0000-000000000004"
 
 # Tasks
-TASK_PURCHASE_ID = "k0000000-0000-0000-0000-000000000001"
-TASK_SALES_ID = "k0000000-0000-0000-0000-000000000002"
-TASK_IT_CONTROL_ID = "k0000000-0000-0000-0000-000000000003"
-TASK_COMP_MGR_ID = "k0000000-0000-0000-0000-000000000004"
-TASK_COMP_STAFF_ID = "k0000000-0000-0000-0000-000000000005"
-TASK_CYBER_IT_ID = "k0000000-0000-0000-0000-000000000006"
-TASK_CYBER_EXEC_ID = "k0000000-0000-0000-0000-000000000007"
+TASK_PURCHASE_ID = "da000001-0000-0000-0000-000000000001"
+TASK_SALES_ID = "da000002-0000-0000-0000-000000000002"
+TASK_IT_CONTROL_ID = "da000003-0000-0000-0000-000000000003"
+TASK_COMP_MGR_ID = "da000004-0000-0000-0000-000000000004"
+TASK_COMP_STAFF_ID = "da000005-0000-0000-0000-000000000005"
+TASK_CYBER_IT_ID = "da000006-0000-0000-0000-000000000006"
+TASK_CYBER_EXEC_ID = "da000007-0000-0000-0000-000000000007"
 
 # Interviewees
-IEE_TAKAHASHI_ID = "e0000000-0000-0000-0000-000000000001"
-IEE_WATANABE_ID = "e0000000-0000-0000-0000-000000000002"
-IEE_ANON1_ID = "e0000000-0000-0000-0000-000000000003"
-IEE_ANON2_ID = "e0000000-0000-0000-0000-000000000004"
-IEE_KOBAYASHI_ID = "e0000000-0000-0000-0000-000000000005"
+IEE_TAKAHASHI_ID = "e0000001-0000-0000-0000-000000000001"
+IEE_WATANABE_ID = "e0000002-0000-0000-0000-000000000002"
+IEE_ANON1_ID = "e0000003-0000-0000-0000-000000000003"
+IEE_ANON2_ID = "e0000004-0000-0000-0000-000000000004"
+IEE_KOBAYASHI_ID = "e0000005-0000-0000-0000-000000000005"
 
 # Interviews
-ITV_PURCHASE_ID = "i0000000-0000-0000-0000-000000000001"
-ITV_SALES_ID = "i0000000-0000-0000-0000-000000000002"
-ITV_IT_CONTROL_ID = "i0000000-0000-0000-0000-000000000003"
-ITV_COMP_MGR_ID = "i0000000-0000-0000-0000-000000000004"
-ITV_CYBER_IT_ID = "i0000000-0000-0000-0000-000000000005"
+ITV_PURCHASE_ID = "f0000001-0000-0000-0000-000000000001"
+ITV_SALES_ID = "f0000002-0000-0000-0000-000000000002"
+ITV_IT_CONTROL_ID = "f0000003-0000-0000-0000-000000000003"
+ITV_COMP_MGR_ID = "f0000004-0000-0000-0000-000000000004"
+ITV_CYBER_IT_ID = "f0000005-0000-0000-0000-000000000005"
 
 # Reports
-RPT_PURCHASE_PROC_ID = "r0000000-0000-0000-0000-000000000001"
-RPT_PURCHASE_RCM_ID = "r0000000-0000-0000-0000-000000000002"
-RPT_SALES_WP_ID = "r0000000-0000-0000-0000-000000000003"
-RPT_COMP_SURVEY_ID = "r0000000-0000-0000-0000-000000000004"
-RPT_CYBER_SUMMARY_ID = "r0000000-0000-0000-0000-000000000005"
+RPT_PURCHASE_PROC_ID = "ae000001-0000-0000-0000-000000000001"
+RPT_PURCHASE_RCM_ID = "ae000002-0000-0000-0000-000000000002"
+RPT_SALES_WP_ID = "ae000003-0000-0000-0000-000000000003"
+RPT_COMP_SURVEY_ID = "ae000004-0000-0000-0000-000000000004"
+RPT_CYBER_SUMMARY_ID = "ae000005-0000-0000-0000-000000000005"
 
 # Knowledge Items
-KN_PURCHASE_ID = "n0000000-0000-0000-0000-000000000001"
-KN_SALES_ID = "n0000000-0000-0000-0000-000000000002"
-KN_CYBER_ID = "n0000000-0000-0000-0000-000000000003"
+KN_PURCHASE_ID = "be000001-0000-0000-0000-000000000001"
+KN_SALES_ID = "be000002-0000-0000-0000-000000000002"
+KN_CYBER_ID = "be000003-0000-0000-0000-000000000003"
 
 # --- 基準日時 ---
 _NOW = datetime(2025, 6, 15, 9, 0, 0, tzinfo=UTC)
@@ -81,7 +81,7 @@ def _purchase_transcript() -> list[dict]:
     """購買プロセス内部統制ヒアリング トランスクリプト。"""
     entries = [
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "本日は購買プロセスの内部統制についてお伺いいたします。"
                 "まず、御社の購買プロセスの全体的な流れを教えていただけますか？"
@@ -89,7 +89,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 0,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "はい。当社の購買は基本的に、各部門からの購買申請、購買部門での発注処理、"
                 "検収、そして経理部での支払い処理という流れになっています。"
@@ -99,7 +99,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 15000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "ありがとうございます。購買申請の承認プロセスについて詳しく教えてください。"
                 "承認権限はどのように設定されていますか？"
@@ -107,7 +107,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 45000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "承認は金額に応じた権限テーブルがあります。50万円未満は課長決裁、"
                 "50万円以上500万円未満は部長決裁、500万円以上は取締役決裁となっています。"
@@ -117,7 +117,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 70000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "金額別の承認権限と、IT関連の特別ルールがあるのですね。"
                 "では、発注先の選定プロセスについてお聞かせください。"
@@ -126,7 +126,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 105000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "100万円以上の案件では原則3社以上の相見積もりを取得します。"
                 "100万円未満でも新規取引先の場合は2社以上必要です。"
@@ -137,7 +137,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 130000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "相見積もりの基準と例外処理が明確ですね。"
                 "検収プロセスについてお伺いします。物品やサービスの検収はどのように行われていますか？"
@@ -145,7 +145,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 175000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "物品の場合は、発注担当者とは別の担当者が納品物を確認し、"
                 "発注書と照合した上で検収処理を行います。いわゆる三者分離の原則ですね。"
@@ -156,7 +156,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 200000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "三者分離の原則を採用されているのですね。月末集中時の形式化は"
                 "よくある課題です。支払い処理についてはいかがですか？"
@@ -165,7 +165,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 250000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "支払いは経理部で処理します。検収が完了した案件について、"
                 "請求書と発注書・検収書の三点照合を行い、金額・数量の一致を確認します。"
@@ -175,7 +175,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 280000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "三点照合と職務分離が整備されていますね。"
                 "最後に、現状の購買プロセスで認識されている課題やリスクについて"
@@ -184,7 +184,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 330000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "いくつかあります。まず、紙の見積書のPDF化が遅れることがあり、"
                 "エビデンスの管理が追いついていない案件があります。"
@@ -196,7 +196,7 @@ def _purchase_transcript() -> list[dict]:
             "timestamp_ms": 355000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "貴重なご指摘ありがとうございます。エビデンス管理、子会社対応、"
                 "アクセス権限管理の3点が主要な課題ということですね。"
@@ -212,7 +212,7 @@ def _sales_transcript() -> list[dict]:
     """売上プロセス内部統制ヒアリング トランスクリプト。"""
     entries = [
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "本日は売上プロセスの内部統制についてお伺いいたします。"
                 "まず、御社の売上計上プロセスの概要を教えていただけますか？"
@@ -220,7 +220,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 0,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "はい。当社はBtoB向けの金融サービスが主力で、売上は大きく分けると"
                 "コンサルティングフィー、システム利用料、ライセンス収入の3種類です。"
@@ -230,7 +230,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 15000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "3種類の収益認識基準があるのですね。"
                 "コンサルティングフィーの計上時期について、もう少し詳しく教えてください。"
@@ -239,7 +239,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 50000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "コンサルティングは成果物納品ベースです。クライアントに成果物を提出し、"
                 "検収書を受領した時点で売上を計上します。長期プロジェクトの場合は"
@@ -249,7 +249,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 75000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "検収書ベースで明確ですね。売上の承認・確認プロセスについて教えてください。"
                 "誰がどの段階で確認していますか？"
@@ -257,7 +257,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 115000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "営業担当が案件情報と請求データを入力し、営業課長が一次承認します。"
                 "その後、管理部門がクライアントとの契約書と請求内容の整合性を確認し、"
@@ -267,12 +267,12 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 140000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": "与信管理についてはどのように運用されていますか？",
             "timestamp_ms": 190000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "新規取引先は必ず与信審査を実施します。信用調査会社のレポートと"
                 "直近3期の財務諸表を基に与信限度額を設定しています。"
@@ -283,7 +283,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 210000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "与信管理が体系的に整備されていますね。"
                 "売上プロセスで現在認識されている課題はありますか？"
@@ -291,7 +291,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 260000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "課題としては、期末に検収が集中する傾向があり、営業部門に"
                 "「検収の前倒し」を依頼するプレッシャーが生じることがあります。"
@@ -302,7 +302,7 @@ def _sales_transcript() -> list[dict]:
             "timestamp_ms": 285000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "期末の検収集中とライセンス按分ルールの明確化が課題ですね。"
                 "本日のヒアリングは以上です。ご協力ありがとうございました。"
@@ -317,7 +317,7 @@ def _compliance_mgr_transcript() -> list[dict]:
     """コンプライアンス意識調査（管理職） トランスクリプト（匿名）。"""
     entries = [
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "本日はコンプライアンス意識に関する匿名アンケートにご協力ください。"
                 "回答内容は統計的に処理され、個人が特定されることはありません。"
@@ -326,7 +326,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 0,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "正直なところ、年1回のeラーニングでは形式的になっていると思います。"
                 "受講率は高いですが、内容を本当に理解しているかは疑問です。"
@@ -335,7 +335,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 20000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "研修の実効性に課題を感じているのですね。"
                 "ハラスメントや不正行為を目撃・認知した場合の通報制度について"
@@ -344,7 +344,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 55000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "内部通報窓口があることは知っていますが、実際に利用した人を"
                 "知りません。匿名性が本当に担保されるのか不安に思っている"
@@ -353,7 +353,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 80000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "通報制度の信頼性が課題ですね。"
                 "部下に対してコンプライアンスの重要性をどのように伝えていますか？"
@@ -361,7 +361,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 115000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "月次のチームミーティングで全社通達を共有するようにしていますが、"
                 "日常業務に追われて十分な時間を割けていないのが実情です。"
@@ -371,7 +371,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 140000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "伝え方の工夫が必要とのことですね。"
                 "コンプライアンス上、最も懸念しているリスクは何ですか？"
@@ -379,7 +379,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 180000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "個人情報の取り扱いです。顧客データを含むExcelファイルが"
                 "メールで共有されることがまだあり、暗号化も徹底されていません。"
@@ -390,7 +390,7 @@ def _compliance_mgr_transcript() -> list[dict]:
             "timestamp_ms": 205000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "個人情報管理と贈収賄リスクが主要な懸念事項ですね。ご協力ありがとうございました。"
             ),
@@ -404,7 +404,7 @@ def _cyber_it_transcript() -> list[dict]:
     """サイバーセキュリティリスクアセスメント（IT部門） トランスクリプト。"""
     entries = [
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "本日はサイバーセキュリティリスクについてお伺いいたします。"
                 "まず、御社の情報セキュリティ管理体制の概要を教えてください。"
@@ -412,7 +412,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 0,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "情報システム部が全社のセキュリティ管理を統括しています。"
                 "CISOは取締役CTOが兼務しており、情報セキュリティ委員会が"
@@ -422,7 +422,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 15000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "体制が整備されていますね。"
                 "現在のネットワークセキュリティ対策について教えてください。"
@@ -430,7 +430,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 55000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "ファイアウォールとIDS/IPSを導入しており、WAFも"
                 "外部公開サービスに適用しています。エンドポイントはEDRを全端末に導入済みです。"
@@ -440,7 +440,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 75000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "ゼロトラストへの移行が進行中なのですね。"
                 "インシデント対応体制について教えてください。"
@@ -449,7 +449,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 120000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "CSIRTを設置しており、情報システム部のメンバー5名で構成しています。"
                 "インシデント対応手順書はあり、年1回の訓練も実施しています。"
@@ -460,7 +460,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 145000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "CSIRTと外部連携が整備されていますね。"
                 "従業員のセキュリティ教育・啓発活動はどのように行っていますか？"
@@ -468,7 +468,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 195000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "全社員向けのセキュリティ研修を年2回実施しています。"
                 "標的型メール訓練は四半期ごとに実施しており、開封率は"
@@ -479,7 +479,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 220000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "標的型メール訓練の成果が出ていますね。"
                 "クラウドサービスのセキュリティ管理についてはいかがですか？"
@@ -487,7 +487,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 265000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "AWS、Azure、Microsoft 365を利用しています。"
                 "クラウドの設定監査は月次で実施しており、"
@@ -498,7 +498,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 290000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "クラウドセキュリティの課題が明確ですね。"
                 "最後に、今後最も優先すべきセキュリティ課題は何だとお考えですか？"
@@ -506,7 +506,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 340000,
         },
         {
-            "speaker": "INTERVIEWEE",
+            "speaker": "interviewee",
             "content": (
                 "3つあります。まず、サプライチェーンリスクへの対応です。"
                 "委託先のセキュリティ評価が不十分なケースがあります。"
@@ -518,7 +518,7 @@ def _cyber_it_transcript() -> list[dict]:
             "timestamp_ms": 365000,
         },
         {
-            "speaker": "AI",
+            "speaker": "ai",
             "content": (
                 "サプライチェーン、生成AI、BCP/DRの3点が優先課題ですね。"
                 "大変参考になりました。本日のヒアリングは以上です。ご協力ありがとうございました。"
