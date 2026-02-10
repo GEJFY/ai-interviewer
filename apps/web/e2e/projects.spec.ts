@@ -11,22 +11,22 @@ test.describe('Project Management', () => {
 
   test('should display projects page', async ({ page }) => {
     await page.goto('/projects');
-    await expect(page.getByRole('heading', { name: /プロジェクト|Projects/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '案件管理' })).toBeVisible();
   });
 
   test('should open new project modal', async ({ page }) => {
     await page.goto('/projects');
-    await page.getByRole('button', { name: /新規|作成|New/i }).click();
+    await page.getByRole('button', { name: /新規案件作成/i }).click();
 
     // モーダルが表示されること
-    await expect(page.getByText(/プロジェクト名|Project Name/i).first()).toBeVisible();
+    await expect(page.getByText('案件名').first()).toBeVisible();
   });
 
   test('should navigate to project detail', async ({ page }) => {
     await page.goto('/projects');
 
     // 最初のプロジェクトリンクをクリック（存在すれば）
-    const projectLink = page.locator('[data-testid="project-item"], a[href*="/projects/"]').first();
+    const projectLink = page.locator('a[href*="/projects/"]').first();
     if (await projectLink.isVisible()) {
       await projectLink.click();
       await expect(page).toHaveURL(/projects\/.+/);

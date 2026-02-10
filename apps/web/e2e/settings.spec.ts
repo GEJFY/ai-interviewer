@@ -12,7 +12,7 @@ test.describe('Settings Page', () => {
 
   test('should display settings page', async ({ page }) => {
     await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: /設定|Settings/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '設定', exact: true })).toBeVisible();
   });
 
   test('should switch between tabs', async ({ page }) => {
