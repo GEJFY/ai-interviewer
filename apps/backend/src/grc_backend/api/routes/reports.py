@@ -1,20 +1,21 @@
 """Report management endpoints."""
 
+import io
+import json
+from datetime import UTC
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Any
-import io
-import json
 
-from grc_backend.api.deps import DBSession, CurrentUser, AIProviderDep
-from grc_core.enums import ReportType, ReportStatus
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
+from grc_core.enums import ReportStatus, ReportType
 from grc_core.models import Report
 from grc_core.repositories import InterviewRepository
 from grc_core.repositories.base import BaseRepository
-from grc_core.schemas import ReportCreate, ReportRead, ReportGenerate
+from grc_core.schemas import ReportGenerate, ReportRead
 from grc_core.schemas.base import PaginatedResponse
-from grc_ai.dialogue import InterviewAgent, InterviewContext
 
 router = APIRouter()
 
@@ -233,12 +234,12 @@ async def _generate_report_content(
 }}""",
     }
 
-    prompt = prompts.get(report_type, prompts[ReportType.SUMMARY]).format(
-        transcript=transcript
-    )
+    prompt = prompts.get(report_type, prompts[ReportType.SUMMARY]).format(transcript=transcript)
 
     messages = [
-        ChatMessage(role=MessageRole.SYSTEM, content="JSONフォーマットで出力してください。説明は不要です。"),
+        ChatMessage(
+            role=MessageRole.SYSTEM, content="JSONフォーマットで出力してください。説明は不要です。"
+        ),
         ChatMessage(role=MessageRole.USER, content=prompt),
     ]
 
@@ -276,6 +277,7 @@ async def get_report(
 
 class ReportUpdateRequest(BaseModel):
     """Request model for updating report content."""
+
     content: dict[str, Any] | None = None
     title: str | None = None
 
@@ -383,7 +385,7 @@ async def approve_report(
     current_user: CurrentUser,
 ) -> ReportRead:
     """Approve a report."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     repo = ReportRepository(db)
     report = await repo.get(report_id)
@@ -404,7 +406,7 @@ async def approve_report(
         report_id,
         status=ReportStatus.APPROVED,
         approved_by=current_user.id,
-        approved_at=datetime.now(timezone.utc),
+        approved_at=datetime.now(UTC),
     )
 
     await db.commit()

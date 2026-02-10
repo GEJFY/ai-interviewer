@@ -108,7 +108,7 @@ resource "azurerm_key_vault" "main" {
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
 
-  enable_rbac_authorization = true
+  rbac_authorization_enabled = true
 
   network_acls {
     default_action = "Allow"
@@ -142,19 +142,19 @@ resource "random_password" "db_password" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                          = "${var.resource_prefix}-db-${var.suffix}"
-  resource_group_name           = azurerm_resource_group.main.name
-  location                      = azurerm_resource_group.main.location
-  version                       = "16"
-  delegated_subnet_id           = azurerm_subnet.db.id
-  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
-  administrator_login           = "aiinterviewer"
-  administrator_password        = random_password.db_password.result
-  zone                          = "1"
-  storage_mb                    = 32768
-  sku_name                      = var.environment == "prod" ? "GP_Standard_D4s_v3" : "B_Standard_B2s"
-  backup_retention_days         = var.environment == "prod" ? 35 : 7
-  geo_redundant_backup_enabled  = var.environment == "prod"
+  name                         = "${var.resource_prefix}-db-${var.suffix}"
+  resource_group_name          = azurerm_resource_group.main.name
+  location                     = azurerm_resource_group.main.location
+  version                      = "16"
+  delegated_subnet_id          = azurerm_subnet.db.id
+  private_dns_zone_id          = azurerm_private_dns_zone.postgres.id
+  administrator_login          = "aiinterviewer"
+  administrator_password       = random_password.db_password.result
+  zone                         = "1"
+  storage_mb                   = 32768
+  sku_name                     = var.environment == "prod" ? "GP_Standard_D4s_v3" : "B_Standard_B2s"
+  backup_retention_days        = var.environment == "prod" ? 35 : 7
+  geo_redundant_backup_enabled = var.environment == "prod"
 
   tags = var.tags
 
@@ -177,14 +177,14 @@ resource "azurerm_postgresql_flexible_server_configuration" "extensions" {
 
 # Redis Cache
 resource "azurerm_redis_cache" "main" {
-  name                = "${var.resource_prefix}-redis-${var.suffix}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  capacity            = var.environment == "prod" ? 2 : 0
-  family              = var.environment == "prod" ? "C" : "C"
-  sku_name            = var.environment == "prod" ? "Standard" : "Basic"
-  enable_non_ssl_port = false
-  minimum_tls_version = "1.2"
+  name                 = "${var.resource_prefix}-redis-${var.suffix}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  capacity             = var.environment == "prod" ? 2 : 0
+  family               = var.environment == "prod" ? "C" : "C"
+  sku_name             = var.environment == "prod" ? "Standard" : "Basic"
+  non_ssl_port_enabled = false
+  minimum_tls_version  = "1.2"
 
   redis_configuration {
     maxmemory_policy = "volatile-lru"
@@ -388,13 +388,13 @@ resource "azurerm_linux_web_app" "api" {
   https_only                = true
 
   site_config {
-    always_on                         = var.environment == "prod"
-    health_check_path                 = "/api/v1/health"
+    always_on                               = var.environment == "prod"
+    health_check_path                       = "/api/v1/health"
     container_registry_use_managed_identity = true
 
     application_stack {
-      docker_image_name        = "ai-interviewer-api:latest"
-      docker_registry_url      = "https://${azurerm_container_registry.main.login_server}"
+      docker_image_name   = "ai-interviewer-api:latest"
+      docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
     }
   }
 
@@ -509,7 +509,7 @@ resource "azurerm_monitor_metric_alert" "api_response_time" {
     metric_name      = "HttpResponseTime"
     aggregation      = "Average"
     operator         = "GreaterThan"
-    threshold        = 5  # 5 seconds
+    threshold        = 5 # 5 seconds
   }
 
   action {
@@ -571,7 +571,7 @@ resource "azurerm_monitor_metric_alert" "redis_memory" {
 
 # Application Insights Smart Detection
 resource "azurerm_application_insights_smart_detection_rule" "failure_anomalies" {
-  name                    = "Failure Anomalies"
+  name                    = "Slow page load time"
   application_insights_id = azurerm_application_insights.main.id
   enabled                 = true
 }

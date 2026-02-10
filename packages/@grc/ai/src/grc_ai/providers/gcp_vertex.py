@@ -1,6 +1,7 @@
 """GCP Vertex AI provider implementation."""
 
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -44,9 +45,7 @@ class GCPVertexProvider(AIProvider):
         )
 
         self._model = GenerativeModel(self.config.model_name)
-        self._embedding_model = TextEmbeddingModel.from_pretrained(
-            self.config.embedding_model
-        )
+        self._embedding_model = TextEmbeddingModel.from_pretrained(self.config.embedding_model)
         self._initialized = True
 
     def _convert_messages_to_gemini(
@@ -63,9 +62,7 @@ class GCPVertexProvider(AIProvider):
                 system_instruction = msg.content
             else:
                 role = "user" if msg.role == MessageRole.USER else "model"
-                contents.append(
-                    Content(role=role, parts=[Part.from_text(msg.content)])
-                )
+                contents.append(Content(role=role, parts=[Part.from_text(msg.content)]))
 
         return system_instruction, contents
 
@@ -84,6 +81,7 @@ class GCPVertexProvider(AIProvider):
     ) -> ChatResponse:
         """Generate a chat completion using GCP Vertex AI."""
         import asyncio
+
         from vertexai.generative_models import GenerationConfig, GenerativeModel
 
         self._ensure_initialized()
@@ -116,11 +114,19 @@ class GCPVertexProvider(AIProvider):
         return ChatResponse(
             content=response.text,
             model=model or self.config.model_name,
-            finish_reason=response.candidates[0].finish_reason.name if response.candidates else None,
+            finish_reason=response.candidates[0].finish_reason.name
+            if response.candidates
+            else None,
             usage={
-                "prompt_tokens": response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
-                "completion_tokens": response.usage_metadata.candidates_token_count if response.usage_metadata else 0,
-                "total_tokens": response.usage_metadata.total_token_count if response.usage_metadata else 0,
+                "prompt_tokens": response.usage_metadata.prompt_token_count
+                if response.usage_metadata
+                else 0,
+                "completion_tokens": response.usage_metadata.candidates_token_count
+                if response.usage_metadata
+                else 0,
+                "total_tokens": response.usage_metadata.total_token_count
+                if response.usage_metadata
+                else 0,
             },
         )
 
@@ -135,6 +141,7 @@ class GCPVertexProvider(AIProvider):
     ) -> AsyncIterator[ChatChunk]:
         """Stream a chat completion using GCP Vertex AI."""
         import asyncio
+
         from vertexai.generative_models import GenerationConfig, GenerativeModel
 
         self._ensure_initialized()
@@ -191,6 +198,7 @@ class GCPVertexProvider(AIProvider):
     ) -> EmbeddingResponse:
         """Generate an embedding using GCP Vertex AI."""
         import asyncio
+
         from vertexai.language_models import TextEmbeddingModel
 
         self._ensure_initialized()
@@ -221,6 +229,7 @@ class GCPVertexProvider(AIProvider):
     ) -> list[EmbeddingResponse]:
         """Generate embeddings for multiple texts."""
         import asyncio
+
         from vertexai.language_models import TextEmbeddingModel
 
         self._ensure_initialized()

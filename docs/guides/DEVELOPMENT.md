@@ -10,6 +10,7 @@
 4. [テスト](#4-テスト)
 5. [Git運用](#5-git運用)
 6. [デバッグ](#6-デバッグ)
+7. [CI/CD パイプライン](#7-cicd-パイプライン)
 
 ---
 
@@ -24,8 +25,12 @@ ai-interviewer/
 │   │   ├── migrations/        # DBマイグレーション
 │   │   └── pyproject.toml     # Python依存関係
 │   ├── web/                   # Next.js フロントエンド
-│   │   ├── app/               # App Router ページ
-│   │   ├── components/        # Reactコンポーネント
+│   │   ├── src/
+│   │   │   ├── app/           # App Router ページ
+│   │   │   ├── components/    # Reactコンポーネント
+│   │   │   ├── hooks/         # Reactフック
+│   │   │   ├── lib/           # ユーティリティ
+│   │   │   └── locales/       # 多言語リソース
 │   │   └── package.json       # Node.js依存関係
 │   └── mobile/                # React Native モバイルアプリ
 │
@@ -103,6 +108,26 @@ docker-compose up -d --build backend
 
 # 停止
 docker-compose down
+```
+
+### 2.3 Ollama (ローカルLLM) を使った開発
+
+ローカルのLLMを使って開発・テストする場合：
+
+```bash
+# Ollama付きで起動
+docker compose --profile local-llm up -d
+
+# モデルをダウンロード
+docker exec ai-interviewer-ollama ollama pull gemma3:1b
+
+# .envの設定
+AI_PROVIDER=local
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=gemma3:1b
+
+# 接続テスト
+curl http://localhost:11434/api/tags
 ```
 
 ---
@@ -338,6 +363,36 @@ describe('InterviewCard', () => {
 });
 ```
 
+### 4.3 パッケージテスト
+
+```bash
+# AIパッケージ
+cd packages/@grc/ai
+pytest tests/ -v
+
+# Coreパッケージ
+cd packages/@grc/core
+pytest tests/ -v
+```
+
+### 4.4 Models API テスト
+
+```bash
+# モデル一覧の取得
+curl http://localhost:8000/api/v1/models
+
+# 推奨モデルの取得
+curl http://localhost:8000/api/v1/models/recommended
+
+# プロバイダー情報
+curl http://localhost:8000/api/v1/models/providers
+
+# 接続テスト
+curl -X POST http://localhost:8000/api/v1/models/test-connection \
+  -H "Content-Type: application/json" \
+  -d '{"provider": "local"}'
+```
+
 ---
 
 ## 5. Git運用
@@ -346,18 +401,14 @@ describe('InterviewCard', () => {
 
 ```
 main
-├── develop
-│   ├── feature/interview-pause
-│   ├── feature/report-export
-│   └── fix/login-error
-└── release/v1.0.0
+├── feature/interview-pause     # 機能開発
+├── feature/report-export       # 機能開発
+└── fix/login-error             # バグ修正
 ```
 
-- `main`: 本番環境に対応
-- `develop`: 開発環境に対応
-- `feature/*`: 機能開発
-- `fix/*`: バグ修正
-- `release/*`: リリース準備
+- `main`: 本番環境に対応（直接プッシュは禁止、PRを使用）
+- `feature/*`: 機能開発ブランチ
+- `fix/*`: バグ修正ブランチ
 
 ### 5.2 Pull Requestの作成
 
@@ -486,6 +537,84 @@ GET session:xxxxx
 
 # 終了
 EXIT
+```
+
+---
+
+## 7. CI/CD パイプライン
+
+### 7.1 CI/CDとは？
+
+- **CI (Continuous Integration)**: コードをプッシュするたびに自動でテスト・品質チェックを実行
+- **CD (Continuous Deployment)**: テスト通過後に自動でデプロイ
+
+### 7.2 GitHub Actionsの仕組み
+
+- `.github/workflows/` フォルダにYAMLファイルで定義
+- プッシュやPRをトリガーに自動実行
+- 各「ジョブ」は独立した仮想マシンで実行
+
+### 7.3 ci.yml の各ジョブ
+
+| ジョブ名 | 実行内容 | 必須/任意 |
+| ------- | ------- | -------- |
+| backend-lint | Ruff(リンター) + MyPy(型チェック) | 必須 |
+| backend-test | pytest + カバレッジ計測 | 必須 |
+| frontend-lint | ESLint + TypeScript型チェック | 必須 |
+| frontend-test | Jest ユニットテスト | 必須 |
+| frontend-build | Next.js 本番ビルド | 必須 |
+| integration-test-ollama | Ollama連携テスト | 任意 |
+| e2e-test | Playwright E2Eテスト | 任意 |
+| security-scan | Trivy脆弱性 + Gitleaksシークレット検出 | 任意 |
+| docker-build | Dockerイメージビルドテスト | 必須 |
+| terraform-validate | Terraform(Azure/AWS/GCP)検証 | 必須 |
+
+### 7.4 ローカルでCIと同等のチェックを実行
+
+```bash
+# 1. Python リント & フォーマット
+cd apps/backend
+ruff check src/ --fix && ruff format src/
+
+# 2. Python テスト
+pytest tests/ -v --tb=short
+
+# 3. TypeScript リント
+cd apps/web
+pnpm lint
+
+# 4. フロントエンドテスト
+pnpm test
+
+# 5. ビルド確認
+pnpm build
+
+# 6. Dockerビルドテスト
+cd ../..
+docker build -t test-backend -f apps/backend/Dockerfile --target production .
+docker build -t test-web -f apps/web/Dockerfile --target production .
+```
+
+### 7.5 PRからデプロイまでのフロー
+
+```text
+feature/xxx ブランチ
+    ↓ git push
+GitHub PR 作成
+    ↓ 自動実行
+CI パイプライン (ci.yml)
+    ├── リント & 型チェック
+    ├── テスト実行
+    ├── セキュリティスキャン
+    ├── Dockerビルド
+    └── Terraform検証
+    ↓ 全ジョブ成功
+レビュー & マージ (→ main)
+    ↓ 自動実行
+CD パイプライン (deploy.yml)
+    ├── Dockerイメージビルド
+    ├── GHCR にプッシュ
+    └── クラウドにデプロイ (Azure/AWS/GCP)
 ```
 
 ---

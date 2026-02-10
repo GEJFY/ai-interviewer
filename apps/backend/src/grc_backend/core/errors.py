@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from fastapi import Request, status
@@ -23,7 +23,7 @@ from .logging import get_logger, request_id_var
 logger = get_logger(__name__)
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Standardized error codes for API responses."""
 
     # Client errors (4xx)
@@ -75,7 +75,7 @@ class AppError(Exception):
 
     def __post_init__(self):
         super().__init__(self.message)
-        self.timestamp = datetime.now(timezone.utc)
+        self.timestamp = datetime.now(UTC)
         self.request_id = request_id_var.get("")
 
     def to_dict(self, include_debug: bool = False) -> dict[str, Any]:
@@ -91,8 +91,7 @@ class AppError(Exception):
 
         if self.details:
             response["error"]["details"] = [
-                {"field": d.field, "message": d.message, "code": d.code}
-                for d in self.details
+                {"field": d.field, "message": d.message, "code": d.code} for d in self.details
             ]
 
         if self.retry_after:

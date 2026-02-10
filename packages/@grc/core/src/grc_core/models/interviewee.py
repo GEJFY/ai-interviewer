@@ -10,8 +10,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from grc_core.models.base import Base
 
 if TYPE_CHECKING:
-    from grc_core.models.organization import Organization
     from grc_core.models.interview import Interview
+    from grc_core.models.organization import Organization
 
 
 class Interviewee(Base):
@@ -32,8 +32,8 @@ class Interviewee(Base):
     is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Additional metadata
-    metadata: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, default=dict, server_default="{}"
+    extra_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, default=dict, server_default="{}"
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -46,6 +46,4 @@ class Interviewee(Base):
     organization: Mapped["Organization | None"] = relationship(
         "Organization", back_populates="interviewees"
     )
-    interviews: Mapped[list["Interview"]] = relationship(
-        "Interview", back_populates="interviewee"
-    )
+    interviews: Mapped[list["Interview"]] = relationship("Interview", back_populates="interviewee")

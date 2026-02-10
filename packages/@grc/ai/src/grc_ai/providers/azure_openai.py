@@ -1,6 +1,6 @@
 """Azure OpenAI provider implementation."""
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from openai import AsyncAzureOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -49,10 +49,7 @@ class AzureOpenAIProvider(AIProvider):
 
         response = await self.client.chat.completions.create(
             model=deployment,
-            messages=[
-                {"role": msg.role.value, "content": msg.content}
-                for msg in messages
-            ],
+            messages=[{"role": msg.role.value, "content": msg.content} for msg in messages],
             temperature=temperature,
             max_tokens=max_tokens,
             **kwargs,
@@ -84,10 +81,7 @@ class AzureOpenAIProvider(AIProvider):
 
         stream = await self.client.chat.completions.create(
             model=deployment,
-            messages=[
-                {"role": msg.role.value, "content": msg.content}
-                for msg in messages
-            ],
+            messages=[{"role": msg.role.value, "content": msg.content} for msg in messages],
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True,

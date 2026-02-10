@@ -10,14 +10,14 @@ Generates various types of reports from interview transcripts:
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
 
-class ReportType(str, Enum):
+class ReportType(StrEnum):
     """Types of reports that can be generated."""
 
     SUMMARY = "summary"  # Interview summary
@@ -26,7 +26,7 @@ class ReportType(str, Enum):
     AUDIT_WORKPAPER = "audit_workpaper"  # Audit workpaper
 
 
-class ExportFormat(str, Enum):
+class ExportFormat(StrEnum):
     """Supported export formats."""
 
     JSON = "json"
@@ -440,9 +440,7 @@ class ReportGeneratorService:
         if format == ExportFormat.JSON:
             import json
 
-            return json.dumps(report.content, ensure_ascii=False, indent=2).encode(
-                "utf-8"
-            )
+            return json.dumps(report.content, ensure_ascii=False, indent=2).encode("utf-8")
 
         elif format == ExportFormat.MARKDOWN:
             return self._export_to_markdown(report).encode("utf-8")
@@ -509,9 +507,7 @@ class ReportGeneratorService:
             if "items" in content:
                 lines.append("## Risk Control Matrix")
                 lines.append("")
-                lines.append(
-                    "| Risk ID | Risk Description | Control | Residual Risk |"
-                )
+                lines.append("| Risk ID | Risk Description | Control | Residual Risk |")
                 lines.append("|---------|------------------|---------|---------------|")
                 for item in content["items"]:
                     lines.append(

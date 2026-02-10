@@ -26,9 +26,7 @@ class BaseRepository(Generic[ModelType]):
 
     async def get(self, id: str) -> ModelType | None:
         """Get a single record by ID."""
-        result = await self.session.execute(
-            select(self.model).where(self.model.id == id)
-        )
+        result = await self.session.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
 
     async def get_multi(

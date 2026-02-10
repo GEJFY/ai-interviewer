@@ -11,8 +11,8 @@ from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from grc_core.models.organization import Organization
-    from grc_core.models.user import User
     from grc_core.models.task import InterviewTask
+    from grc_core.models.user import User
 
 
 class Template(Base, TimestampMixin):
@@ -32,12 +32,8 @@ class Template(Base, TimestampMixin):
     )
 
     # Questions structure: [{order, question, follow_ups, required, category}]
-    questions: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    settings: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, default=dict, server_default="{}"
-    )
+    questions: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
 
     version: Mapped[int] = mapped_column(Integer, default=1)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -49,6 +45,4 @@ class Template(Base, TimestampMixin):
     created_by_user: Mapped["User | None"] = relationship(
         "User", back_populates="created_templates", foreign_keys=[created_by]
     )
-    tasks: Mapped[list["InterviewTask"]] = relationship(
-        "InterviewTask", back_populates="template"
-    )
+    tasks: Mapped[list["InterviewTask"]] = relationship("InterviewTask", back_populates="template")

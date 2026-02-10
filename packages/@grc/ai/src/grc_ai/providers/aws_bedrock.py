@@ -1,7 +1,8 @@
 """AWS Bedrock provider implementation."""
 
 import json
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import boto3
 from botocore.config import Config
@@ -53,10 +54,12 @@ class AWSBedrockProvider(AIProvider):
             if msg.role == MessageRole.SYSTEM:
                 system_prompt = msg.content
             else:
-                bedrock_messages.append({
-                    "role": msg.role.value,
-                    "content": [{"type": "text", "text": msg.content}],
-                })
+                bedrock_messages.append(
+                    {
+                        "role": msg.role.value,
+                        "content": [{"type": "text", "text": msg.content}],
+                    }
+                )
 
         return system_prompt, bedrock_messages
 
@@ -89,6 +92,7 @@ class AWSBedrockProvider(AIProvider):
 
         # Bedrock is synchronous, run in thread pool
         import asyncio
+
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
             None,

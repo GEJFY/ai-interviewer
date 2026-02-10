@@ -1,7 +1,7 @@
 """GCP Speech-to-Text and Text-to-Speech implementation."""
 
 import asyncio
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from grc_ai.speech.base import (
     AudioFormat,
@@ -61,7 +61,7 @@ class GCPSpeechToText(BaseSpeechToText):
                 raise ImportError(
                     "google-cloud-speech is required for GCP Speech. "
                     "Install with: pip install google-cloud-speech"
-                )
+                ) from None
         return self._client
 
     async def transcribe(
@@ -85,9 +85,7 @@ class GCPSpeechToText(BaseSpeechToText):
         }
 
         config = speech.RecognitionConfig(
-            encoding=encoding_map.get(
-                format, speech.RecognitionConfig.AudioEncoding.LINEAR16
-            ),
+            encoding=encoding_map.get(format, speech.RecognitionConfig.AudioEncoding.LINEAR16),
             sample_rate_hertz=sample_rate,
             language_code=self.LANGUAGE_MAPPING.get(language, "ja-JP"),
             enable_automatic_punctuation=True,
@@ -143,9 +141,7 @@ class GCPSpeechToText(BaseSpeechToText):
         }
 
         config = speech.RecognitionConfig(
-            encoding=encoding_map.get(
-                format, speech.RecognitionConfig.AudioEncoding.LINEAR16
-            ),
+            encoding=encoding_map.get(format, speech.RecognitionConfig.AudioEncoding.LINEAR16),
             sample_rate_hertz=sample_rate,
             language_code=self.LANGUAGE_MAPPING.get(language, "ja-JP"),
             enable_automatic_punctuation=True,
@@ -216,7 +212,7 @@ class GCPTextToSpeech(BaseTextToSpeech):
                 raise ImportError(
                     "google-cloud-texttospeech is required for GCP TTS. "
                     "Install with: pip install google-cloud-texttospeech"
-                )
+                ) from None
         return self._client
 
     async def synthesize(

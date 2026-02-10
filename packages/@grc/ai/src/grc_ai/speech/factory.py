@@ -1,17 +1,15 @@
 """Factory functions for creating speech providers."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from grc_ai.speech.base import (
-    BaseSpeechToText,
-    BaseTextToSpeech,
     SpeechToTextProvider,
     TextToSpeechProvider,
 )
 
 
-class SpeechProviderType(str, Enum):
+class SpeechProviderType(StrEnum):
     """Supported speech provider types."""
 
     AZURE = "azure"

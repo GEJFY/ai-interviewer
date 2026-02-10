@@ -7,21 +7,20 @@ Supports multiple identity providers:
 """
 
 import logging
+import secrets
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from urllib.parse import urlencode
-import hashlib
-import secrets
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
 
-class SSOProvider(str, Enum):
+class SSOProvider(StrEnum):
     """Supported SSO providers."""
 
     AZURE_AD = "azure_ad"

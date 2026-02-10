@@ -1,24 +1,25 @@
 """FastAPI application entry point."""
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from grc_backend.config import get_settings
 from grc_backend.api.routes import (
     auth,
-    projects,
-    tasks,
-    interviews,
-    templates,
-    reports,
-    knowledge,
     health,
+    interviews,
+    knowledge,
+    models,
+    projects,
+    reports,
+    tasks,
+    templates,
 )
 from grc_backend.api.websocket import interview_ws
-from grc_core.database import init_database, get_database
+from grc_backend.config import get_settings
+from grc_core.database import init_database
 
 
 @asynccontextmanager
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(templates.router, prefix="/api/v1/templates", tags=["Templates"])
     app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
     app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["Knowledge"])
+    app.include_router(models.router, prefix="/api/v1/models", tags=["Models"])
 
     # WebSocket endpoint
     app.include_router(interview_ws.router, prefix="/api/v1/interviews", tags=["WebSocket"])

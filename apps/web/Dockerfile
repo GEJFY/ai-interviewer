@@ -17,7 +17,6 @@ RUN corepack enable && corepack prepare pnpm@9.14.0 --activate
 COPY pnpm-workspace.yaml ./
 COPY package.json pnpm-lock.yaml* ./
 COPY apps/web/package.json ./apps/web/
-COPY packages/@grc/ui/package.json ./packages/@grc/ui/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -41,7 +40,6 @@ COPY pnpm-workspace.yaml ./
 COPY package.json ./
 COPY tsconfig.json ./
 COPY apps/web ./apps/web
-COPY packages/@grc/ui ./packages/@grc/ui
 
 # Build arguments for environment
 ARG NEXT_PUBLIC_API_URL
@@ -112,7 +110,6 @@ COPY pnpm-workspace.yaml ./
 COPY package.json ./
 COPY tsconfig.json ./
 COPY apps/web ./apps/web
-COPY packages/@grc/ui ./packages/@grc/ui
 
 WORKDIR /app/apps/web
 

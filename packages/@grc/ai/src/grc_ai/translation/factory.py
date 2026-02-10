@@ -1,16 +1,15 @@
 """Factory functions for creating translation providers."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from grc_ai.translation.base import (
-    BaseTranslation,
     TranslationLanguage,
     TranslationProvider,
 )
 
 
-class TranslationProviderType(str, Enum):
+class TranslationProviderType(StrEnum):
     """Supported translation provider types."""
 
     AZURE = "azure"
@@ -54,25 +53,19 @@ def create_translator(
         ...     project_id="your-project",
         ... )
     """
-    provider_type = (
-        TranslationProviderType(provider)
-        if isinstance(provider, str)
-        else provider
-    )
+    provider_type = TranslationProviderType(provider) if isinstance(provider, str) else provider
 
     match provider_type:
         case TranslationProviderType.AZURE:
             from grc_ai.translation.azure_translate import (
-                AzureTranslatorConfig,
                 AzureTranslator,
+                AzureTranslatorConfig,
             )
 
             config_obj = AzureTranslatorConfig(
                 subscription_key=config.get("subscription_key", ""),
                 region=config.get("region", "japaneast"),
-                endpoint=config.get(
-                    "endpoint", "https://api.cognitive.microsofttranslator.com"
-                ),
+                endpoint=config.get("endpoint", "https://api.cognitive.microsofttranslator.com"),
             )
             default_source = config.get("default_source")
             if default_source and isinstance(default_source, str):
@@ -81,8 +74,8 @@ def create_translator(
 
         case TranslationProviderType.AWS:
             from grc_ai.translation.aws_translate import (
-                AWSTranslateConfig,
                 AWSTranslate,
+                AWSTranslateConfig,
             )
 
             config_obj = AWSTranslateConfig(
@@ -97,8 +90,8 @@ def create_translator(
 
         case TranslationProviderType.GCP:
             from grc_ai.translation.gcp_translate import (
-                GCPTranslateConfig,
                 GCPTranslate,
+                GCPTranslateConfig,
             )
 
             config_obj = GCPTranslateConfig(

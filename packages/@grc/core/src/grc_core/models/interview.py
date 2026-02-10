@@ -11,12 +11,12 @@ from grc_core.enums import InterviewStatus
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from grc_core.models.task import InterviewTask
     from grc_core.models.interviewee import Interviewee
-    from grc_core.models.user import User
-    from grc_core.models.transcript import TranscriptEntry
-    from grc_core.models.report import Report
     from grc_core.models.knowledge import KnowledgeItem
+    from grc_core.models.report import Report
+    from grc_core.models.task import InterviewTask
+    from grc_core.models.transcript import TranscriptEntry
+    from grc_core.models.user import User
 
 
 class Interview(Base, TimestampMixin):
@@ -41,12 +41,8 @@ class Interview(Base, TimestampMixin):
         String(50), nullable=False, default=InterviewStatus.SCHEDULED
     )
 
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # AI-generated summary
@@ -56,8 +52,8 @@ class Interview(Base, TimestampMixin):
     ai_analysis: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # Additional metadata (settings, context, etc.)
-    metadata: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, default=dict, server_default="{}"
+    extra_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, default=dict, server_default="{}"
     )
 
     # Relationships

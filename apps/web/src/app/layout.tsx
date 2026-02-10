@@ -1,9 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Noto_Sans_JP } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { ThemeProvider } from '@/components/theme-provider';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const notoSansJP = Noto_Sans_JP({
+  subsets: ['latin'],
+  variable: '--font-noto-sans-jp',
+});
 
 export const metadata: Metadata = {
   title: 'AI Interview Tool - GRC Advisory',
@@ -16,9 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
-      <body className={inter.className}>
-        <Providers>{children}</Providers>
+    <html lang="ja" suppressHydrationWarning>
+      <body className={`${inter.variable} ${notoSansJP.variable} font-sans`}>
+        <ThemeProvider>
+          <Providers>{children}</Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

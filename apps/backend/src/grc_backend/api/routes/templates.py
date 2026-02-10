@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from grc_backend.api.deps import DBSession, CurrentUser, ManagerUser
+from grc_backend.api.deps import CurrentUser, DBSession, ManagerUser
 from grc_core.enums import UseCaseType
 from grc_core.repositories import TemplateRepository
 from grc_core.schemas import TemplateCreate, TemplateRead, TemplateUpdate
@@ -116,7 +116,9 @@ async def update_template(
 
     update_data = template_data.model_dump(exclude_unset=True)
     if "questions" in update_data and update_data["questions"]:
-        update_data["questions"] = [q.model_dump() if hasattr(q, 'model_dump') else q for q in update_data["questions"]]
+        update_data["questions"] = [
+            q.model_dump() if hasattr(q, "model_dump") else q for q in update_data["questions"]
+        ]
 
     # Increment version
     update_data["version"] = template.version + 1

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from grc_core.models.organization import Organization
     from grc_core.models.interview import Interview
+    from grc_core.models.organization import Organization
 
 
 class KnowledgeItem(Base, TimestampMixin):
@@ -39,8 +39,8 @@ class KnowledgeItem(Base, TimestampMixin):
     embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
 
     # Additional metadata
-    metadata: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, default=dict, server_default="{}"
+    extra_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, default=dict, server_default="{}"
     )
 
     # Relationships

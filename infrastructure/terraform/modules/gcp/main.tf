@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.14"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 6.14"
+    }
   }
 }
 
@@ -400,7 +404,7 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
 
 # Firebase Hosting for Frontend (optional)
 resource "google_firebase_hosting_site" "web" {
-  provider = google
+  provider = google-beta
   project  = local.project_id
   site_id  = "${var.resource_prefix}-web-${var.suffix}"
 }

@@ -44,9 +44,7 @@ class Report(Base, TimestampMixin):
     status: Mapped[ReportStatus] = mapped_column(
         String(50), nullable=False, default=ReportStatus.DRAFT
     )
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     interview: Mapped["Interview | None"] = relationship(

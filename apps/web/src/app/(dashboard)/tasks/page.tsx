@@ -6,6 +6,8 @@ import { ClipboardList, Calendar, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Task {
   id: string;
@@ -34,95 +36,88 @@ export default function TasksPage() {
     queryFn: () => api.tasks.list({ pageSize: 100 }),
   });
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      pending: 'bg-secondary-100 text-secondary-700',
-      in_progress: 'bg-amber-100 text-amber-700',
-      completed: 'bg-green-100 text-green-700',
-      cancelled: 'bg-red-100 text-red-700',
-    };
-    const labels = {
+  const statusVariant = (status: string) => {
+    if (status === 'in_progress') return 'warning';
+    if (status === 'completed') return 'success';
+    if (status === 'cancelled') return 'danger';
+    return 'default';
+  };
+
+  const statusLabel = (status: string) => {
+    const labels: Record<string, string> = {
       pending: '未着手',
       in_progress: '進行中',
       completed: '完了',
       cancelled: 'キャンセル',
     };
-    return (
-      <span
-        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-          styles[status as keyof typeof styles] || styles.pending
-        }`}
-      >
-        {labels[status as keyof typeof labels] || status}
-      </span>
-    );
+    return labels[status] || status;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-secondary-900">タスク管理</h1>
-        <p className="text-secondary-600 mt-1">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">タスク管理</h1>
+        <p className="text-surface-500 dark:text-surface-400 mt-1">
           すべてのインタビュータスクを確認できます
         </p>
       </div>
 
-      {/* Tasks List */}
-      <div className="bg-white rounded-xl border border-secondary-200">
+      <Card>
         {isLoading ? (
           <div className="p-6">
             <div className="animate-pulse space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-secondary-100 rounded" />
+                <div key={i} className="h-16 bg-surface-100 dark:bg-surface-800 rounded" />
               ))}
             </div>
           </div>
         ) : data?.items?.length > 0 ? (
-          <div className="divide-y divide-secondary-100">
+          <div className="divide-y divide-surface-100 dark:divide-surface-800">
             {data.items.map((task: Task) => (
               <Link
                 key={task.id}
                 href={`/tasks/${task.id}`}
-                className="flex items-center gap-4 px-6 py-4 hover:bg-secondary-50 transition"
+                className="flex items-center gap-4 px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors"
               >
-                <div className="p-2 bg-secondary-100 rounded-lg">
-                  <ClipboardList className="w-5 h-5 text-secondary-500" />
+                <div className="p-2 bg-surface-100 dark:bg-surface-800 rounded-lg">
+                  <ClipboardList className="w-5 h-5 text-surface-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-secondary-900">{task.name}</p>
-                  <p className="text-sm text-secondary-500">
+                  <p className="font-medium text-surface-900 dark:text-surface-100">{task.name}</p>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
                     {USE_CASE_LABELS[task.use_case_type] || task.use_case_type}
                   </p>
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2 text-sm text-secondary-600">
+                  <div className="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
                     <MessageSquare className="w-4 h-4" />
                     {task.completed_interview_count}/{task.interview_count}
                   </div>
                   {task.deadline && (
-                    <div className="flex items-center gap-2 text-sm text-secondary-500">
+                    <div className="flex items-center gap-2 text-sm text-surface-400">
                       <Calendar className="w-4 h-4" />
                       {format(new Date(task.deadline), 'M/d', { locale: ja })}
                     </div>
                   )}
-                  {getStatusBadge(task.status)}
+                  <Badge variant={statusVariant(task.status)}>
+                    {statusLabel(task.status)}
+                  </Badge>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
           <div className="p-12 text-center">
-            <ClipboardList className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-secondary-900 mb-2">
+            <ClipboardList className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
               タスクがありません
             </h3>
-            <p className="text-secondary-500">
+            <p className="text-surface-500 dark:text-surface-400">
               案件からタスクを作成してください
             </p>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

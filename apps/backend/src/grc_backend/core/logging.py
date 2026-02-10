@@ -14,12 +14,11 @@ import sys
 import time
 import traceback
 import uuid
+from collections.abc import Callable
 from contextvars import ContextVar
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import wraps
-from typing import Any, Callable
-
-from pydantic import BaseModel
+from typing import Any
 
 # Context variables for request tracking
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -107,7 +106,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -146,10 +145,10 @@ class ConsoleFormatter(logging.Formatter):
     """Human-readable console formatter for development."""
 
     COLORS = {
-        "DEBUG": "\033[36m",     # Cyan
-        "INFO": "\033[32m",      # Green
-        "WARNING": "\033[33m",   # Yellow
-        "ERROR": "\033[31m",     # Red
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
         "CRITICAL": "\033[35m",  # Magenta
     }
     RESET = "\033[0m"
@@ -293,6 +292,7 @@ def log_execution_time(operation_name: str | None = None):
     Args:
         operation_name: Custom operation name (defaults to function name)
     """
+
     def decorator(func: Callable):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -325,6 +325,7 @@ def log_execution_time(operation_name: str | None = None):
                 raise
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper

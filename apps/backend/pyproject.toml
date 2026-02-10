@@ -7,7 +7,7 @@ license = { text = "MIT" }
 
 dependencies = [
     # Web Framework (2026 latest)
-    "fastapi>=0.115.0",
+    "fastapi>=0.115.6",
     "uvicorn[standard]>=0.34.0",
     "starlette>=0.45.0",
     # Data Validation
@@ -16,13 +16,16 @@ dependencies = [
     # Security
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.0,<4.1.0",  # passlib compatibility: bcrypt 4.1+ breaks detect_wrap_bug
     "python-multipart>=0.0.18",
     # Database
-    "sqlalchemy[asyncio]>=2.0.36",
+    "sqlalchemy[asyncio]>=2.0.37",
     "asyncpg>=0.30.0",
     "alembic>=1.14.0",
     # Cache
     "redis>=5.2.0",
+    # Numerical computation
+    "numpy>=1.26.0",
     # Internal packages
     "grc-core",
     "grc-ai",
@@ -37,6 +40,10 @@ dev = [
     "ruff>=0.8.0",
     "mypy>=1.14.0",
 ]
+
+[tool.uv.sources]
+grc-core = { workspace = true }
+grc-ai = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

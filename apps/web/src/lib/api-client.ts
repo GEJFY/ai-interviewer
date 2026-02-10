@@ -194,6 +194,26 @@ export const api = {
     },
   },
 
+  // Models
+  models: {
+    list: async (params?: { provider?: string; tier?: string; capability?: string; realtime_only?: boolean }) => {
+      const response = await apiClient.get('/models', { params });
+      return response.data;
+    },
+    recommended: async () => {
+      const response = await apiClient.get('/models/recommended');
+      return response.data;
+    },
+    providers: async () => {
+      const response = await apiClient.get('/models/providers');
+      return response.data;
+    },
+    testConnection: async (provider: string) => {
+      const response = await apiClient.post('/models/test-connection', { provider });
+      return response.data;
+    },
+  },
+
   // Reports
   reports: {
     list: async (params?: { interviewId?: string; taskId?: string; reportType?: string }) => {

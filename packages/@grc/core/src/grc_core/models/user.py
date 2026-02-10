@@ -10,12 +10,12 @@ from grc_core.enums import UserRole
 from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from grc_core.models.interview import Interview
     from grc_core.models.organization import Organization
     from grc_core.models.project import Project
+    from grc_core.models.report import Report
     from grc_core.models.task import InterviewTask
     from grc_core.models.template import Template
-    from grc_core.models.interview import Interview
-    from grc_core.models.report import Report
 
 
 class User(Base, TimestampMixin):
@@ -25,18 +25,14 @@ class User(Base, TimestampMixin):
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[UserRole] = mapped_column(
-        String(50), nullable=False, default=UserRole.VIEWER
-    )
+    role: Mapped[UserRole] = mapped_column(String(50), nullable=False, default=UserRole.VIEWER)
 
     organization_id: Mapped[str | None] = mapped_column(
         UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True
     )
 
     # Authentication
-    auth_provider: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="local"
-    )
+    auth_provider: Mapped[str] = mapped_column(String(50), nullable=False, default="local")
     external_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)

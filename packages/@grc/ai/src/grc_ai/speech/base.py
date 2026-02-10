@@ -1,12 +1,13 @@
 """Speech service abstraction layer for STT and TTS."""
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import AsyncIterator, Protocol, runtime_checkable
+from enum import StrEnum
+from typing import Protocol, runtime_checkable
 
 
-class AudioFormat(str, Enum):
+class AudioFormat(StrEnum):
     """Supported audio formats."""
 
     WAV = "wav"
@@ -16,7 +17,7 @@ class AudioFormat(str, Enum):
     PCM = "pcm"
 
 
-class SpeechLanguage(str, Enum):
+class SpeechLanguage(StrEnum):
     """Supported languages for speech recognition/synthesis."""
 
     JA = "ja-JP"  # Japanese

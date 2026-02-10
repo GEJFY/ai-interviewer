@@ -24,7 +24,6 @@ RUN pip install uv
 COPY pyproject.toml ./
 COPY packages/@grc/core/pyproject.toml packages/@grc/core/
 COPY packages/@grc/ai/pyproject.toml packages/@grc/ai/
-COPY packages/@grc/infrastructure/pyproject.toml packages/@grc/infrastructure/
 
 # Create virtual environment and install dependencies
 RUN uv venv /opt/venv
@@ -50,6 +49,7 @@ RUN uv pip install --no-cache-dir \
     opentelemetry-sdk==1.28.0 \
     opentelemetry-instrumentation-fastapi==0.49b0 \
     opentelemetry-exporter-otlp==1.28.0 \
+    openai>=1.50.0 \
     azure-identity==1.19.0 \
     azure-cognitiveservices-speech==1.42.0 \
     boto3==1.35.0 \
@@ -78,13 +78,12 @@ WORKDIR /app
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH="/app/src:/app/packages/@grc/core/src:/app/packages/@grc/ai/src:/app/packages/@grc/infrastructure/src"
+ENV PYTHONPATH="/app/src:/app/packages/@grc/core/src:/app/packages/@grc/ai/src"
 
 # Copy application code
 COPY apps/backend/src ./src
 COPY packages/@grc/core/src ./packages/@grc/core/src
 COPY packages/@grc/ai/src ./packages/@grc/ai/src
-COPY packages/@grc/infrastructure/src ./packages/@grc/infrastructure/src
 
 # Set ownership to non-root user
 RUN chown -R appuser:appgroup /app

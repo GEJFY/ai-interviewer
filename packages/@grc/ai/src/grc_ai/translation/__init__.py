@@ -5,11 +5,11 @@ AWS Translate, and GCP Cloud Translation.
 """
 
 from grc_ai.translation.base import (
-    TranslationLanguage,
-    TranslationResult,
-    DetectionResult,
-    TranslationProvider,
     BaseTranslation,
+    DetectionResult,
+    TranslationLanguage,
+    TranslationProvider,
+    TranslationResult,
 )
 from grc_ai.translation.factory import (
     TranslationProviderType,

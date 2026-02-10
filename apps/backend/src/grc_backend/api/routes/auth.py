@@ -1,6 +1,6 @@
 """Authentication endpoints."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,7 +9,7 @@ from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
-from grc_backend.api.deps import DBSession, CurrentUser, get_settings_dep
+from grc_backend.api.deps import CurrentUser, DBSession, get_settings_dep
 from grc_backend.config import Settings
 from grc_core.repositories import UserRepository
 from grc_core.schemas import UserCreate, UserRead
@@ -57,11 +57,9 @@ def create_access_token(
     """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.access_token_expire_minutes
-        )
+        expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.jwt_algorithm)
 
@@ -69,7 +67,7 @@ def create_access_token(
 def create_refresh_token(data: dict, settings: Settings) -> str:
     """Create a JWT refresh token."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    expire = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.jwt_algorithm)
 
@@ -137,16 +135,16 @@ async def refresh_token(
                 detail="Invalid token",
             )
 
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-        )
-    except jwt.JWTError:
+        ) from err
+    except jwt.JWTError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-        )
+        ) from err
 
     user_repo = UserRepository(db)
     user = await user_repo.get(user_id)

@@ -1,8 +1,7 @@
 """Azure Speech Services implementation for STT and TTS."""
 
 import asyncio
-import io
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from grc_ai.speech.base import (
     AudioFormat,
@@ -47,7 +46,7 @@ class AzureSpeechToText(BaseSpeechToText):
                 raise ImportError(
                     "azure-cognitiveservices-speech is required for Azure Speech. "
                     "Install with: pip install azure-cognitiveservices-speech"
-                )
+                ) from None
         return self._speech_config
 
     async def transcribe(
@@ -78,9 +77,7 @@ class AzureSpeechToText(BaseSpeechToText):
         audio_stream.close()
 
         # Perform recognition
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, recognizer.recognize_once
-        )
+        result = await asyncio.get_event_loop().run_in_executor(None, recognizer.recognize_once)
 
         if result.reason == speechsdk.ResultReason.RecognizedSpeech:
             return TranscriptionResult(
@@ -150,9 +147,7 @@ class AzureSpeechToText(BaseSpeechToText):
 
         def on_session_stopped(evt):
             """Handle session end."""
-            asyncio.get_event_loop().call_soon_threadsafe(
-                result_queue.put_nowait, None
-            )
+            asyncio.get_event_loop().call_soon_threadsafe(result_queue.put_nowait, None)
 
         # Connect event handlers
         recognizer.recognizing.connect(on_recognizing)
@@ -213,7 +208,7 @@ class AzureTextToSpeech(BaseTextToSpeech):
                 raise ImportError(
                     "azure-cognitiveservices-speech is required for Azure Speech. "
                     "Install with: pip install azure-cognitiveservices-speech"
-                )
+                ) from None
         return self._speech_config
 
     async def synthesize(
