@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=30)
     refresh_token_expire_days: int = Field(default=7)
 
+    # Logging
+    log_level: str = Field(default="INFO")
+    json_logs: bool = Field(default=False)
+
     # CORS
     cors_origins: list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
 
@@ -51,6 +55,11 @@ class Settings(BaseSettings):
                 pass
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
+
+    # Rate limiting
+    rate_limit_enabled: bool = Field(default=False)
+    rate_limit_requests: int = Field(default=100)
+    rate_limit_window: int = Field(default=60)
 
     # AI Provider (azure, aws, gcp, local)
     ai_provider: str = Field(default="azure")
