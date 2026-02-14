@@ -1,12 +1,10 @@
 """FastAPI application entry point."""
 
-import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from grc_backend.api.routes import (
     auth,
@@ -22,15 +20,51 @@ from grc_backend.api.routes import (
 )
 from grc_backend.api.websocket import interview_ws
 from grc_backend.config import get_settings
+from grc_backend.core.errors import AppError, app_error_handler, generic_exception_handler
+from grc_backend.core.logging import get_logger, setup_logging
+from grc_backend.core.security import SecurityConfig, setup_security
 from grc_core.database import init_database
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
+
+def _validate_ai_provider(settings) -> None:
+    """Validate AI provider configuration on startup."""
+    provider = settings.ai_provider
+    if provider == "azure":
+        if not settings.azure_openai_api_key or not settings.azure_openai_endpoint:
+            logger.warning("Azure OpenAI credentials not configured")
+    elif provider == "aws":
+        if not settings.aws_access_key_id:
+            logger.info("AWS credentials not set - using IAM role authentication")
+    elif provider == "gcp":
+        if not settings.gcp_project_id:
+            logger.warning("GCP project ID not configured")
+    elif provider == "local":
+        logger.info(
+            "Using local LLM (Ollama)",
+            base_url=settings.ollama_base_url,
+            model=settings.ollama_model,
+        )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan manager."""
     settings = get_settings()
+
+    # Setup structured logging
+    setup_logging(
+        service_name="ai-interviewer",
+        environment=settings.environment,
+        log_level=settings.log_level,
+        json_output=settings.json_logs,
+    )
+
+    logger.info("Application starting", environment=settings.environment)
+
+    # Validate AI provider configuration
+    _validate_ai_provider(settings)
 
     # Initialize database
     db = init_database(settings.database_url, echo=settings.debug)
@@ -46,11 +80,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             seeder = DemoSeeder(db)
             if not await seeder.is_seeded():
                 result = await seeder.seed()
-                logger.info(f"Demo data auto-seeded: {result}")
+                logger.info("Demo data auto-seeded", result=result)
+
+    logger.info(
+        "Application started successfully",
+        environment=settings.environment,
+        ai_provider=settings.ai_provider,
+    )
 
     yield
 
     # Cleanup
+    logger.info("Application shutting down")
     await db.close()
 
 
@@ -67,14 +108,24 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+    # Store debug mode in app state for error handlers
+    app.state.debug = settings.debug
+
+    # Register error handlers
+    app.add_exception_handler(AppError, app_error_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)
+
+    # Security middleware (CORS + security headers + rate limiting)
+    security_config = SecurityConfig(
+        cors_origins=settings.cors_origins,
+        rate_limit_enabled=settings.rate_limit_enabled,
+        rate_limit_requests=settings.rate_limit_requests,
+        rate_limit_window=settings.rate_limit_window,
+        hsts_enabled=settings.is_production,
+        csp_enabled=settings.is_production,
+        debug=settings.debug,
     )
+    setup_security(app, security_config)
 
     # Include routers
     app.include_router(health.router, tags=["Health"])

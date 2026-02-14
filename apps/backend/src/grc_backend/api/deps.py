@@ -3,13 +3,18 @@
 from collections.abc import AsyncGenerator
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from grc_ai import AIConfig, AIProvider, create_ai_provider
 from grc_backend.config import Settings, get_settings
+from grc_backend.core.errors import (
+    AuthenticationError,
+    AuthorizationError,
+    ErrorCode,
+)
 from grc_core.database import get_database
 from grc_core.models import User
 from grc_core.repositories import UserRepository
@@ -36,12 +41,6 @@ async def get_current_user(
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> User:
     """Get current authenticated user from JWT token."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
     try:
         payload = jwt.decode(
             credentials.credentials,
@@ -50,15 +49,25 @@ async def get_current_user(
         )
         user_id: str | None = payload.get("sub")
         if user_id is None:
-            raise credentials_exception
+            raise AuthenticationError(
+                message="Could not validate credentials",
+                code=ErrorCode.INVALID_CREDENTIALS,
+            )
     except JWTError as err:
-        raise credentials_exception from err
+        raise AuthenticationError(
+            message="Could not validate credentials",
+            code=ErrorCode.INVALID_CREDENTIALS,
+            cause=err,
+        ) from err
 
     user_repo = UserRepository(db)
     user = await user_repo.get(user_id)
 
     if user is None:
-        raise credentials_exception
+        raise AuthenticationError(
+            message="Could not validate credentials",
+            code=ErrorCode.INVALID_CREDENTIALS,
+        )
 
     return user
 
@@ -67,7 +76,6 @@ async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     """Ensure user is active."""
-    # Add any active user checks here
     return current_user
 
 
@@ -76,9 +84,10 @@ async def require_admin(
 ) -> User:
     """Require admin role."""
     if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
+        raise AuthorizationError(
+            message="Admin access required",
+            resource="admin_endpoint",
+            action="access",
         )
     return current_user
 
@@ -88,9 +97,10 @@ async def require_manager_or_admin(
 ) -> User:
     """Require manager or admin role."""
     if current_user.role not in ("admin", "manager"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager or admin access required",
+        raise AuthorizationError(
+            message="Manager or admin access required",
+            resource="manager_endpoint",
+            action="access",
         )
     return current_user
 
