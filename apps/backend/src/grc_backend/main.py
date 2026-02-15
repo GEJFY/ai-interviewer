@@ -67,7 +67,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _validate_ai_provider(settings)
 
     # Initialize database
-    db = init_database(settings.database_url, echo=settings.debug)
+    db = init_database(
+        settings.database_url,
+        echo=settings.debug,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+    )
 
     # Create tables (idempotent - safe for all environments)
     await db.create_tables()

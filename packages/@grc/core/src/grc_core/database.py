@@ -16,18 +16,26 @@ from grc_core.models import Base
 class DatabaseManager:
     """Manages database connections and sessions."""
 
-    def __init__(self, database_url: str, echo: bool = False) -> None:
+    def __init__(
+        self,
+        database_url: str,
+        echo: bool = False,
+        pool_size: int = 10,
+        max_overflow: int = 20,
+    ) -> None:
         """Initialize database manager.
 
         Args:
             database_url: PostgreSQL connection URL (postgresql+asyncpg://...)
             echo: Whether to log SQL statements
+            pool_size: Number of persistent connections in the pool
+            max_overflow: Max additional connections beyond pool_size
         """
         self.engine: AsyncEngine = create_async_engine(
             database_url,
             echo=echo,
-            pool_size=10,
-            max_overflow=20,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
             pool_pre_ping=True,
         )
         self.session_factory = async_sessionmaker(
@@ -75,10 +83,17 @@ class DatabaseManager:
 _db_manager: DatabaseManager | None = None
 
 
-def init_database(database_url: str, echo: bool = False) -> DatabaseManager:
+def init_database(
+    database_url: str,
+    echo: bool = False,
+    pool_size: int = 10,
+    max_overflow: int = 20,
+) -> DatabaseManager:
     """Initialize the global database manager."""
     global _db_manager
-    _db_manager = DatabaseManager(database_url, echo=echo)
+    _db_manager = DatabaseManager(
+        database_url, echo=echo, pool_size=pool_size, max_overflow=max_overflow
+    )
     return _db_manager
 
 
