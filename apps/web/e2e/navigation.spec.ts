@@ -36,7 +36,7 @@ test.describe('Navigation', () => {
 
     // 設定
     await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: '設定' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '設定', exact: true }).first()).toBeVisible();
   });
 
   test('should show sidebar navigation links', async ({ page }) => {

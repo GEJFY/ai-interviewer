@@ -16,8 +16,8 @@ test.describe('Task Management', () => {
 
   test('should show task list items', async ({ page }) => {
     await page.goto('/tasks');
-    // タスク一覧が表示される（モックデータまたは実データ）
-    await expect(page.locator('[class*="divide-y"]').first()).toBeVisible();
+    // タスク一覧が表示される（モックデータのタスク名で確認）
+    await expect(page.getByText('コンプライアンス調査 Q1').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should navigate to task detail', async ({ page }) => {

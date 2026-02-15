@@ -6,19 +6,22 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 
-// react-hot-toast のモック（virtual: true でモジュール解決をスキップ）
-const mockToast = Object.assign(jest.fn(), {
-  success: jest.fn(),
-  error: jest.fn(),
-  loading: jest.fn(),
-  dismiss: jest.fn(),
-});
-
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: mockToast,
-  Toaster: (props: any) => <div data-testid="hot-toaster" />,
-}), { virtual: true });
+// react-hot-toast のモック
+// jest.mock はファイル先頭にホイスティングされるため、
+// モック定義は factory 内で完結させる必要がある
+jest.mock('react-hot-toast', () => {
+  const fn = Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+    loading: jest.fn(),
+    dismiss: jest.fn(),
+  });
+  return {
+    __esModule: true,
+    default: fn,
+    Toaster: (props: any) => <div data-testid="hot-toaster" />,
+  };
+}, { virtual: true });
 
 // モック後にインポート
 import { Toaster, toast } from '../toast';

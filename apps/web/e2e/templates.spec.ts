@@ -16,7 +16,7 @@ test.describe('Template Management', () => {
 
   test('should open create template modal', async ({ page }) => {
     await page.goto('/templates');
-    await page.getByRole('button', { name: /新規作成/i }).click();
+    await page.getByRole('button', { name: /新規テンプレート/i }).click();
 
     // モーダルが表示される
     await expect(page.getByText('テンプレート名').first()).toBeVisible();
