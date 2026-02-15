@@ -18,6 +18,11 @@
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3"
   },
+  "pnpm": {
+    "overrides": {
+      "tar": ">=7.5.7"
+    }
+  },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"

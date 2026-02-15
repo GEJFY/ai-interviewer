@@ -192,21 +192,24 @@ async function setupApiMocks(page: Page) {
   });
 
   // Projects
-  await page.route(`${apiBase}/api/v1/projects**`, (route) => {
-    if (route.request().method() === 'GET') {
+  await page.route(
+    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/projects'),
+    (route) => {
+      if (route.request().method() === 'GET') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_PROJECTS),
+        });
+      }
+      // POST (create)
       return route.fulfill({
-        status: 200,
+        status: 201,
         contentType: 'application/json',
-        body: JSON.stringify(MOCK_PROJECTS),
+        body: JSON.stringify(MOCK_PROJECTS.items[0]),
       });
-    }
-    // POST (create)
-    return route.fulfill({
-      status: 201,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_PROJECTS.items[0]),
-    });
-  });
+    },
+  );
 
   // Models: providers
   await page.route(`${apiBase}/api/v1/models/providers`, (route) => {
@@ -232,13 +235,16 @@ async function setupApiMocks(page: Page) {
   });
 
   // Models: list
-  await page.route(`${apiBase}/api/v1/models?**`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ models: [], total: 0 }),
-    });
-  });
+  await page.route(
+    (url) => url.origin === apiBase && url.pathname === '/api/v1/models',
+    (route) => {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ models: [], total: 0 }),
+      });
+    },
+  );
 
   // Models: recommended
   await page.route(`${apiBase}/api/v1/models/recommended`, (route) => {
@@ -254,46 +260,55 @@ async function setupApiMocks(page: Page) {
     });
   });
 
-  // Tasks
-  await page.route(`${apiBase}/api/v1/tasks**`, (route) => {
-    if (route.request().method() === 'GET') {
+  // Tasks（URLの関数マッチャーでクエリ文字列を含むリクエストも確実にキャッチ）
+  await page.route(
+    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/tasks'),
+    (route) => {
+      if (route.request().method() === 'GET') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_TASKS),
+        });
+      }
       return route.fulfill({
-        status: 200,
+        status: 201,
         contentType: 'application/json',
-        body: JSON.stringify(MOCK_TASKS),
+        body: JSON.stringify(MOCK_TASKS.items[0]),
       });
-    }
-    return route.fulfill({
-      status: 201,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_TASKS.items[0]),
-    });
-  });
+    },
+  );
 
   // Templates
-  await page.route(`${apiBase}/api/v1/templates**`, (route) => {
-    if (route.request().method() === 'GET') {
+  await page.route(
+    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/templates'),
+    (route) => {
+      if (route.request().method() === 'GET') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_TEMPLATES),
+        });
+      }
+      return route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_TEMPLATES.items[0]),
+      });
+    },
+  );
+
+  // Catch-all for other API calls
+  await page.route(
+    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/'),
+    (route) => {
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(MOCK_TEMPLATES),
+        body: JSON.stringify({}),
       });
-    }
-    return route.fulfill({
-      status: 201,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_TEMPLATES.items[0]),
-    });
-  });
-
-  // Catch-all for other API calls
-  await page.route(`${apiBase}/api/v1/**`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({}),
-    });
-  });
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------

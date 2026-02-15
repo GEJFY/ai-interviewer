@@ -16,8 +16,10 @@ test.describe('Task Management', () => {
 
   test('should show task list items', async ({ page }) => {
     await page.goto('/tasks');
+    // ページが完全に読み込まれ、APIレスポンスが返るのを待つ
+    await page.waitForLoadState('networkidle');
     // タスク一覧が表示される（モックデータのタスク名で確認）
-    await expect(page.getByText('コンプライアンス調査 Q1').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('コンプライアンス調査 Q1').first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should navigate to task detail', async ({ page }) => {
