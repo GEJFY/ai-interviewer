@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
 import {
-  ArrowLeft,
   Save,
   Upload,
   Plus,
@@ -16,9 +14,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import api from '@/lib/api-client';
-import { Button, Input, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Button, Input, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface Question {
   id: string;
@@ -102,6 +102,10 @@ export default function TemplateDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['template', templateId] });
       queryClient.invalidateQueries({ queryKey: ['templates'] });
       setHasChanges(false);
+      toast.success('テンプレートを保存しました');
+    },
+    onError: () => {
+      toast.error('テンプレートの保存に失敗しました');
     },
   });
 
@@ -111,6 +115,10 @@ export default function TemplateDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['template', templateId] });
       queryClient.invalidateQueries({ queryKey: ['templates'] });
       setIsPublishModalOpen(false);
+      toast.success('テンプレートを公開しました');
+    },
+    onError: () => {
+      toast.error('テンプレートの公開に失敗しました');
     },
   });
 
@@ -206,24 +214,22 @@ export default function TemplateDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4" />
-        <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2" />
-        <div className="h-64 bg-surface-200 dark:bg-surface-700 rounded" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back link */}
-      <Link
-        href="/templates"
-        className="inline-flex items-center gap-2 text-surface-500 hover:text-surface-900 dark:hover:text-surface-100 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        テンプレート一覧に戻る
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: 'テンプレート', href: '/templates' },
+          { label: template?.name || '...' },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex justify-between items-start">

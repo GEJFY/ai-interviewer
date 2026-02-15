@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/cn';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import api from '@/lib/api-client';
 
 export default function DashboardPage() {
@@ -135,9 +136,12 @@ export default function DashboardPage() {
                   </Link>
                 ))
               ) : (
-                <div className="px-6 py-12 text-center text-surface-400">
-                  案件がありません
-                </div>
+                <EmptyState
+                  icon={FolderKanban}
+                  title="案件がありません"
+                  description="新しい案件を作成して始めましょう"
+                  action={{ label: '案件を作成', href: '/projects/new' }}
+                />
               )}
             </div>
           </Card>
@@ -187,9 +191,11 @@ export default function DashboardPage() {
                   </Link>
                 ))
               ) : (
-                <div className="px-6 py-12 text-center text-surface-400">
-                  タスクがありません
-                </div>
+                <EmptyState
+                  icon={ClipboardList}
+                  title="タスクがありません"
+                  description="案件からタスクを作成してください"
+                />
               )}
             </div>
           </Card>

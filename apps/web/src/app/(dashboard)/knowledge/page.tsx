@@ -16,6 +16,8 @@ import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface KnowledgeItem {
   id: string;
@@ -151,14 +153,13 @@ export default function KnowledgePage() {
       )}
 
       {searchResults?.items && searchResults.items.length === 0 && (
-        <Card className="p-12 text-center">
-          <Search className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-            検索結果がありません
-          </h3>
-          <p className="text-surface-500 dark:text-surface-400">
-            別のキーワードで検索してください
-          </p>
+        <Card>
+          <EmptyState
+            icon={Search}
+            title="検索結果がありません"
+            description="別のキーワードで検索してください"
+            variant="search"
+          />
         </Card>
       )}
 
@@ -168,27 +169,19 @@ export default function KnowledgePage() {
             <h2 className="font-semibold text-surface-900 dark:text-surface-50">最近のナレッジ</h2>
           </div>
           {isLoadingRecent ? (
-            <div className="p-6">
-              <div className="animate-pulse space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-16 bg-surface-100 dark:bg-surface-800 rounded" />
-                ))}
-              </div>
+            <div className="p-4">
+              <SkeletonListItem count={5} />
             </div>
           ) : recentItems?.items?.length > 0 ? (
             <div className="divide-y divide-surface-100 dark:divide-surface-800">
               {recentItems.items.map((item: KnowledgeItem) => renderKnowledgeItem(item))}
             </div>
           ) : (
-            <div className="p-12 text-center">
-              <BookOpen className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-                ナレッジがありません
-              </h3>
-              <p className="text-surface-500 dark:text-surface-400">
-                インタビュー完了後、自動的にナレッジが抽出されます
-              </p>
-            </div>
+            <EmptyState
+              icon={BookOpen}
+              title="ナレッジがありません"
+              description="インタビュー完了後、自動的にナレッジが抽出されます"
+            />
           )}
         </Card>
       )}

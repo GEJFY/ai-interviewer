@@ -18,9 +18,11 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
-import { Button, Modal, ModalBody, ModalFooter, Select } from '@/components/ui';
+import { Button, Modal, ModalBody, ModalFooter, Select, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Report {
   id: string;
@@ -88,7 +90,11 @@ function ReportsContent() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       setIsGenerateModalOpen(false);
+      toast.success('レポートの生成を開始しました');
       router.push(`/reports/${data.id}`);
+    },
+    onError: () => {
+      toast.error('レポートの生成に失敗しました');
     },
   });
 
@@ -103,8 +109,10 @@ function ReportsContent() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success('エクスポートが完了しました');
     } catch (error) {
       console.error('Export failed:', error);
+      toast.error('エクスポートに失敗しました');
     }
   };
 
@@ -178,12 +186,8 @@ function ReportsContent() {
       {/* Reports List */}
       <Card>
         {isLoading ? (
-          <div className="p-6">
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-20 bg-surface-100 dark:bg-surface-800 rounded" />
-              ))}
-            </div>
+          <div className="p-4">
+            <SkeletonListItem count={5} />
           </div>
         ) : data?.items?.length > 0 ? (
           <div className="divide-y divide-surface-100 dark:divide-surface-800">
@@ -225,18 +229,12 @@ function ReportsContent() {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center">
-            <FileText className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-              レポートがありません
-            </h3>
-            <p className="text-surface-500 dark:text-surface-400 mb-6">
-              インタビュー完了後にレポートを生成できます
-            </p>
-            <Button variant="accent" onClick={() => setIsGenerateModalOpen(true)}>
-              レポートを生成
-            </Button>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="レポートがありません"
+            description="インタビュー完了後にレポートを生成できます"
+            action={{ label: 'レポートを生成', onClick: () => setIsGenerateModalOpen(true) }}
+          />
         )}
       </Card>
 

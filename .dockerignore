@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# Node
+**/node_modules
+apps/web/.next
+apps/web/out
+
+# Python
+**/__pycache__
+**/*.pyc
+**/.venv
+**/venv
+
+# IDE
+.vscode
+.idea
+**/*.swp
+
+# Docker
+docker-compose*.yml
+
+# CI/CD
+.github
+
+# Docs
+docs/
+*.md
+
+# Terraform
+infrastructure/
+.terraform*
+
+# Mobile app (not needed for web/backend builds)
+apps/mobile
+
+# Misc
+.env*
+.azure-demo-info.txt
+.claude/
+scripts/
+tests/
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache

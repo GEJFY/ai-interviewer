@@ -79,14 +79,14 @@ NEXT_PUBLIC_WS_URL=wss://api.your-domain.com
 
 プロバイダーを1つ選択し、対応する認証情報を設定する。`AI_PROVIDER` は `azure` / `aws` / `gcp` / `local` から選択。
 
-### Azure OpenAI
+### Microsoft Foundry (旧 Azure OpenAI)
 
 | 状態 | 項目 | 詳細 |
 |------|------|------|
 | [ ] | **AZURE_OPENAI_ENDPOINT** | `https://your-resource.openai.azure.com/` |
 | [ ] | **AZURE_OPENAI_API_KEY** | Terraform output `openai_key` から取得、または Azure Portal から |
 | [ ] | **AZURE_OPENAI_API_VERSION** | config.py デフォルト: `2025-12-01-preview`、.env.example: `2024-12-01` |
-| [ ] | **モデルデプロイメントの確認** | Terraform で構成済み: `gpt-5.2`, `gpt-5-nano`, `gpt-4o`, `claude-sonnet-4.6-opus`, `claude-4.6-sonnet`, `text-embedding-3-large` |
+| [ ] | **モデルデプロイメントの確認** | フラグシップ: `gpt-5.2`、エコノミカル: `gpt-5-nano`、Embedding: `text-embedding-3-large` |
 
 ### AWS Bedrock
 
@@ -94,7 +94,7 @@ NEXT_PUBLIC_WS_URL=wss://api.your-domain.com
 |------|------|------|
 | [ ] | **AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY** | IAM ユーザーまたは Instance Profile を使用 |
 | [ ] | **AWS_REGION** | デフォルト: `ap-northeast-1` |
-| [ ] | **AWS_BEDROCK_MODEL_ID** | デフォルト: `anthropic.claude-sonnet-4-5-20250929-v1:0` |
+| [ ] | **AWS_BEDROCK_MODEL_ID** | フラグシップ: Claude Opus 4.6、エコノミカル: Claude Haiku 4.5 |
 
 ### GCP Vertex AI
 

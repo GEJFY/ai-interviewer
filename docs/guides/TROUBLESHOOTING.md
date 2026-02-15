@@ -604,7 +604,7 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434
 
 ---
 
-### 4.2 Azure OpenAI 429 Too Many Requests
+### 4.2 Microsoft Foundry 429 Too Many Requests
 
 **症状**
 
@@ -614,7 +614,7 @@ openai.RateLimitError: Error code: 429 - Rate limit reached for deployment 'gpt-
 
 **原因**
 
-Azure OpenAI デプロイメントのレート制限 (TPM: Tokens Per Minute / RPM: Requests Per Minute)
+Microsoft Foundry デプロイメントのレート制限 (TPM: Tokens Per Minute / RPM: Requests Per Minute)
 を超過している。
 
 **解決策**
