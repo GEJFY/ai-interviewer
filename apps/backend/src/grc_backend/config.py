@@ -39,7 +39,9 @@ class Settings(BaseSettings):
     json_logs: bool = Field(default=False)
 
     # CORS (str | list[str] で pydantic-settings v2 の JSON パースエラーを回避)
-    cors_origins: str | list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
+    cors_origins: str | list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:8000"]
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -102,7 +104,10 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _validate_production_secrets(self) -> "Settings":
         """production環境でデフォルトSECRET_KEYの使用をブロック。"""
-        if self.environment == "production" and self.secret_key == "dev-secret-key-change-in-production":
+        if (
+            self.environment == "production"
+            and self.secret_key == "dev-secret-key-change-in-production"
+        ):
             raise ValueError("SECRET_KEY must be set in production environment")
         return self
 
