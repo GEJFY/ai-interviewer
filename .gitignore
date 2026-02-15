@@ -86,3 +86,5 @@ coverage/
 # Mobile builds
 *.apk
 *.ipa
+
+.azure-demo-info.txt

@@ -8,6 +8,8 @@ import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Task {
   id: string;
@@ -64,12 +66,8 @@ export default function TasksPage() {
 
       <Card>
         {isLoading ? (
-          <div className="p-6">
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-surface-100 dark:bg-surface-800 rounded" />
-              ))}
-            </div>
+          <div className="p-4">
+            <SkeletonListItem count={5} />
           </div>
         ) : data?.items?.length > 0 ? (
           <div className="divide-y divide-surface-100 dark:divide-surface-800">
@@ -107,15 +105,12 @@ export default function TasksPage() {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center">
-            <ClipboardList className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-              タスクがありません
-            </h3>
-            <p className="text-surface-500 dark:text-surface-400">
-              案件からタスクを作成してください
-            </p>
-          </div>
+          <EmptyState
+            icon={ClipboardList}
+            title="タスクがありません"
+            description="案件からタスクを作成してください"
+            action={{ label: '案件一覧へ', href: '/projects' }}
+          />
         )}
       </Card>
     </div>

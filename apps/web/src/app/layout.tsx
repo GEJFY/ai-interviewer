@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_JP } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/toast';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -28,7 +29,10 @@ export default function RootLayout({
     <html lang="ja" suppressHydrationWarning>
       <body className={`${inter.variable} ${notoSansJP.variable} font-sans`}>
         <ThemeProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            {children}
+            <Toaster />
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

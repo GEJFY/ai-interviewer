@@ -52,6 +52,74 @@ const MOCK_PROJECTS = {
   pages: 1,
 };
 
+const MOCK_TASKS = {
+  items: [
+    {
+      id: '01JTEST000000000000000200',
+      name: 'コンプライアンス調査 Q1',
+      description: 'E2E test task',
+      project_id: '01JTEST000000000000000100',
+      use_case_type: 'compliance_survey',
+      status: 'in_progress',
+      target_count: 5,
+      interview_count: 3,
+      completed_interview_count: 1,
+      deadline: '2026-03-31',
+      created_at: '2025-01-15T00:00:00',
+      updated_at: '2025-01-15T00:00:00',
+    },
+    {
+      id: '01JTEST000000000000000201',
+      name: '内部統制評価 FY2025',
+      description: 'J-SOX evaluation task',
+      project_id: '01JTEST000000000000000100',
+      use_case_type: 'control_evaluation',
+      status: 'pending',
+      target_count: 10,
+      interview_count: 0,
+      completed_interview_count: 0,
+      deadline: '2026-06-30',
+      created_at: '2025-02-01T00:00:00',
+      updated_at: '2025-02-01T00:00:00',
+    },
+  ],
+  total: 2,
+  page: 1,
+  page_size: 20,
+  pages: 1,
+};
+
+const MOCK_TEMPLATES = {
+  items: [
+    {
+      id: '01JTEST000000000000000300',
+      name: 'コンプライアンス意識調査テンプレート',
+      description: 'Standard compliance survey template',
+      use_case_type: 'compliance_survey',
+      is_published: true,
+      version: 1,
+      question_count: 5,
+      created_at: '2025-01-01T00:00:00',
+      updated_at: '2025-01-01T00:00:00',
+    },
+    {
+      id: '01JTEST000000000000000301',
+      name: 'リスク評価ヒアリングシート',
+      description: 'Risk assessment interview template',
+      use_case_type: 'risk_assessment',
+      is_published: false,
+      version: 2,
+      question_count: 8,
+      created_at: '2025-01-10T00:00:00',
+      updated_at: '2025-01-10T00:00:00',
+    },
+  ],
+  total: 2,
+  page: 1,
+  page_size: 20,
+  pages: 1,
+};
+
 const MOCK_PROVIDERS = {
   providers: [
     {
@@ -183,6 +251,38 @@ async function setupApiMocks(page: Page) {
           analysis_report: 'gpt-5-nano',
         },
       }),
+    });
+  });
+
+  // Tasks
+  await page.route(`${apiBase}/api/v1/tasks**`, (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_TASKS),
+      });
+    }
+    return route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_TASKS.items[0]),
+    });
+  });
+
+  // Templates
+  await page.route(`${apiBase}/api/v1/templates**`, (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_TEMPLATES),
+      });
+    }
+    return route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_TEMPLATES.items[0]),
     });
   });
 

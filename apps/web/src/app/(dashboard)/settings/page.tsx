@@ -21,9 +21,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import api from '@/lib/api-client';
-import { Button, Input, Select } from '@/components/ui';
+import { Button, Input, Select, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserProfile {
   id: string;
@@ -121,7 +122,13 @@ export default function SettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => ({ name, email }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      toast.success('プロフィールを保存しました');
+    },
+    onError: () => {
+      toast.error('プロフィールの保存に失敗しました');
+    },
   });
 
   const [testMessage, setTestMessage] = useState('');
@@ -155,9 +162,9 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4" />
-        <div className="h-64 bg-surface-200 dark:bg-surface-700 rounded" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }

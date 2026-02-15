@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
-  ArrowLeft,
   Download,
   Save,
   CheckCircle2,
@@ -20,9 +19,11 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api, { apiClient } from '@/lib/api-client';
-import { Button, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Button, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface Report {
   id: string;
@@ -98,6 +99,10 @@ export default function ReportDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['report', reportId] });
       setIsEditing(false);
+      toast.success('レポートを保存しました');
+    },
+    onError: () => {
+      toast.error('レポートの保存に失敗しました');
     },
   });
 
@@ -108,6 +113,10 @@ export default function ReportDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['report', reportId] });
+      toast.success('レビューを依頼しました');
+    },
+    onError: () => {
+      toast.error('レビュー依頼に失敗しました');
     },
   });
 
@@ -119,6 +128,10 @@ export default function ReportDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['report', reportId] });
       setIsApproveModalOpen(false);
+      toast.success('レポートを承認しました');
+    },
+    onError: () => {
+      toast.error('レポートの承認に失敗しました');
     },
   });
 
@@ -134,8 +147,10 @@ export default function ReportDetailPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       setIsExportMenuOpen(false);
+      toast.success('エクスポートしました');
     } catch (error) {
       console.error('Export failed:', error);
+      toast.error('エクスポートに失敗しました');
     }
   };
 
@@ -161,10 +176,10 @@ export default function ReportDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4" />
-        <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2" />
-        <div className="h-96 bg-surface-200 dark:bg-surface-700 rounded" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
@@ -185,14 +200,12 @@ export default function ReportDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back link */}
-      <Link
-        href="/reports"
-        className="inline-flex items-center gap-2 text-surface-500 hover:text-surface-900 dark:hover:text-surface-100 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        レポート一覧に戻る
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: 'レポート', href: '/reports' },
+          { label: report.title },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex justify-between items-start">

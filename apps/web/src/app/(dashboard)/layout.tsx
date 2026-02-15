@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -15,6 +15,8 @@ import {
   Bell,
   PanelLeftClose,
   PanelLeft,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -36,14 +38,32 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // モバイルメニューをページ遷移時に閉じる
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-[rgb(var(--bg))]">
+      {/* モバイルバックドロップ */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex flex-col border-r border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-950 transition-all duration-300',
-          collapsed ? 'w-16' : 'w-64'
+          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-950 transition-all duration-300',
+          // モバイル: デフォルト非表示、mobileMenuOpenで表示
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          // デスクトップ: 常に表示
+          'md:translate-x-0',
+          collapsed ? 'md:w-16 w-64' : 'w-64'
         )}
       >
         {/* ロゴ */}
@@ -53,9 +73,17 @@ export default function DashboardLayout({
               AI Interview<span className="text-accent-500">.</span>
             </Link>
           )}
+          {/* モバイル: 閉じるボタン */}
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors md:hidden"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* デスクトップ: 折りたたみボタン */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors hidden md:block"
           >
             {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
@@ -82,7 +110,7 @@ export default function DashboardLayout({
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-accent-500 rounded-r" />
                 )}
                 <item.icon className={cn('w-5 h-5 flex-shrink-0', isActive && 'text-accent-500')} />
-                {!collapsed && <span>{item.name}</span>}
+                {(!collapsed || mobileMenuOpen) && <span className={cn(collapsed && 'md:hidden')}>{item.name}</span>}
               </Link>
             );
           })}
@@ -90,8 +118,8 @@ export default function DashboardLayout({
 
         {/* フッター */}
         <div className="p-3 border-t border-surface-200 dark:border-surface-800 space-y-1">
-          {!collapsed && (
-            <div className="flex items-center justify-between px-3 py-1 mb-2">
+          {(!collapsed || mobileMenuOpen) && (
+            <div className={cn('flex items-center justify-between px-3 py-1 mb-2', collapsed && 'md:hidden')}>
               <ThemeToggle />
               <LanguageSelector compact />
             </div>
@@ -102,7 +130,7 @@ export default function DashboardLayout({
             title={collapsed ? '設定' : undefined}
           >
             <Settings className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span>設定</span>}
+            {(!collapsed || mobileMenuOpen) && <span className={cn(collapsed && 'md:hidden')}>設定</span>}
           </Link>
           <button
             onClick={() => {
@@ -114,16 +142,24 @@ export default function DashboardLayout({
             title={collapsed ? 'ログアウト' : undefined}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span>ログアウト</span>}
+            {(!collapsed || mobileMenuOpen) && <span className={cn(collapsed && 'md:hidden')}>ログアウト</span>}
           </button>
         </div>
       </aside>
 
       {/* メインコンテンツ */}
-      <div className={cn('transition-all duration-300', collapsed ? 'pl-16' : 'pl-64')}>
+      <div className={cn('transition-all duration-300 md:pl-64', collapsed && 'md:pl-16')}>
         {/* トップバー */}
-        <header className="sticky top-0 z-20 h-16 glass-strong flex items-center justify-between px-8">
-          <div className="flex-1" />
+        <header className="sticky top-0 z-20 h-16 glass-strong flex items-center justify-between px-4 md:px-8">
+          {/* モバイルハンバーガーボタン */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-lg transition-colors md:hidden"
+            aria-label="メニューを開く"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex-1 hidden md:block" />
           <div className="flex items-center gap-2">
             <button className="p-2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-lg transition-colors relative">
               <Bell className="w-5 h-5" />
@@ -132,7 +168,7 @@ export default function DashboardLayout({
         </header>
 
         {/* ページコンテンツ */}
-        <main className="p-8">{children}</main>
+        <main className="p-4 md:p-8">{children}</main>
       </div>
     </div>
   );

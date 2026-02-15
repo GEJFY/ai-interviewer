@@ -14,9 +14,11 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
-import { Button, Input, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Button, Input, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SkeletonCard } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Project {
   id: string;
@@ -54,6 +56,10 @@ export default function ProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setIsCreateModalOpen(false);
       setNewProject({ name: '', description: '', client_name: '' });
+      toast.success('案件を作成しました');
+    },
+    onError: () => {
+      toast.error('案件の作成に失敗しました');
     },
   });
 
@@ -117,13 +123,7 @@ export default function ProjectsPage() {
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="animate-pulse">
-                <div className="h-6 bg-surface-200 dark:bg-surface-700 rounded w-3/4 mb-4" />
-                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2 mb-2" />
-                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/3" />
-              </div>
-            </Card>
+            <SkeletonCard key={i} />
           ))}
         </div>
       ) : filteredProjects.length > 0 ? (
@@ -184,21 +184,14 @@ export default function ProjectsPage() {
           ))}
         </div>
       ) : (
-        <Card className="p-12 text-center">
-          <FolderKanban className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-            {searchQuery ? '検索結果がありません' : '案件がありません'}
-          </h3>
-          <p className="text-surface-500 dark:text-surface-400 mb-6">
-            {searchQuery
-              ? '別のキーワードで検索してください'
-              : '新しい案件を作成して始めましょう'}
-          </p>
-          {!searchQuery && (
-            <Button variant="accent" onClick={() => setIsCreateModalOpen(true)}>
-              最初の案件を作成
-            </Button>
-          )}
+        <Card>
+          <EmptyState
+            icon={FolderKanban}
+            title={searchQuery ? '検索結果がありません' : '案件がありません'}
+            description={searchQuery ? '別のキーワードで検索してください' : '新しい案件を作成して始めましょう'}
+            variant={searchQuery ? 'search' : 'default'}
+            action={!searchQuery ? { label: '最初の案件を作成', onClick: () => setIsCreateModalOpen(true) } : undefined}
+          />
         </Card>
       )}
 

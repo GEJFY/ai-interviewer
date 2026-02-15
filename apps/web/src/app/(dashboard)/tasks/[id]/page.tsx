@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
 import {
-  ArrowLeft,
   Plus,
   MessageSquare,
   Play,
@@ -17,9 +15,12 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
-import { Button, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Button, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton, SkeletonListItem } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface Interview {
   id: string;
@@ -55,7 +56,11 @@ export default function TaskDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['interviews', { taskId }] });
       queryClient.invalidateQueries({ queryKey: ['task', taskId] });
       setIsCreateInterviewModalOpen(false);
+      toast.success('インタビューを開始します');
       router.push(`/interviews/${data.id}`);
+    },
+    onError: () => {
+      toast.error('インタビューの開始に失敗しました');
     },
   });
 
@@ -86,24 +91,23 @@ export default function TaskDetailPage() {
 
   if (isLoadingTask) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4" />
-        <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2" />
-        <div className="h-64 bg-surface-200 dark:bg-surface-700 rounded" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back link */}
-      <Link
-        href={`/projects/${task?.project_id}`}
-        className="inline-flex items-center gap-2 text-surface-500 hover:text-surface-900 dark:hover:text-surface-100 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        案件に戻る
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: '案件管理', href: '/projects' },
+          { label: '案件', href: `/projects/${task?.project_id}` },
+          { label: task?.name || '...' },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex justify-between items-start">
@@ -178,12 +182,8 @@ export default function TaskDetailPage() {
         </div>
 
         {isLoadingInterviews ? (
-          <div className="p-6">
-            <div className="animate-pulse space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-surface-200 dark:bg-surface-700 rounded" />
-              ))}
-            </div>
+          <div className="p-4">
+            <SkeletonListItem count={3} />
           </div>
         ) : interviewsData?.items?.length > 0 ? (
           <div className="divide-y divide-surface-100 dark:divide-surface-800">
@@ -268,18 +268,12 @@ export default function TaskDetailPage() {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center">
-            <MessageSquare className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-              インタビューがありません
-            </h3>
-            <p className="text-surface-500 dark:text-surface-400 mb-6">
-              新しいインタビューを開始しましょう
-            </p>
-            <Button variant="accent" onClick={() => setIsCreateInterviewModalOpen(true)}>
-              最初のインタビューを開始
-            </Button>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="インタビューがありません"
+            description="新しいインタビューを開始しましょう"
+            action={{ label: '最初のインタビューを開始', onClick: () => setIsCreateInterviewModalOpen(true) }}
+          />
         )}
       </Card>
 

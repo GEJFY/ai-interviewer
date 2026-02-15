@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import api from '@/lib/api-client';
 import { createInterviewWebSocket, InterviewWebSocket, WSResponse } from '@/lib/websocket';
 import { useAudioRecorder, AudioChunk } from '@/hooks/useAudioRecorder';
@@ -50,6 +51,7 @@ export default function InterviewPage() {
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [transcribingText, setTranscribingText] = useState('');
+  const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
 
   const wsRef = useRef<InterviewWebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -213,9 +215,12 @@ export default function InterviewPage() {
 
   const endInterview = () => {
     if (!wsRef.current?.isConnected) return;
-    if (window.confirm('インタビューを終了しますか？')) {
-      wsRef.current.sendControl('end');
-    }
+    setIsEndDialogOpen(true);
+  };
+
+  const confirmEndInterview = () => {
+    wsRef.current?.sendControl('end');
+    setIsEndDialogOpen(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -507,6 +512,16 @@ export default function InterviewPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isEndDialogOpen}
+        onClose={() => setIsEndDialogOpen(false)}
+        onConfirm={confirmEndInterview}
+        title="インタビュー終了"
+        message="インタビューを終了しますか？終了後は再開できません。"
+        confirmLabel="終了する"
+        variant="warning"
+      />
     </div>
   );
 }

@@ -16,9 +16,12 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
-import { Button, Modal, ModalBody, ModalFooter, Input, Select } from '@/components/ui';
+import { Button, Modal, ModalBody, ModalFooter, Input, Select, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SkeletonCard } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Template {
   id: string;
@@ -82,7 +85,11 @@ export default function TemplatesPage() {
       queryClient.invalidateQueries({ queryKey: ['templates'] });
       setIsCreateModalOpen(false);
       setNewTemplate({ name: '', useCaseType: 'compliance_survey', description: '' });
+      toast.success('テンプレートを作成しました');
       router.push(`/templates/${data.id}`);
+    },
+    onError: () => {
+      toast.error('テンプレートの作成に失敗しました');
     },
   });
 
@@ -91,6 +98,10 @@ export default function TemplatesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['templates'] });
       setOpenMenuId(null);
+      toast.success('テンプレートを複製しました');
+    },
+    onError: () => {
+      toast.error('テンプレートの複製に失敗しました');
     },
   });
 
@@ -100,6 +111,10 @@ export default function TemplatesPage() {
       queryClient.invalidateQueries({ queryKey: ['templates'] });
       setIsDeleteModalOpen(false);
       setSelectedTemplate(null);
+      toast.success('テンプレートを削除しました');
+    },
+    onError: () => {
+      toast.error('テンプレートの削除に失敗しました');
     },
   });
 
@@ -132,13 +147,7 @@ export default function TemplatesPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="animate-pulse">
-                <div className="h-6 bg-surface-200 dark:bg-surface-700 rounded w-3/4 mb-4" />
-                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2 mb-2" />
-                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-full" />
-              </div>
-            </Card>
+            <SkeletonCard key={i} />
           ))}
         </div>
       ) : data?.items?.length > 0 ? (
@@ -224,17 +233,13 @@ export default function TemplatesPage() {
           ))}
         </div>
       ) : (
-        <Card className="p-12 text-center">
-          <FileText className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-            テンプレートがありません
-          </h3>
-          <p className="text-surface-500 dark:text-surface-400 mb-6">
-            最初のテンプレートを作成しましょう
-          </p>
-          <Button variant="accent" onClick={() => setIsCreateModalOpen(true)}>
-            テンプレートを作成
-          </Button>
+        <Card>
+          <EmptyState
+            icon={FileText}
+            title="テンプレートがありません"
+            description="最初のテンプレートを作成しましょう"
+            action={{ label: 'テンプレートを作成', onClick: () => setIsCreateModalOpen(true) }}
+          />
         </Card>
       )}
 
@@ -281,31 +286,16 @@ export default function TemplatesPage() {
         </ModalFooter>
       </Modal>
 
-      <Modal
+      <ConfirmDialog
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => selectedTemplate && deleteMutation.mutate(selectedTemplate.id)}
         title="テンプレートの削除"
-        size="sm"
-      >
-        <ModalBody>
-          <p className="text-surface-500 dark:text-surface-400">
-            「{selectedTemplate?.name}」を削除しますか？
-            この操作は取り消せません。
-          </p>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-            キャンセル
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => selectedTemplate && deleteMutation.mutate(selectedTemplate.id)}
-            isLoading={deleteMutation.isPending}
-          >
-            削除
-          </Button>
-        </ModalFooter>
-      </Modal>
+        message={`「${selectedTemplate?.name}」を削除しますか？この操作は取り消せません。`}
+        confirmLabel="削除"
+        variant="danger"
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

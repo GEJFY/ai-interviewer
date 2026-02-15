@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
-  ArrowLeft,
   Plus,
   ClipboardList,
   Edit2,
@@ -15,9 +14,12 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
-import { Button, Input, Select, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Button, Input, Select, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton, SkeletonListItem } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 const USE_CASE_OPTIONS = [
   { value: 'compliance_survey', label: 'コンプライアンス意識調査' },
@@ -71,6 +73,10 @@ export default function ProjectDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       setIsCreateTaskModalOpen(false);
       setNewTask({ name: '', description: '', use_case_type: '', target_count: 1 });
+      toast.success('タスクを作成しました');
+    },
+    onError: () => {
+      toast.error('タスクの作成に失敗しました');
     },
   });
 
@@ -108,24 +114,22 @@ export default function ProjectDetailPage() {
 
   if (isLoadingProject) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface-200 dark:bg-surface-700 rounded w-1/4" />
-        <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2" />
-        <div className="h-64 bg-surface-200 dark:bg-surface-700 rounded" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back link */}
-      <Link
-        href="/projects"
-        className="inline-flex items-center gap-2 text-surface-500 hover:text-surface-900 dark:hover:text-surface-100 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        案件一覧に戻る
-      </Link>
+      <Breadcrumb
+        items={[
+          { label: '案件管理', href: '/projects' },
+          { label: project?.name || '...' },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex justify-between items-start">
@@ -196,12 +200,8 @@ export default function ProjectDetailPage() {
         </div>
 
         {isLoadingTasks ? (
-          <div className="p-6">
-            <div className="animate-pulse space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-surface-200 dark:bg-surface-700 rounded" />
-              ))}
-            </div>
+          <div className="p-4">
+            <SkeletonListItem count={3} />
           </div>
         ) : tasksData?.items?.length > 0 ? (
           <div className="divide-y divide-surface-100 dark:divide-surface-800">
@@ -240,18 +240,12 @@ export default function ProjectDetailPage() {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center">
-            <ClipboardList className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-surface-900 dark:text-surface-50 mb-2">
-              タスクがありません
-            </h3>
-            <p className="text-surface-500 dark:text-surface-400 mb-6">
-              新しいタスクを追加してインタビューを開始しましょう
-            </p>
-            <Button variant="accent" onClick={() => setIsCreateTaskModalOpen(true)}>
-              最初のタスクを作成
-            </Button>
-          </div>
+          <EmptyState
+            icon={ClipboardList}
+            title="タスクがありません"
+            description="新しいタスクを追加してインタビューを開始しましょう"
+            action={{ label: '最初のタスクを作成', onClick: () => setIsCreateTaskModalOpen(true) }}
+          />
         )}
       </Card>
 
