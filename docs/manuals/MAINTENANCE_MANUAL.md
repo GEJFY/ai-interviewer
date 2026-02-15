@@ -808,11 +808,11 @@ fi
 
 ### 5.1 APIバージョン更新
 
-#### Azure OpenAI
+#### Microsoft Foundry (旧 Azure OpenAI)
 
 ```python
 # backend/config.py
-AZURE_OPENAI_API_VERSION = "2024-02-15-preview"  # 定期的に最新版に更新
+AZURE_OPENAI_API_VERSION = "2024-12-01"  # 定期的に最新版に更新
 
 # 更新時の確認事項
 # 1. APIドキュメントで破壊的変更を確認

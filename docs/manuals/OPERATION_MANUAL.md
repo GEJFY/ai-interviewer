@@ -47,7 +47,7 @@
                         ▼                    ▼                    ▼
               ┌──────────────────┐  ┌──────────────┐  ┌──────────────────┐
               │   PostgreSQL 15+  │  │   Redis 7+   │  │   AI Provider    │
-              │   Port 5432      │  │   Port 6379  │  │ Azure OpenAI /   │
+              │   Port 5432      │  │   Port 6379  │  │ MS Foundry /     │
               │   asyncpg        │  │   Cache      │  │ AWS Bedrock /    │
               │                  │  │              │  │ GCP Vertex AI    │
               └──────────────────┘  └──────────────┘  └──────────────────┘
@@ -61,7 +61,7 @@
 | **APIバックエンド** | FastAPI, Python 3.11+ | ビジネスロジック、API提供 | 水平スケール可 (3台以上推奨) |
 | **データベース** | PostgreSQL 15+ | 永続データストレージ | Primary-Replica構成 |
 | **キャッシュ** | Redis 7+ | セッション管理、キャッシュ | Redis Cluster / Sentinel |
-| **AI Provider** | Azure OpenAI / Bedrock / Vertex AI | AI面接処理 | マルチプロバイダー対応 |
+| **AI Provider** | Microsoft Foundry / Bedrock / Vertex AI | AI面接処理 | マルチプロバイダー対応 |
 | **認証** | JWT (access + refresh token) | ユーザー認証、MFA対応 | ステートレス |
 | **リアルタイム通信** | WebSocket | 面接セッション | 永続接続管理 |
 
@@ -117,12 +117,12 @@ MFA_ENABLED=true
 MFA_ISSUER=AI Interview System
 TOTP_SECRET_KEY=your-totp-secret-key
 
-# AI Provider設定 (Azure OpenAI)
-AI_PROVIDER=azure_openai  # azure_openai / aws_bedrock / gcp_vertex
+# AI Provider設定 (Microsoft Foundry)
+AI_PROVIDER=azure  # azure / aws / gcp / local
 AZURE_OPENAI_API_KEY=your-azure-openai-api-key
 AZURE_OPENAI_ENDPOINT=https://your-instance.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT=gpt-4
-AZURE_OPENAI_API_VERSION=2024-02-15-preview
+AZURE_OPENAI_DEPLOYMENT_GPT52=gpt-5.2
+AZURE_OPENAI_DEPLOYMENT_GPT5_NANO=gpt-5-nano
 AZURE_OPENAI_MAX_RETRIES=3
 AZURE_OPENAI_TIMEOUT=60
 
@@ -871,9 +871,9 @@ docker logs --since "1h" ai-interviewer-api | grep '^{' | \
 # アプリケーション設定で同時リクエスト数を制限
 
 # 2. フォールバックAIプロバイダーへの切り替え
-# 例: Azure OpenAI → AWS Bedrock
+# 例: Microsoft Foundry → AWS Bedrock
 # 環境変数を更新:
-AI_PROVIDER=aws_bedrock
+AI_PROVIDER=aws
 
 # 3. キャッシュの活用 (同じ質問の再利用)
 ```
@@ -886,7 +886,7 @@ AI_PROVIDER=aws_bedrock
 # 2. AIプロバイダーのクォータ増加申請
 
 # 3. マルチプロバイダー構成 (負荷分散)
-# Azure OpenAI + AWS Bedrock + GCP Vertex AI
+# Microsoft Foundry + AWS Bedrock + GCP Vertex AI
 
 # 4. リクエストバッファリング/キューイングシステム導入
 # Redis Queue / Celery 等
@@ -2014,10 +2014,10 @@ docker-compose up -d
 
 #### 7.2.2 AI Provider API Key ローテーション
 
-**Azure OpenAI API Key:**
+**Microsoft Foundry API Key:**
 ```bash
 # 1. Azure Portalで新しいキーを生成
-# Azure Portal → Azure OpenAI リソース → Keys and Endpoint → Regenerate Key 2
+# Azure Portal → Microsoft Foundry リソース → Keys and Endpoint → Regenerate Key 2
 
 # 2. 環境変数を更新
 # .env.production:
@@ -2305,7 +2305,7 @@ fi
 **外部サポート:**
 | サービス | サポート窓口 | SLA |
 |---------|------------|-----|
-| Azure OpenAI | https://azure.microsoft.com/support/ | Business: 1時間以内 |
+| Microsoft Foundry | https://azure.microsoft.com/support/ | Business: 1時間以内 |
 | AWS | https://aws.amazon.com/premiumsupport/ | Business: 1時間以内 |
 | PostgreSQL | https://www.postgresql.org/support/ | コミュニティ |
 

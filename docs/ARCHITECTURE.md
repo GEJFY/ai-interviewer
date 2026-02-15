@@ -553,12 +553,12 @@ class AIProvider(Protocol):
 
 #### AI プロバイダ別デフォルトモデル
 
-| プロバイダ      | チャットモデル                           | Embedding モデル        |
-|---------------|----------------------------------------|------------------------|
-| Azure OpenAI  | gpt-5-nano                             | text-embedding-3-large |
-| AWS Bedrock   | anthropic.claude-sonnet-4-5-20250929-v1:0 | (Bedrock 内蔵)      |
-| GCP Vertex AI | gemini-2.5-flash                       | (Vertex AI 内蔵)      |
-| Ollama (Local)| gemma3:1b                              | nomic-embed-text       |
+| プロバイダ          | チャットモデル                          | Embedding モデル        |
+|-------------------|-----------------------------------------|------------------------|
+| Microsoft Foundry | gpt-5-nano / gpt-5.2                   | text-embedding-3-large |
+| AWS Bedrock       | Claude Opus 4.6 / Claude Haiku 4.5     | (Bedrock 内蔵)         |
+| GCP Vertex AI     | Gemini 3 Pro / Gemini 3 Flash Preview  | (Vertex AI 内蔵)       |
+| Ollama (Local)    | gemma3:1b                              | nomic-embed-text       |
 
 ---
 
@@ -775,7 +775,7 @@ class AIProvider(Protocol):
 | Registry       | Azure Container Registry   | -          | コンテナイメージ管理            |
 | Compute        | Azure App Service (Linux)  | -          | バックエンド実行環境            |
 | Frontend Host  | Azure Static Web Apps      | -          | フロントエンド配信              |
-| AI Service     | Azure OpenAI / AI Foundry  | -          | LLM + Embedding              |
+| AI Service     | Microsoft Foundry          | -          | LLM + Embedding              |
 | Speech         | Azure Cognitive Speech     | -          | STT + TTS                    |
 | Storage        | Azure Blob Storage         | -          | ファイルストレージ              |
 | Monitoring     | Application Insights       | -          | APM + ログ集約                |
@@ -878,7 +878,7 @@ Azure Resource Group: {project}-{env}-rg
 │   └── maxmemory-policy: volatile-lru
 │
 ├── Azure Cognitive Services
-│   ├── OpenAI (S0) - GPT-5.2, GPT-5-nano, GPT-4o, Claude models
+│   ├── OpenAI (S0) - GPT-5.2, GPT-5-nano, Claude models
 │   ├── Speech Services (S0) - STT + TTS
 │   └── Embedding: text-embedding-3-large
 │
@@ -1111,9 +1111,9 @@ apps/mobile/ (Expo React Native)
 | `DATABASE_URL`                | `postgresql+asyncpg://...`          | PostgreSQL 接続文字列       |
 | `REDIS_URL`                   | `redis://localhost:6379/0`          | Redis 接続文字列            |
 | `AI_PROVIDER`                 | `azure`                             | AI プロバイダ選択            |
-| `AZURE_OPENAI_API_KEY`        | -                                   | Azure OpenAI API キー       |
-| `AZURE_OPENAI_ENDPOINT`       | -                                   | Azure OpenAI エンドポイント  |
-| `AZURE_OPENAI_DEPLOYMENT_NAME`| `gpt-5-nano`                        | Azure OpenAI デプロイ名     |
+| `AZURE_OPENAI_API_KEY`        | -                                   | Microsoft Foundry API キー   |
+| `AZURE_OPENAI_ENDPOINT`       | -                                   | Microsoft Foundry エンドポイント |
+| `AZURE_OPENAI_DEPLOYMENT_NAME`| `gpt-5-nano`                        | Microsoft Foundry デプロイ名 |
 | `AWS_ACCESS_KEY_ID`           | -                                   | AWS アクセスキー             |
 | `AWS_SECRET_ACCESS_KEY`       | -                                   | AWS シークレットキー          |
 | `AWS_REGION`                  | `ap-northeast-1`                    | AWS リージョン               |

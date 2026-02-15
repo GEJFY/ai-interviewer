@@ -624,22 +624,22 @@ Draft（下書き） → Review（レビュー中） → Approved（承認済）
 使用するAIサービスの選択と設定:
 
 **対応プロバイダー**
-- **Azure OpenAI**: Microsoft Azure経由でOpenAIモデルを使用
-- **AWS Bedrock**: AmazonのマネージドAIサービス
-- **GCP Vertex AI**: Google CloudのAIプラットフォーム
+- **Microsoft Foundry**: GPT-5.2、GPT-5-nano等のOpenAIモデルを使用
+- **AWS Bedrock**: Claude Opus 4.6、Claude Haiku 4.5等を使用
+- **GCP Vertex AI**: Gemini 3 Pro、Gemini 3 Flash Preview等を使用
 
 **設定手順**
 1. 「設定」メニューから「AIプロバイダー」タブを選択
 2. 使用するプロバイダーを選択
 3. 認証情報を入力:
-   - **Azure OpenAI**: エンドポイント、APIキー、デプロイメント名
+   - **Microsoft Foundry**: エンドポイント、APIキー、デプロイメント名
    - **AWS Bedrock**: アクセスキーID、シークレットキー、リージョン
    - **GCP Vertex AI**: プロジェクトID、サービスアカウントキー
 4. 「接続テスト」で動作確認
 5. 「保存」ボタンをクリック
 
 **モデル選択**
-- GPT-4、Claude、Geminiなど利用可能モデルを選択
+- GPT-5.2、Claude Opus 4.6、Gemini 3 Pro等から利用可能モデルを選択
 - 用途に応じて最適なモデルを推奨表示
 
 **注意事項**
@@ -809,7 +809,7 @@ Draft→Review→Approved→Publishedの4段階で品質を管理する仕組み
 多要素認証。パスワードに加えて認証アプリなどの第2要素で本人確認。
 
 **AIプロバイダー（AI Provider）**
-AIサービスを提供するクラウド事業者。Azure OpenAI、AWS Bedrock、GCP Vertex AIなど。
+AIサービスを提供するクラウド事業者。Microsoft Foundry、AWS Bedrock、GCP Vertex AIなど。
 
 **ステータス（Status）**
 案件・タスク・レポートの現在の状態を示す分類。進行管理に使用。
