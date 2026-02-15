@@ -153,6 +153,21 @@ const MOCK_PROVIDERS = {
 async function setupApiMocks(page: Page) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
+  // ⚠️ Playwright はルートを登録の逆順で評価する（後に登録したものが先にマッチ）
+  // そのため catch-all を最初に登録し、具体的なハンドラーを後に登録する
+
+  // Catch-all for other API calls（最初に登録 → 最後に評価される）
+  await page.route(
+    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/'),
+    (route) => {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
+    },
+  );
+
   // Auth: login
   await page.route(`${apiBase}/api/v1/auth/login`, (route) => {
     const body = route.request().postData() || '';
@@ -228,7 +243,7 @@ async function setupApiMocks(page: Page) {
       body: JSON.stringify({
         provider: 'azure_openai',
         status: 'success',
-        message: '\u63a5\u7d9a\u6210\u529f',
+        message: '接続成功',
         model_used: 'gpt-5-nano',
       }),
     });
@@ -260,7 +275,7 @@ async function setupApiMocks(page: Page) {
     });
   });
 
-  // Tasks（URLの関数マッチャーでクエリ文字列を含むリクエストも確実にキャッチ）
+  // Tasks
   await page.route(
     (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/tasks'),
     (route) => {
@@ -279,7 +294,7 @@ async function setupApiMocks(page: Page) {
     },
   );
 
-  // Templates
+  // Templates（最後に登録 → 最初に評価される）
   await page.route(
     (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/templates'),
     (route) => {
@@ -294,18 +309,6 @@ async function setupApiMocks(page: Page) {
         status: 201,
         contentType: 'application/json',
         body: JSON.stringify(MOCK_TEMPLATES.items[0]),
-      });
-    },
-  );
-
-  // Catch-all for other API calls
-  await page.route(
-    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/'),
-    (route) => {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({}),
       });
     },
   );
