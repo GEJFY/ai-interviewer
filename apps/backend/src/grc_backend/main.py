@@ -73,14 +73,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await db.create_tables()
 
     # Auto-seed demo data when SEED_DEMO is enabled (development only)
-    if settings.is_development:
-        if os.environ.get("SEED_DEMO", "").lower() in ("true", "1", "yes"):
-            from grc_backend.demo.seeder import DemoSeeder
+    if settings.is_development and os.environ.get("SEED_DEMO", "").lower() in ("true", "1", "yes"):
+        from grc_backend.demo.seeder import DemoSeeder
 
-            seeder = DemoSeeder(db)
-            if not await seeder.is_seeded():
-                result = await seeder.seed()
-                logger.info("Demo data auto-seeded", result=result)
+        seeder = DemoSeeder(db)
+        if not await seeder.is_seeded():
+            result = await seeder.seed()
+            logger.info("Demo data auto-seeded", result=result)
 
     logger.info(
         "Application started successfully",
