@@ -69,11 +69,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Initialize database
     db = init_database(settings.database_url, echo=settings.debug)
 
-    # Create tables in development
-    if settings.is_development:
-        await db.create_tables()
+    # Create tables (idempotent - safe for all environments)
+    await db.create_tables()
 
-        # Auto-seed demo data when SEED_DEMO is enabled
+    # Auto-seed demo data when SEED_DEMO is enabled (development only)
+    if settings.is_development:
         if os.environ.get("SEED_DEMO", "").lower() in ("true", "1", "yes"):
             from grc_backend.demo.seeder import DemoSeeder
 
@@ -128,7 +128,7 @@ def create_app() -> FastAPI:
     setup_security(app, security_config)
 
     # Include routers
-    app.include_router(health.router, tags=["Health"])
+    app.include_router(health.router, prefix="/api/v1", tags=["Health"])
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
     app.include_router(projects.router, prefix="/api/v1/projects", tags=["Projects"])
     app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])

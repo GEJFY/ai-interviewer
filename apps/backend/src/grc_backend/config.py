@@ -3,7 +3,7 @@
 import json
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
     json_logs: bool = Field(default=False)
 
-    # CORS
-    cors_origins: list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
+    # CORS (str | list[str] で pydantic-settings v2 の JSON パースエラーを回避)
+    cors_origins: str | list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -98,6 +98,13 @@ class Settings(BaseSettings):
     aws_transcribe_s3_bucket: str = Field(default="")
 
     # GCP Speech (uses gcp_project_id from above)
+
+    @model_validator(mode="after")
+    def _validate_production_secrets(self) -> "Settings":
+        """production環境でデフォルトSECRET_KEYの使用をブロック。"""
+        if self.environment == "production" and self.secret_key == "dev-secret-key-change-in-production":
+            raise ValueError("SECRET_KEY must be set in production environment")
+        return self
 
     @property
     def is_development(self) -> bool:

@@ -9,8 +9,11 @@ const nextConfig = {
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
   },
 
-  // Headers for CORS
+  // Headers for CORS (development only; production uses backend CORS middleware)
   async headers() {
+    if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
+      return [];
+    }
     return [
       {
         source: '/api/:path*',
