@@ -153,162 +153,130 @@ const MOCK_PROVIDERS = {
 async function setupApiMocks(page: Page) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
-  // ⚠️ Playwright はルートを登録の逆順で評価する（後に登録したものが先にマッチ）
-  // そのため catch-all を最初に登録し、具体的なハンドラーを後に登録する
-
-  // Catch-all for other API calls（最初に登録 → 最後に評価される）
+  // 単一ルートハンドラーで全 API リクエストを処理（ルート評価順の問題を回避）
   await page.route(
     (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/'),
     (route) => {
+      const url = new URL(route.request().url());
+      const path = url.pathname;
+      const method = route.request().method();
+
+      // Auth: login
+      if (path === '/api/v1/auth/login') {
+        const body = route.request().postData() || '';
+        const isValidLogin =
+          body.includes('admin@example.com') && body.includes('password123');
+        return route.fulfill({
+          status: isValidLogin ? 200 : 401,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            isValidLogin ? MOCK_TOKENS : { detail: 'Incorrect email or password' },
+          ),
+        });
+      }
+
+      // Auth: current user
+      if (path === '/api/v1/auth/me') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_USER),
+        });
+      }
+
+      // Auth: refresh token
+      if (path === '/api/v1/auth/refresh') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_TOKENS),
+        });
+      }
+
+      // Projects
+      if (path.startsWith('/api/v1/projects')) {
+        return route.fulfill({
+          status: method === 'GET' ? 200 : 201,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            method === 'GET' ? MOCK_PROJECTS : MOCK_PROJECTS.items[0],
+          ),
+        });
+      }
+
+      // Models: providers
+      if (path === '/api/v1/models/providers') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(MOCK_PROVIDERS),
+        });
+      }
+
+      // Models: test-connection
+      if (path === '/api/v1/models/test-connection') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            provider: 'azure_openai',
+            status: 'success',
+            message: '接続成功',
+            model_used: 'gpt-5-nano',
+          }),
+        });
+      }
+
+      // Models: list
+      if (path === '/api/v1/models') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ models: [], total: 0 }),
+        });
+      }
+
+      // Models: recommended
+      if (path === '/api/v1/models/recommended') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            recommendations: {
+              realtime_dialogue: 'gpt-5-nano',
+              analysis_report: 'gpt-5-nano',
+            },
+          }),
+        });
+      }
+
+      // Tasks
+      if (path.startsWith('/api/v1/tasks')) {
+        return route.fulfill({
+          status: method === 'GET' ? 200 : 201,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            method === 'GET' ? MOCK_TASKS : MOCK_TASKS.items[0],
+          ),
+        });
+      }
+
+      // Templates
+      if (path.startsWith('/api/v1/templates')) {
+        return route.fulfill({
+          status: method === 'GET' ? 200 : 201,
+          contentType: 'application/json',
+          body: JSON.stringify(
+            method === 'GET' ? MOCK_TEMPLATES : MOCK_TEMPLATES.items[0],
+          ),
+        });
+      }
+
+      // Catch-all
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({}),
-      });
-    },
-  );
-
-  // Auth: login
-  await page.route(`${apiBase}/api/v1/auth/login`, (route) => {
-    const body = route.request().postData() || '';
-    const isValidLogin =
-      body.includes('admin@example.com') && body.includes('password123');
-
-    if (isValidLogin) {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_TOKENS),
-      });
-    }
-    return route.fulfill({
-      status: 401,
-      contentType: 'application/json',
-      body: JSON.stringify({ detail: 'Incorrect email or password' }),
-    });
-  });
-
-  // Auth: current user
-  await page.route(`${apiBase}/api/v1/auth/me`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_USER),
-    });
-  });
-
-  // Auth: refresh token
-  await page.route(`${apiBase}/api/v1/auth/refresh`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_TOKENS),
-    });
-  });
-
-  // Projects
-  await page.route(
-    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/projects'),
-    (route) => {
-      if (route.request().method() === 'GET') {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_PROJECTS),
-        });
-      }
-      // POST (create)
-      return route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_PROJECTS.items[0]),
-      });
-    },
-  );
-
-  // Models: providers
-  await page.route(`${apiBase}/api/v1/models/providers`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_PROVIDERS),
-    });
-  });
-
-  // Models: test-connection
-  await page.route(`${apiBase}/api/v1/models/test-connection`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        provider: 'azure_openai',
-        status: 'success',
-        message: '接続成功',
-        model_used: 'gpt-5-nano',
-      }),
-    });
-  });
-
-  // Models: list
-  await page.route(
-    (url) => url.origin === apiBase && url.pathname === '/api/v1/models',
-    (route) => {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ models: [], total: 0 }),
-      });
-    },
-  );
-
-  // Models: recommended
-  await page.route(`${apiBase}/api/v1/models/recommended`, (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        recommendations: {
-          realtime_dialogue: 'gpt-5-nano',
-          analysis_report: 'gpt-5-nano',
-        },
-      }),
-    });
-  });
-
-  // Tasks
-  await page.route(
-    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/tasks'),
-    (route) => {
-      if (route.request().method() === 'GET') {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_TASKS),
-        });
-      }
-      return route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_TASKS.items[0]),
-      });
-    },
-  );
-
-  // Templates（最後に登録 → 最初に評価される）
-  await page.route(
-    (url) => url.origin === apiBase && url.pathname.startsWith('/api/v1/templates'),
-    (route) => {
-      if (route.request().method() === 'GET') {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_TEMPLATES),
-        });
-      }
-      return route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_TEMPLATES.items[0]),
       });
     },
   );
