@@ -4,7 +4,7 @@
  * CI ではバックエンドが起動していないため、API レスポンスをモックする。
  * ローカル開発時はバックエンドが起動していれば実際の API を使用する。
  */
-import { test as base, expect, type Page, type Route } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -147,68 +147,78 @@ const MOCK_PROVIDERS = {
 };
 
 // ---------------------------------------------------------------------------
-// API mock handler（URL パスに基づくディスパッチ）
+// API mock setup
 // ---------------------------------------------------------------------------
 
-function handleApiRequest(route: Route) {
-  const url = new URL(route.request().url());
-  const path = url.pathname;
-  const method = route.request().method();
+async function setupApiMocks(page: Page) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
   // Auth: login
-  if (path === '/api/v1/auth/login') {
+  await page.route(`${apiBase}/api/v1/auth/login`, (route) => {
     const body = route.request().postData() || '';
     const isValidLogin =
       body.includes('admin@example.com') && body.includes('password123');
+
+    if (isValidLogin) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_TOKENS),
+      });
+    }
     return route.fulfill({
-      status: isValidLogin ? 200 : 401,
+      status: 401,
       contentType: 'application/json',
-      body: JSON.stringify(
-        isValidLogin ? MOCK_TOKENS : { detail: 'Incorrect email or password' },
-      ),
+      body: JSON.stringify({ detail: 'Incorrect email or password' }),
     });
-  }
+  });
 
   // Auth: current user
-  if (path === '/api/v1/auth/me') {
+  await page.route(`${apiBase}/api/v1/auth/me`, (route) => {
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_USER),
     });
-  }
+  });
 
   // Auth: refresh token
-  if (path === '/api/v1/auth/refresh') {
+  await page.route(`${apiBase}/api/v1/auth/refresh`, (route) => {
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_TOKENS),
     });
-  }
+  });
 
   // Projects
-  if (path.startsWith('/api/v1/projects')) {
+  await page.route(`${apiBase}/api/v1/projects**`, (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_PROJECTS),
+      });
+    }
+    // POST (create)
     return route.fulfill({
-      status: method === 'GET' ? 200 : 201,
+      status: 201,
       contentType: 'application/json',
-      body: JSON.stringify(
-        method === 'GET' ? MOCK_PROJECTS : MOCK_PROJECTS.items[0],
-      ),
+      body: JSON.stringify(MOCK_PROJECTS.items[0]),
     });
-  }
+  });
 
   // Models: providers
-  if (path === '/api/v1/models/providers') {
+  await page.route(`${apiBase}/api/v1/models/providers`, (route) => {
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_PROVIDERS),
     });
-  }
+  });
 
   // Models: test-connection
-  if (path === '/api/v1/models/test-connection') {
+  await page.route(`${apiBase}/api/v1/models/test-connection`, (route) => {
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -219,19 +229,19 @@ function handleApiRequest(route: Route) {
         model_used: 'gpt-5-nano',
       }),
     });
-  }
+  });
 
   // Models: list
-  if (path === '/api/v1/models') {
+  await page.route(`${apiBase}/api/v1/models?**`, (route) => {
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ models: [], total: 0 }),
     });
-  }
+  });
 
   // Models: recommended
-  if (path === '/api/v1/models/recommended') {
+  await page.route(`${apiBase}/api/v1/models/recommended`, (route) => {
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -242,47 +252,48 @@ function handleApiRequest(route: Route) {
         },
       }),
     });
-  }
+  });
 
   // Tasks
-  if (path.startsWith('/api/v1/tasks')) {
+  await page.route(`${apiBase}/api/v1/tasks**`, (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_TASKS),
+      });
+    }
     return route.fulfill({
-      status: method === 'GET' ? 200 : 201,
+      status: 201,
       contentType: 'application/json',
-      body: JSON.stringify(
-        method === 'GET' ? MOCK_TASKS : MOCK_TASKS.items[0],
-      ),
+      body: JSON.stringify(MOCK_TASKS.items[0]),
     });
-  }
+  });
 
   // Templates
-  if (path.startsWith('/api/v1/templates')) {
+  await page.route(`${apiBase}/api/v1/templates**`, (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_TEMPLATES),
+      });
+    }
     return route.fulfill({
-      status: method === 'GET' ? 200 : 201,
+      status: 201,
       contentType: 'application/json',
-      body: JSON.stringify(
-        method === 'GET' ? MOCK_TEMPLATES : MOCK_TEMPLATES.items[0],
-      ),
+      body: JSON.stringify(MOCK_TEMPLATES.items[0]),
     });
-  }
-
-  // Catch-all
-  return route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({}),
   });
-}
 
-// ---------------------------------------------------------------------------
-// API mock setup
-// ---------------------------------------------------------------------------
-
-async function setupApiMocks(page: Page) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-
-  // 全 API リクエストを単一ハンドラーで処理
-  await page.route(`${apiBase}/api/v1/**`, handleApiRequest);
+  // Catch-all for other API calls
+  await page.route(`${apiBase}/api/v1/**`, (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({}),
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
