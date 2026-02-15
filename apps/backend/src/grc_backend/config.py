@@ -58,6 +58,10 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
+    # Database connection pool
+    db_pool_size: int = Field(default=10)
+    db_max_overflow: int = Field(default=20)
+
     # Rate limiting
     rate_limit_enabled: bool = Field(default=False)
     rate_limit_requests: int = Field(default=100)

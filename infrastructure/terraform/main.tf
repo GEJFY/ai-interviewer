@@ -1,5 +1,5 @@
-# AI Interview Tool - Multi-Cloud Infrastructure
-# Terraform configuration for Azure, AWS, and GCP deployments
+# AI Interview Tool - Azure Infrastructure
+# デモ環境デプロイ用（Azure専用）
 
 terraform {
   required_version = ">= 1.9.0"
@@ -9,23 +9,21 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.14"
     }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.82"
-    }
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 6.14"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
   }
 
-  backend "azurerm" {
-    # Configure backend in environment-specific tfvars
-  }
+  # デモ/開発環境ではローカル backend を使用
+  # 本番環境では以下のように azurerm backend に切り替えること:
+  #   backend "azurerm" {
+  #     resource_group_name  = "terraform-state-rg"
+  #     storage_account_name = "tfstateXXXXXX"
+  #     container_name       = "tfstate"
+  #     key                  = "ai-interviewer.tfstate"
+  #   }
+  backend "local" {}
 }
 
 # Variables
@@ -33,12 +31,6 @@ variable "environment" {
   description = "Deployment environment (dev, staging, prod)"
   type        = string
   default     = "dev"
-}
-
-variable "cloud_provider" {
-  description = "Primary cloud provider (azure, aws, gcp)"
-  type        = string
-  default     = "azure"
 }
 
 variable "project_name" {
@@ -59,13 +51,19 @@ variable "ai_provider" {
   default     = "azure_openai"
 }
 
+# cloud_provider variable kept for tfvars compatibility
+variable "cloud_provider" {
+  description = "Primary cloud provider (azure, aws, gcp)"
+  type        = string
+  default     = "azure"
+}
+
 # Local values
 locals {
   common_tags = {
     Project     = var.project_name
     Environment = var.environment
     ManagedBy   = "terraform"
-    CreatedAt   = timestamp()
   }
 
   resource_prefix = "${var.project_name}-${var.environment}"
@@ -78,10 +76,9 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-# Conditional module loading based on cloud provider
+# Azure module (direct call without count)
 module "azure" {
   source = "./modules/azure"
-  count  = var.cloud_provider == "azure" ? 1 : 0
 
   environment     = var.environment
   resource_prefix = local.resource_prefix
@@ -91,55 +88,29 @@ module "azure" {
   ai_provider     = var.ai_provider
 }
 
-module "aws" {
-  source = "./modules/aws"
-  count  = var.cloud_provider == "aws" ? 1 : 0
-
-  environment     = var.environment
-  resource_prefix = local.resource_prefix
-  region          = var.region
-  tags            = local.common_tags
-  suffix          = random_string.suffix.result
-  ai_provider     = var.ai_provider
-}
-
-module "gcp" {
-  source = "./modules/gcp"
-  count  = var.cloud_provider == "gcp" ? 1 : 0
-
-  environment     = var.environment
-  resource_prefix = local.resource_prefix
-  region          = var.region
-  labels          = local.common_tags
-  suffix          = random_string.suffix.result
-  ai_provider     = var.ai_provider
-}
-
 # Outputs
 output "cloud_provider" {
   description = "Selected cloud provider"
-  value       = var.cloud_provider
+  value       = "azure"
 }
 
 output "api_endpoint" {
   description = "API endpoint URL"
-  value = var.cloud_provider == "azure" ? (
-    length(module.azure) > 0 ? module.azure[0].api_endpoint : null
-  ) : var.cloud_provider == "aws" ? (
-    length(module.aws) > 0 ? module.aws[0].api_endpoint : null
-  ) : (
-    length(module.gcp) > 0 ? module.gcp[0].api_endpoint : null
-  )
+  value       = module.azure.api_endpoint
 }
 
 output "database_connection" {
   description = "Database connection string (sensitive)"
-  value = var.cloud_provider == "azure" ? (
-    length(module.azure) > 0 ? module.azure[0].database_connection : null
-  ) : var.cloud_provider == "aws" ? (
-    length(module.aws) > 0 ? module.aws[0].database_connection : null
-  ) : (
-    length(module.gcp) > 0 ? module.gcp[0].database_connection : null
-  )
-  sensitive = true
+  value       = module.azure.database_connection
+  sensitive   = true
+}
+
+output "container_registry" {
+  description = "Container registry URL"
+  value       = module.azure.container_registry
+}
+
+output "resource_group_name" {
+  description = "Resource group name"
+  value       = module.azure.resource_group_name
 }
