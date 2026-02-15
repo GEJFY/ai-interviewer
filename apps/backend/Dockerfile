@@ -54,7 +54,9 @@ RUN uv pip install --no-cache-dir \
     azure-cognitiveservices-speech==1.42.0 \
     boto3==1.35.0 \
     google-cloud-aiplatform==1.72.0 \
-    anthropic==0.40.0
+    anthropic==0.40.0 \
+    ollama>=0.4.0 \
+    "bcrypt>=4.0.0,<4.1.0"
 
 # -----------------------------------------------------------------------------
 # Stage 2: Production image

@@ -516,12 +516,13 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, frontend-build, security-scan, docker-build, terraform-validate, integration-test-ollama, e2e-test]
+    needs: [backend-lint, backend-test, frontend-test, frontend-build, security-scan, docker-build, terraform-validate, integration-test-ollama, e2e-test]
     if: always()
     steps:
       - name: Check all jobs
         run: |
           echo "=== CI Job Results ==="
+          echo "backend-lint:            ${{ needs.backend-lint.result }}"
           echo "backend-test:            ${{ needs.backend-test.result }}"
           echo "frontend-test:           ${{ needs.frontend-test.result }}"
           echo "frontend-build:          ${{ needs.frontend-build.result }}"
@@ -532,22 +533,21 @@ jobs:
           echo "e2e-test:                ${{ needs.e2e-test.result }}"
           echo ""
 
-          # Required jobs (must succeed or be skipped due to dependency failure)
+          # Required jobs (must succeed — skipped means upstream failed)
           FAILED=false
-          for job in backend-test frontend-test frontend-build docker-build terraform-validate; do
-            result="${{ needs.backend-test.result }}"
+          for job in backend-lint backend-test frontend-test frontend-build docker-build terraform-validate; do
+            result=""
             case "$job" in
+              backend-lint) result="${{ needs.backend-lint.result }}" ;;
               backend-test) result="${{ needs.backend-test.result }}" ;;
               frontend-test) result="${{ needs.frontend-test.result }}" ;;
               frontend-build) result="${{ needs.frontend-build.result }}" ;;
               docker-build) result="${{ needs.docker-build.result }}" ;;
               terraform-validate) result="${{ needs.terraform-validate.result }}" ;;
             esac
-            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+            if [[ "$result" != "success" ]]; then
               echo "FAIL: $job ($result)"
               FAILED=true
-            elif [[ "$result" == "skipped" ]]; then
-              echo "SKIP: $job (skipped due to dependency)"
             fi
           done
 
