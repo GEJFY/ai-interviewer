@@ -44,6 +44,9 @@ RUN uv pip install --no-cache-dir \
     opentelemetry-api==1.28.0 \
     opentelemetry-sdk==1.28.0 \
     opentelemetry-instrumentation-fastapi==0.49b0 \
+    opentelemetry-instrumentation-sqlalchemy==0.49b0 \
+    opentelemetry-instrumentation-redis==0.49b0 \
+    opentelemetry-instrumentation-httpx==0.49b0 \
     opentelemetry-exporter-otlp==1.28.0 \
     azure-monitor-opentelemetry-exporter>=1.0.0b31 \
     msal>=1.31.0 \

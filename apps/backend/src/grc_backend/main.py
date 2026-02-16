@@ -125,6 +125,7 @@ def create_app() -> FastAPI:
         rate_limit_enabled=settings.rate_limit_enabled,
         rate_limit_requests=settings.rate_limit_requests,
         rate_limit_window=settings.rate_limit_window,
+        redis_url=settings.redis_url if settings.rate_limit_enabled else None,
         hsts_enabled=settings.is_production,
         csp_enabled=settings.is_production,
         debug=settings.debug,
