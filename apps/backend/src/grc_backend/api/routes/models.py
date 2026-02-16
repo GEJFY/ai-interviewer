@@ -167,7 +167,7 @@ async def list_providers() -> ProvidersResponse:
 
 
 _PROVIDER_ID_TO_FACTORY = {
-    "azure_openai": "azure",
+    "azure_foundry": "azure",
     "openai": "azure",  # OpenAI models accessed via Azure
     "aws_bedrock": "aws",
     "gcp_vertex": "gcp",
@@ -257,7 +257,7 @@ async def test_connection(request: ConnectionTestRequest) -> ConnectionTestRespo
 
 def _check_provider_configured(provider: str, settings) -> bool:
     """Check if a provider has required credentials configured."""
-    if provider in ("openai", "azure_openai"):
+    if provider in ("openai", "azure_foundry"):
         return bool(settings.azure_openai_api_key and settings.azure_openai_endpoint)
     elif provider == "anthropic":
         return False  # Direct Anthropic not in settings
