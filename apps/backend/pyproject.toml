@@ -26,6 +26,12 @@ dependencies = [
     "redis>=5.2.0",
     # Numerical computation
     "numpy>=1.26.0",
+    # Document export
+    "python-docx>=1.1.0",
+    "openpyxl>=3.1.0",
+    "reportlab>=4.1.0",
+    # Vector search
+    "pgvector>=0.3.0",
     # Internal packages
     "grc-core",
     "grc-ai",
