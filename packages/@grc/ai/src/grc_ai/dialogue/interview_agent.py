@@ -404,6 +404,124 @@ class InterviewAgent:
                 "sentiment": "neutral",
             }
 
+    async def assess_coverage(self) -> dict[str, Any]:
+        """Assess question coverage by asking the AI to analyze the conversation.
+
+        Returns:
+            Coverage assessment with per-question status and overall percentage
+        """
+        if not self.history:
+            return {
+                "overall_percentage": 0,
+                "questions": [
+                    {"question": q, "status": "unanswered", "percentage": 0}
+                    for q in self.context.questions
+                ],
+                "suggest_end": False,
+            }
+
+        transcript_text = "\n".join(
+            f"{'AI' if t.role == 'ai' else '回答者'}: {t.content}" for t in self.history
+        )
+        questions_text = "\n".join(f"{i + 1}. {q}" for i, q in enumerate(self.context.questions))
+
+        prompt = f"""以下のインタビュー記録と質問リストを分析し、各質問のカバレッジを評価してください。
+
+## 質問リスト
+{questions_text}
+
+## インタビュー記録
+{transcript_text}
+
+## 出力形式（JSON）
+{{
+    "overall_percentage": 0-100の数値,
+    "questions": [
+        {{"question": "質問文", "status": "answered|partial|unanswered", "percentage": 0-100}}
+    ],
+    "suggest_end": true/false（90%以上でtrue）
+}}
+"""
+        messages = [
+            ChatMessage(role=MessageRole.SYSTEM, content="JSONフォーマットで出力してください。"),
+            ChatMessage(role=MessageRole.USER, content=prompt),
+        ]
+
+        response = await self.provider.chat(
+            messages,
+            temperature=0.2,
+            max_tokens=2048,
+        )
+
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+            return json.loads(content)
+        except json.JSONDecodeError:
+            # Fallback: estimate from conversation length
+            user_turns = sum(1 for t in self.history if t.role == "user")
+            total_q = len(self.context.questions)
+            estimated = min(int((user_turns / max(total_q * 2, 1)) * 100), 100)
+            return {
+                "overall_percentage": estimated,
+                "questions": [
+                    {"question": q, "status": "unknown", "percentage": estimated}
+                    for q in self.context.questions
+                ],
+                "suggest_end": estimated >= 90,
+            }
+
+    def generate_carry_over(self, coverage: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Generate carry-over context for the next interview session.
+
+        Args:
+            coverage: Optional coverage assessment from assess_coverage()
+
+        Returns:
+            Carry-over context to store in Interview.extra_metadata
+        """
+        # Collect key points from AI messages
+        ai_messages = [t.content for t in self.history if t.role == "ai"]
+        user_messages = [t.content for t in self.history if t.role == "user"]
+
+        # Determine unanswered questions
+        unanswered: list[str] = []
+        if coverage and "questions" in coverage:
+            unanswered = [
+                q["question"]
+                for q in coverage["questions"]
+                if q.get("status") in ("unanswered", "partial")
+            ]
+        else:
+            # Simple fallback: assume later questions are less covered
+            user_turns = len(user_messages)
+            total_q = len(self.context.questions)
+            covered_count = min(user_turns, total_q)
+            unanswered = self.context.questions[covered_count:]
+
+        return {
+            "carry_over": True,
+            "previous_interview_id": self.context.interview_id,
+            "coverage_percentage": coverage.get("overall_percentage", 0) if coverage else 0,
+            "unanswered_questions": unanswered,
+            "key_topics_discussed": ai_messages[:3] if ai_messages else [],
+            "total_turns": len(self.history),
+            "message": "前回のインタビューからの持ち越しコンテキストです。",
+        }
+
+    def load_carry_over(self, carry_over: dict[str, Any]) -> None:
+        """Load carry-over context from a previous interview session.
+
+        Injects previous context into the metadata so prompts can reference it.
+
+        Args:
+            carry_over: Carry-over context from previous session
+        """
+        self.context.metadata["carry_over"] = carry_over
+
     def get_transcript(self) -> list[dict[str, Any]]:
         """Get the full transcript of the interview.
 
