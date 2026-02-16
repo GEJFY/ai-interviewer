@@ -266,27 +266,31 @@ def get_transcription_service() -> TranscriptionService:
     """Get or create the transcription service singleton."""
     global _transcription_service
     if _transcription_service is None:
-        # TODO: Load configuration from environment/settings
-        from grc_backend.config import settings
+        from grc_backend.config import get_settings
+
+        settings = get_settings()
 
         provider_config = {}
         provider_type = SpeechProviderType.AZURE
 
-        if hasattr(settings, "SPEECH_PROVIDER"):
-            provider_type = SpeechProviderType(settings.SPEECH_PROVIDER)
+        if settings.speech_provider:
+            try:
+                provider_type = SpeechProviderType(settings.speech_provider)
+            except ValueError:
+                provider_type = SpeechProviderType.AZURE
 
         if provider_type == SpeechProviderType.AZURE:
             provider_config = {
-                "subscription_key": getattr(settings, "AZURE_SPEECH_KEY", ""),
-                "region": getattr(settings, "AZURE_SPEECH_REGION", "japaneast"),
+                "subscription_key": settings.azure_speech_key,
+                "region": settings.azure_speech_region,
             }
         elif provider_type == SpeechProviderType.AWS:
             provider_config = {
-                "region_name": getattr(settings, "AWS_REGION", "ap-northeast-1"),
+                "region_name": settings.aws_region,
             }
         elif provider_type == SpeechProviderType.GCP:
             provider_config = {
-                "project_id": getattr(settings, "GCP_PROJECT_ID", ""),
+                "project_id": settings.gcp_project_id,
             }
 
         _transcription_service = TranscriptionService(

@@ -75,8 +75,8 @@ export default function InterviewPage() {
         reader.readAsDataURL(chunk.data);
       }
     },
-    onStop: async (blob: Blob, duration: number) => {
-      console.log(`Recording stopped: ${duration}s`);
+    onStop: async (_blob: Blob, _duration: number) => {
+      // Recording stopped - blob available for further processing if needed
     },
   });
 

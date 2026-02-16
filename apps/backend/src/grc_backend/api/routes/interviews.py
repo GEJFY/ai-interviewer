@@ -1,8 +1,9 @@
 """Interview management endpoints."""
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Query, status
 
 from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession, InterviewerUser
+from grc_backend.core.errors import NotFoundError, ValidationError
 from grc_core.enums import InterviewStatus
 from grc_core.repositories import InterviewRepository, TaskRepository
 from grc_core.schemas import (
@@ -16,6 +17,35 @@ from grc_core.schemas.base import PaginatedResponse
 from grc_core.schemas.transcript import TranscriptEntryRead
 
 router = APIRouter()
+
+# ステートマシン: 各操作で許可される現在ステータス
+_ALLOWED_TRANSITIONS: dict[str, set[InterviewStatus]] = {
+    "start": {InterviewStatus.SCHEDULED, InterviewStatus.PAUSED},
+    "pause": {InterviewStatus.IN_PROGRESS},
+    "resume": {InterviewStatus.PAUSED},
+    "complete": {InterviewStatus.IN_PROGRESS, InterviewStatus.PAUSED},
+}
+
+
+def _validate_transition(interview, action: str) -> None:
+    """インタビューのステータス遷移を検証する。"""
+    allowed = _ALLOWED_TRANSITIONS.get(action, set())
+    if interview.status not in allowed:
+        raise ValidationError(
+            message=f"Cannot {action} interview with status: {interview.status.value}",
+        )
+
+
+async def _get_interview_or_raise(repo: InterviewRepository, interview_id: str):
+    """インタビューを取得し、なければ NotFoundError を送出する。"""
+    interview = await repo.get(interview_id)
+    if not interview:
+        raise NotFoundError(
+            message="Interview not found",
+            resource_type="Interview",
+            resource_id=interview_id,
+        )
+    return interview
 
 
 @router.get("", response_model=PaginatedResponse[InterviewRead])
@@ -56,14 +86,14 @@ async def create_interview(
     current_user: InterviewerUser,
 ) -> InterviewRead:
     """Create a new interview."""
-    # Verify task exists
     task_repo = TaskRepository(db)
     task = await task_repo.get(interview_data.task_id)
 
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
+        raise NotFoundError(
+            message="Task not found",
+            resource_type="Task",
+            resource_id=interview_data.task_id,
         )
 
     repo = InterviewRepository(db)
@@ -86,14 +116,7 @@ async def get_interview(
 ) -> InterviewRead:
     """Get a specific interview."""
     repo = InterviewRepository(db)
-    interview = await repo.get(interview_id)
-
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found",
-        )
-
+    interview = await _get_interview_or_raise(repo, interview_id)
     return InterviewRead.model_validate(interview)
 
 
@@ -106,19 +129,8 @@ async def start_interview(
 ) -> InterviewRead:
     """Start an interview session."""
     repo = InterviewRepository(db)
-    interview = await repo.get(interview_id)
-
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found",
-        )
-
-    if interview.status not in (InterviewStatus.SCHEDULED, InterviewStatus.PAUSED):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot start interview with status: {interview.status}",
-        )
+    interview = await _get_interview_or_raise(repo, interview_id)
+    _validate_transition(interview, "start")
 
     interviewer_id = start_data.interviewer_id or current_user.id
     updated_interview = await repo.start(interview_id, interviewer_id)
@@ -135,16 +147,12 @@ async def pause_interview(
 ) -> InterviewRead:
     """Pause an interview session."""
     repo = InterviewRepository(db)
-    interview = await repo.pause(interview_id)
+    interview = await _get_interview_or_raise(repo, interview_id)
+    _validate_transition(interview, "pause")
 
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found or cannot be paused",
-        )
-
+    updated = await repo.pause(interview_id)
     await db.commit()
-    return InterviewRead.model_validate(interview)
+    return InterviewRead.model_validate(updated)
 
 
 @router.post("/{interview_id}/resume", response_model=InterviewRead)
@@ -155,16 +163,12 @@ async def resume_interview(
 ) -> InterviewRead:
     """Resume a paused interview session."""
     repo = InterviewRepository(db)
-    interview = await repo.resume(interview_id)
+    interview = await _get_interview_or_raise(repo, interview_id)
+    _validate_transition(interview, "resume")
 
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found or cannot be resumed",
-        )
-
+    updated = await repo.resume(interview_id)
     await db.commit()
-    return InterviewRead.model_validate(interview)
+    return InterviewRead.model_validate(updated)
 
 
 @router.post("/{interview_id}/complete", response_model=InterviewRead)
@@ -177,22 +181,15 @@ async def complete_interview(
 ) -> InterviewRead:
     """Complete an interview session."""
     repo = InterviewRepository(db)
-    interview = await repo.get(interview_id)
+    interview = await _get_interview_or_raise(repo, interview_id)
+    _validate_transition(interview, "complete")
 
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found",
-        )
-
-    # Complete the interview
     updated_interview = await repo.complete(
         interview_id,
         summary=complete_data.summary,
         ai_analysis=complete_data.ai_analysis,
     )
 
-    # Update task status
     task_repo = TaskRepository(db)
     await task_repo.update_status(interview.task_id)
 
@@ -208,13 +205,7 @@ async def get_transcript(
 ) -> list[TranscriptEntryRead]:
     """Get the transcript of an interview."""
     repo = InterviewRepository(db)
-    interview = await repo.get(interview_id)
-
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found",
-        )
+    await _get_interview_or_raise(repo, interview_id)
 
     entries = await repo.get_transcript(interview_id)
     return [TranscriptEntryRead.model_validate(e) for e in entries]
@@ -229,13 +220,7 @@ async def update_interview(
 ) -> InterviewRead:
     """Update an interview."""
     repo = InterviewRepository(db)
-    interview = await repo.get(interview_id)
-
-    if not interview:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Interview not found",
-        )
+    await _get_interview_or_raise(repo, interview_id)
 
     update_data = interview_data.model_dump(exclude_unset=True)
     updated_interview = await repo.update(interview_id, **update_data)

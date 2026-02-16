@@ -475,6 +475,13 @@ def get_knowledge_service() -> KnowledgeService:
     """Get or create the knowledge service singleton."""
     global _knowledge_service
     if _knowledge_service is None:
-        # TODO: Initialize with AI provider from settings
-        _knowledge_service = KnowledgeService()
+        from grc_backend.api.deps import get_ai_provider
+        from grc_backend.config import get_settings
+
+        settings = get_settings()
+        try:
+            ai_provider = get_ai_provider(settings)
+        except Exception:
+            ai_provider = None
+        _knowledge_service = KnowledgeService(ai_provider=ai_provider)
     return _knowledge_service
