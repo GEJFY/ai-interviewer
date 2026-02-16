@@ -71,10 +71,21 @@ class SecurityConfig:
 
     @classmethod
     def from_env(cls, env: str = "development") -> "SecurityConfig":
-        """Create security config from environment."""
+        """Create security config from environment.
+
+        In production/staging the CORS origins are read from the
+        ``CORS_ORIGINS`` environment variable (comma-separated list).
+        Falls back to localhost when the variable is absent so that
+        local development works out of the box.
+        """
+        import os
+
+        cors_env = os.getenv("CORS_ORIGINS", "")
+        cors_from_env = [o.strip() for o in cors_env.split(",") if o.strip()]
+
         if env == "production":
             return cls(
-                cors_origins=["https://your-production-domain.com"],
+                cors_origins=cors_from_env or ["https://localhost:3000"],
                 rate_limit_enabled=True,
                 rate_limit_requests=60,
                 ip_allowlist_enabled=False,
@@ -84,14 +95,14 @@ class SecurityConfig:
             )
         elif env == "staging":
             return cls(
-                cors_origins=["https://staging.your-domain.com", "http://localhost:3000"],
+                cors_origins=cors_from_env or ["http://localhost:3000"],
                 rate_limit_enabled=True,
                 rate_limit_requests=120,
                 debug=False,
             )
         else:  # development
             return cls(
-                cors_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+                cors_origins=cors_from_env or ["http://localhost:3000", "http://127.0.0.1:3000"],
                 rate_limit_enabled=False,
                 hsts_enabled=False,
                 csp_enabled=False,
