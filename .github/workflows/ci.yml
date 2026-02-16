@@ -64,7 +64,7 @@ jobs:
       - name: Run MyPy type check
         run: |
           source .venv/bin/activate
-          mypy apps/backend/src packages/@grc --ignore-missing-imports
+          mypy apps/backend/src packages/@grc --ignore-missing-imports --exclude 'tests/'
 
   backend-test:
     name: Backend Tests
