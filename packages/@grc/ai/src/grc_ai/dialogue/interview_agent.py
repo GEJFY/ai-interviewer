@@ -3,14 +3,14 @@
 import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from grc_ai.base import AIProvider, ChatMessage, MessageRole
 from grc_ai.dialogue.prompts import PromptManager
 
 
-class InterviewPhase(str, Enum):
+class InterviewPhase(StrEnum):
     """Interview phase enum."""
 
     ICE_BREAKING = "ice_breaking"
