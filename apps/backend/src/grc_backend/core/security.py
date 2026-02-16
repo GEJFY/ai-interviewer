@@ -42,6 +42,7 @@ class SecurityConfig:
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 100  # Requests per window
     rate_limit_window: int = 60  # Window in seconds
+    redis_url: str | None = None  # Redis URL for distributed rate limiting
 
     # IP filtering
     ip_allowlist_enabled: bool = False
@@ -82,6 +83,7 @@ class SecurityConfig:
 
         cors_env = os.getenv("CORS_ORIGINS", "")
         cors_from_env = [o.strip() for o in cors_env.split(",") if o.strip()]
+        redis_url = os.getenv("REDIS_URL") or None
 
         if env == "production":
             return cls(
@@ -92,6 +94,7 @@ class SecurityConfig:
                 hsts_enabled=True,
                 csp_enabled=True,
                 debug=False,
+                redis_url=redis_url,
             )
         elif env == "staging":
             return cls(
@@ -99,6 +102,7 @@ class SecurityConfig:
                 rate_limit_enabled=True,
                 rate_limit_requests=120,
                 debug=False,
+                redis_url=redis_url,
             )
         else:  # development
             return cls(
@@ -107,36 +111,80 @@ class SecurityConfig:
                 hsts_enabled=False,
                 csp_enabled=False,
                 debug=True,
+                redis_url=redis_url,
             )
 
 
 class RateLimiter:
-    """In-memory rate limiter using sliding window algorithm."""
+    """Rate limiter with Redis backend and in-memory fallback.
 
-    def __init__(self, requests: int = 100, window: int = 60):
+    Uses Redis sorted sets for distributed rate limiting when available.
+    Falls back to in-memory sliding window when Redis is not configured.
+    """
+
+    def __init__(self, requests: int = 100, window: int = 60, redis_url: str | None = None):
         self.requests = requests
         self.window = window
+        self._redis = None
         self._store: dict[str, list[float]] = {}
 
-    def _cleanup_old_requests(self, key: str, current_time: float):
-        """Remove requests outside the current window."""
-        if key in self._store:
-            cutoff = current_time - self.window
-            self._store[key] = [t for t in self._store[key] if t > cutoff]
+        if redis_url:
+            try:
+                import redis as redis_lib
+
+                self._redis = redis_lib.Redis.from_url(redis_url, decode_responses=True)
+                self._redis.ping()
+                logger.info("Rate limiter using Redis backend")
+            except Exception:
+                self._redis = None
+                logger.info("Redis unavailable, rate limiter using in-memory fallback")
 
     def is_allowed(self, key: str) -> tuple[bool, dict]:
-        """Check if request is allowed under rate limit.
+        """Check if request is allowed under rate limit."""
+        if self._redis:
+            return self._is_allowed_redis(key)
+        return self._is_allowed_memory(key)
 
-        Args:
-            key: Unique identifier (IP, user ID, API key)
-
-        Returns:
-            Tuple of (allowed, rate_limit_info)
-        """
+    def _is_allowed_redis(self, key: str) -> tuple[bool, dict]:
+        """Redis-backed sliding window using sorted sets."""
         current_time = time.time()
-        self._cleanup_old_requests(key, current_time)
+        redis_key = f"ratelimit:{key}"
+        cutoff = current_time - self.window
 
-        if key not in self._store:
+        pipe = self._redis.pipeline()
+        pipe.zremrangebyscore(redis_key, 0, cutoff)
+        pipe.zcard(redis_key)
+        pipe.execute()
+
+        request_count = self._redis.zcard(redis_key)
+        remaining = max(0, self.requests - request_count)
+
+        info = {
+            "limit": self.requests,
+            "remaining": remaining,
+            "reset": int(current_time + self.window),
+            "window": self.window,
+        }
+
+        if request_count >= self.requests:
+            return False, info
+
+        pipe = self._redis.pipeline()
+        pipe.zadd(redis_key, {str(current_time): current_time})
+        pipe.expire(redis_key, self.window)
+        pipe.execute()
+
+        info["remaining"] = remaining - 1
+        return True, info
+
+    def _is_allowed_memory(self, key: str) -> tuple[bool, dict]:
+        """In-memory sliding window fallback."""
+        current_time = time.time()
+        cutoff = current_time - self.window
+
+        if key in self._store:
+            self._store[key] = [t for t in self._store[key] if t > cutoff]
+        else:
             self._store[key] = []
 
         request_count = len(self._store[key])
@@ -166,6 +214,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         self.rate_limiter = RateLimiter(
             requests=config.rate_limit_requests,
             window=config.rate_limit_window,
+            redis_url=config.redis_url,
         )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

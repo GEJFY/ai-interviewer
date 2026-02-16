@@ -87,6 +87,34 @@ def setup_telemetry(
 
     # Auto-instrument FastAPI
     FastAPIInstrumentor.instrument_app(app)
+
+    # Auto-instrument SQLAlchemy (database queries)
+    try:
+        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
+        SQLAlchemyInstrumentor().instrument()
+        logger.info("SQLAlchemy auto-instrumentation enabled")
+    except ImportError:
+        logger.debug("opentelemetry-instrumentation-sqlalchemy not installed, skipping")
+
+    # Auto-instrument Redis
+    try:
+        from opentelemetry.instrumentation.redis import RedisInstrumentor
+
+        RedisInstrumentor().instrument()
+        logger.info("Redis auto-instrumentation enabled")
+    except ImportError:
+        logger.debug("opentelemetry-instrumentation-redis not installed, skipping")
+
+    # Auto-instrument httpx (outbound HTTP calls to AI providers, SSO, etc.)
+    try:
+        from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+        HTTPXClientInstrumentor().instrument()
+        logger.info("httpx auto-instrumentation enabled")
+    except ImportError:
+        logger.debug("opentelemetry-instrumentation-httpx not installed, skipping")
+
     logger.info(
         "OpenTelemetry configured",
         extra={"service": service_name, "environment": environment},
