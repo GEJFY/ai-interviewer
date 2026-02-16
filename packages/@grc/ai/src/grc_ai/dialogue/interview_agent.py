@@ -117,8 +117,55 @@ class InterviewAgent:
             "感謝を伝えて丁寧にインタビューを終了してください。"
         )
 
+    def _get_time_hint(self) -> str:
+        """Generate time management hint based on elapsed time and duration setting.
+
+        Returns:
+            Time hint string to inject into the system prompt
+        """
+        duration_minutes = self.context.metadata.get("duration_minutes", 30)
+        total_questions = len(self.context.questions)
+
+        if not self.is_started:
+            return (
+                f"インタビュー時間は{duration_minutes}分です。"
+                f"質問数は{total_questions}問あるため、ペース配分に注意してください。"
+            )
+
+        # Calculate elapsed time from first history entry
+        if not self.history:
+            return f"インタビュー時間は{duration_minutes}分です。"
+
+        start_ms = self.history[0].timestamp_ms
+        elapsed_ms = self._get_timestamp() - start_ms
+        elapsed_minutes = elapsed_ms / 60000
+        remaining_minutes = duration_minutes - elapsed_minutes
+
+        if remaining_minutes <= 0:
+            return (
+                "【時間超過】設定時間を超過しています。"
+                "重要な未確認事項があれば簡潔に確認し、次回への持ち越しを提案してまとめに入ってください。"
+            )
+
+        if remaining_minutes <= 2:
+            return (
+                f"【残り約{int(remaining_minutes)}分】まもなく時間です。"
+                "今すぐクロージング（要点の振り返り・感謝）に入ってください。"
+            )
+
+        if remaining_minutes <= 5:
+            return (
+                f"【残り約{int(remaining_minutes)}分】時間が残りわずかです。"
+                "まとめに入る準備をしてください。重要な未確認事項を優先し、深掘りは控えてください。"
+            )
+
+        return (
+            f"経過: 約{int(elapsed_minutes)}分 / 設定: {duration_minutes}分（残り約{int(remaining_minutes)}分）。"
+            "ペース配分に注意して進めてください。"
+        )
+
     def _build_system_prompt(self) -> str:
-        """Build system prompt with current phase hint."""
+        """Build system prompt with current phase and time hints."""
         return PromptManager.get_system_prompt(
             organization_name=self.context.organization_name,
             use_case_type=self.context.use_case_type,
@@ -126,6 +173,7 @@ class InterviewAgent:
             questions=self.context.questions,
             is_anonymous=self.context.is_anonymous,
             phase_hint=self._get_phase_hint(),
+            time_hint=self._get_time_hint(),
         )
 
     def _build_messages(self) -> list[ChatMessage]:

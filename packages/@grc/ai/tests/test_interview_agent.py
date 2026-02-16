@@ -540,3 +540,177 @@ class TestPromptContent:
         messages = call_args[0][0]
         user_msg = [m for m in messages if m.role == "user"][0]
         assert "約60分" in user_msg.content
+
+
+# --- 時間管理テスト ---
+
+
+class TestTimeManagement:
+    """時間管理機能のテスト。"""
+
+    @pytest.fixture
+    def mock_provider(self):
+        provider = AsyncMock()
+        provider.chat.return_value = ChatResponse(
+            content="AIの応答", model="test", finish_reason="stop"
+        )
+        return provider
+
+    def test_time_hint_before_start(self, mock_provider):
+        """開始前のtime_hintがduration_minutesを含むこと。"""
+        ctx = InterviewContext(
+            interview_id="time-test-001",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1", "Q2", "Q3"],
+            metadata={"duration_minutes": 15},
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        hint = agent._get_time_hint()
+        assert "15分" in hint
+        assert "3問" in hint
+
+    def test_time_hint_default_duration(self, mock_provider):
+        """duration_minutes未設定時にデフォルト30分が使われること。"""
+        ctx = InterviewContext(
+            interview_id="time-test-002",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        hint = agent._get_time_hint()
+        assert "30分" in hint
+
+    def test_time_hint_during_interview(self, mock_provider):
+        """インタビュー中のtime_hintに経過/残り時間が含まれること。"""
+        import time
+
+        ctx = InterviewContext(
+            interview_id="time-test-003",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            metadata={"duration_minutes": 60},
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        agent.is_started = True
+        # Simulate history with a recent start timestamp
+        now_ms = int(time.time() * 1000)
+        agent.history.append(
+            DialogueTurn(role="ai", content="こんにちは", timestamp_ms=now_ms - 300000)
+        )  # 5 min ago
+
+        hint = agent._get_time_hint()
+        assert "経過" in hint
+        assert "残り" in hint
+
+    def test_time_hint_warning_5min(self, mock_provider):
+        """残り5分以内でまとめ準備の指示が出ること。"""
+        import time
+
+        ctx = InterviewContext(
+            interview_id="time-test-004",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            metadata={"duration_minutes": 30},
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        agent.is_started = True
+        # Simulate: started 26 minutes ago (4 min remaining)
+        now_ms = int(time.time() * 1000)
+        agent.history.append(
+            DialogueTurn(role="ai", content="start", timestamp_ms=now_ms - 26 * 60000)
+        )
+
+        hint = agent._get_time_hint()
+        assert "残り" in hint
+        assert "まとめ" in hint
+
+    def test_time_hint_warning_2min(self, mock_provider):
+        """残り2分以内でクロージング指示が出ること。"""
+        import time
+
+        ctx = InterviewContext(
+            interview_id="time-test-005",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            metadata={"duration_minutes": 30},
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        agent.is_started = True
+        # Simulate: started 29 minutes ago (1 min remaining)
+        now_ms = int(time.time() * 1000)
+        agent.history.append(
+            DialogueTurn(role="ai", content="start", timestamp_ms=now_ms - 29 * 60000)
+        )
+
+        hint = agent._get_time_hint()
+        assert "クロージング" in hint
+
+    def test_time_hint_exceeded(self, mock_provider):
+        """時間超過で超過メッセージが出ること。"""
+        import time
+
+        ctx = InterviewContext(
+            interview_id="time-test-006",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            metadata={"duration_minutes": 15},
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        agent.is_started = True
+        # Simulate: started 20 minutes ago (exceeded by 5 min)
+        now_ms = int(time.time() * 1000)
+        agent.history.append(
+            DialogueTurn(role="ai", content="start", timestamp_ms=now_ms - 20 * 60000)
+        )
+
+        hint = agent._get_time_hint()
+        assert "時間超過" in hint
+        assert "持ち越し" in hint
+
+    def test_time_hint_in_system_prompt(self, mock_provider):
+        """time_hintがシステムプロンプトに含まれること。"""
+        ctx = InterviewContext(
+            interview_id="time-test-007",
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            metadata={"duration_minutes": 45},
+        )
+        agent = InterviewAgent(provider=mock_provider, context=ctx)
+        prompt = agent._build_system_prompt()
+        assert "時間管理" in prompt
+        assert "45分" in prompt
+
+    def test_prompt_manager_time_hint_parameter(self):
+        """PromptManager.get_system_promptにtime_hintが渡せること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            time_hint="【残り約3分】クロージングに入ってください。",
+        )
+        assert "残り約3分" in prompt
+
+    def test_prompt_manager_default_time_hint(self):
+        """time_hint未指定時にデフォルトが使われること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        assert "ペース" in prompt

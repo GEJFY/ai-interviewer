@@ -167,6 +167,12 @@ async def interview_websocket(
             if template:
                 questions = [q.get("question", "") for q in template.questions]
 
+        # Read duration setting
+        duration_minutes = (
+            task.settings.get("duration_minutes", 30) if task and task.settings else 30
+        )
+        interview_start_time = time.time()
+
         # Create interview context
         org_name = getattr(current_user, "organization_name", None) or "Organization"
         context = InterviewContext(
@@ -177,16 +183,27 @@ async def interview_websocket(
             questions=questions or ["一般的なヒアリングを行います。"],
             is_anonymous=task.settings.get("anonymous_mode", False) if task else False,
             language=interview.language,
+            metadata={"duration_minutes": duration_minutes},
         )
 
         # Create interview agent
         agent = InterviewAgent(ai_provider, context)
         manager.set_agent(interview_id, agent)
 
-        # Send status
+        # Track which time warnings have been sent
+        time_warnings_sent: set[str] = set()
+
+        # Send status with duration info
         await manager.send_message(
             interview_id,
-            {"type": "status", "payload": {"status": "connected", "interview_id": interview_id}},
+            {
+                "type": "status",
+                "payload": {
+                    "status": "connected",
+                    "interview_id": interview_id,
+                    "duration_minutes": duration_minutes,
+                },
+            },
         )
 
         # Start interview if not already started
@@ -282,6 +299,50 @@ async def interview_websocket(
                         },
                     },
                 )
+
+                # Check time warnings after each AI response
+                elapsed_seconds = time.time() - interview_start_time
+                remaining_seconds = (duration_minutes * 60) - elapsed_seconds
+
+                if remaining_seconds <= 0 and "exceeded" not in time_warnings_sent:
+                    time_warnings_sent.add("exceeded")
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "time_warning",
+                            "payload": {
+                                "level": "exceeded",
+                                "remaining_seconds": 0,
+                                "message": "設定時間を超過しました。",
+                            },
+                        },
+                    )
+                elif remaining_seconds <= 120 and "2min" not in time_warnings_sent:
+                    time_warnings_sent.add("2min")
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "time_warning",
+                            "payload": {
+                                "level": "critical",
+                                "remaining_seconds": int(remaining_seconds),
+                                "message": "残り約2分です。",
+                            },
+                        },
+                    )
+                elif remaining_seconds <= 300 and "5min" not in time_warnings_sent:
+                    time_warnings_sent.add("5min")
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "time_warning",
+                            "payload": {
+                                "level": "warning",
+                                "remaining_seconds": int(remaining_seconds),
+                                "message": "残り約5分です。",
+                            },
+                        },
+                    )
 
             elif msg_type == "control":
                 action = payload.get("action")
