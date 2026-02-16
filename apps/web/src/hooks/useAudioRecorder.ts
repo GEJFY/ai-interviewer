@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import logger from '@/lib/logger';
 
 export type RecordingState = 'idle' | 'recording' | 'paused' | 'processing';
 
@@ -113,7 +114,7 @@ export function useAudioRecorder(
       setHasPermission(true);
       return true;
     } catch (error) {
-      console.error('Microphone permission denied:', error);
+      logger.error('Microphone permission denied:', error);
       setHasPermission(false);
       onError?.(error as Error);
       return false;
@@ -231,7 +232,7 @@ export function useAudioRecorder(
       };
 
       mediaRecorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
+        logger.error('MediaRecorder error:', event);
         onError?.(new Error('Recording error'));
         setState('idle');
       };
@@ -241,7 +242,7 @@ export function useAudioRecorder(
       startAudioLevelMonitoring(stream);
 
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      logger.error('Failed to start recording:', error);
       setState('idle');
       setHasPermission(false);
       onError?.(error as Error);

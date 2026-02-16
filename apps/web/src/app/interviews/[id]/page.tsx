@@ -21,6 +21,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import logger from '@/lib/logger';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import api from '@/lib/api-client';
@@ -179,7 +180,7 @@ export default function InterviewPage() {
         break;
 
       case 'error':
-        console.error('WebSocket error:', response.payload.message);
+        logger.error('WebSocket error:', response.payload.message);
         setIsLoading(false);
         break;
     }
@@ -192,7 +193,7 @@ export default function InterviewPage() {
     ws.onOpen = () => setIsConnected(true);
     ws.onClose = () => setIsConnected(false);
     ws.onMessage = handleWSMessage;
-    ws.onError = (error) => console.error('WebSocket error:', error);
+    ws.onError = (error) => logger.error('WebSocket error:', error);
     ws.connect();
     return () => ws.disconnect();
   }, [interviewId, handleWSMessage]);

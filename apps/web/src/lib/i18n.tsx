@@ -14,6 +14,7 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react';
+import logger from '@/lib/logger';
 
 // Import locale files
 import jaMessages from '@/locales/ja.json';
@@ -144,7 +145,7 @@ export function I18nProvider({
         }
 
         // Return key if no translation found
-        console.warn(`Missing translation: ${key}`);
+        logger.warn(`Missing translation: ${key}`);
         return key;
       }
 

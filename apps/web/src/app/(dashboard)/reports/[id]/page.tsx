@@ -19,6 +19,7 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api, { apiClient } from '@/lib/api-client';
+import logger from '@/lib/logger';
 import { Button, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -149,7 +150,7 @@ export default function ReportDetailPage() {
       setIsExportMenuOpen(false);
       toast.success('エクスポートしました');
     } catch (error) {
-      console.error('Export failed:', error);
+      logger.error('Export failed:', error);
       toast.error('エクスポートに失敗しました');
     }
   };

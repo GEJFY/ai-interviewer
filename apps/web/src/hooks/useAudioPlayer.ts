@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import logger from '@/lib/logger';
 
 export type PlaybackState = 'idle' | 'loading' | 'playing' | 'paused' | 'ended';
 
@@ -101,7 +102,7 @@ export function useAudioPlayer(
       if (state === 'loading') {
         setState('idle');
         if (autoPlay) {
-          audio.play().catch(console.error);
+          audio.play().catch(logger.error);
         }
       }
     };
