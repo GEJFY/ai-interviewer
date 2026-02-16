@@ -34,6 +34,8 @@ export class InterviewWebSocket {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private disposed = false;
 
   public onMessage: ((response: WSResponse) => void) | null = null;
   public onOpen: (() => void) | null = null;
@@ -45,8 +47,11 @@ export class InterviewWebSocket {
   }
 
   connect(): void {
-    const token = localStorage.getItem('access_token');
-    const url = `${WS_URL}/api/v1/interviews/${this.interviewId}/stream`;
+    if (this.disposed) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const params = token ? `?token=${encodeURIComponent(token)}` : '';
+    const url = `${WS_URL}/api/v1/interviews/${this.interviewId}/stream${params}`;
 
     this.ws = new WebSocket(url);
 
@@ -59,8 +64,8 @@ export class InterviewWebSocket {
       try {
         const response: WSResponse = JSON.parse(event.data);
         this.onMessage?.(response);
-      } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+      } catch {
+        // Silently ignore unparseable messages
       }
     };
 
@@ -75,18 +80,17 @@ export class InterviewWebSocket {
   }
 
   private attemptReconnect(): void {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-      setTimeout(() => this.connect(), delay);
+    if (this.disposed || this.reconnectAttempts >= this.maxReconnectAttempts) {
+      return;
     }
+    this.reconnectAttempts++;
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    this.reconnectTimer = setTimeout(() => this.connect(), delay);
   }
 
   send(message: WSMessage): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
-    } else {
-      console.error('WebSocket is not connected');
     }
   }
 
@@ -112,7 +116,11 @@ export class InterviewWebSocket {
   }
 
   disconnect(): void {
-    this.maxReconnectAttempts = 0; // Prevent reconnection
+    this.disposed = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     this.ws?.close();
     this.ws = null;
   }

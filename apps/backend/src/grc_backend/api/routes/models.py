@@ -227,15 +227,20 @@ async def test_connection(request: ConnectionTestRequest) -> ConnectionTestRespo
         config = AIConfig(**config_dict)
         provider = create_ai_provider(config)
 
-        response = await provider.chat(
-            messages=[
-                ChatMessage(
-                    role=MessageRole.USER,
-                    content="Reply with exactly: OK",
-                )
-            ],
-            temperature=0.0,
-            max_tokens=10,
+        import asyncio
+
+        response = await asyncio.wait_for(
+            provider.chat(
+                messages=[
+                    ChatMessage(
+                        role=MessageRole.USER,
+                        content="Reply with exactly: OK",
+                    )
+                ],
+                temperature=0.0,
+                max_tokens=10,
+            ),
+            timeout=30.0,
         )
         await provider.close()
 

@@ -567,6 +567,13 @@ def get_report_generator() -> ReportGeneratorService:
     """Get or create the report generator singleton."""
     global _report_generator
     if _report_generator is None:
-        # TODO: Initialize with AI provider from settings
-        _report_generator = ReportGeneratorService()
+        from grc_backend.api.deps import get_ai_provider
+        from grc_backend.config import get_settings
+
+        settings = get_settings()
+        try:
+            ai_provider = get_ai_provider(settings)
+        except Exception:
+            ai_provider = None
+        _report_generator = ReportGeneratorService(ai_provider=ai_provider)
     return _report_generator
