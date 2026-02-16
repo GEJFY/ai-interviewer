@@ -1,0 +1,55 @@
+# =============================================================================
+# Pre-commit hooks configuration
+# インストール: pre-commit install
+# 手動実行:     pre-commit run --all-files
+# =============================================================================
+
+repos:
+  # ---------------------------------------------------------------------------
+  # General hooks
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+        exclude: tsconfig.*\.json$
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+  # ---------------------------------------------------------------------------
+  # Python: Ruff (linter + formatter)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: ['--fix']
+      - id: ruff-format
+
+  # ---------------------------------------------------------------------------
+  # Python: MyPy (type checker)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.0
+    hooks:
+      - id: mypy
+        args: ['--ignore-missing-imports']
+        additional_dependencies: []
+        files: ^(apps/backend/src|packages/@grc)/
+        pass_filenames: false
+        entry: mypy apps/backend/src packages/@grc --ignore-missing-imports
+
+  # ---------------------------------------------------------------------------
+  # Secret scanning: Gitleaks
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
