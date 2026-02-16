@@ -121,7 +121,8 @@ Docker、CI/CD、Terraformを使用したインフラ構築について解説し
 - [デプロイガイド](../guides/DEPLOYMENT.md) - 本番環境へのデプロイ
 
 ### アーキテクチャ
-- [アーキテクチャ概要](../architecture/README.md) - システム全体の設計
+
+- [アーキテクチャ概要](../ARCHITECTURE.md) - システム全体の設計
 
 ---
 

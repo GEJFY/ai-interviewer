@@ -526,20 +526,19 @@ docker-compose up -d
 
 ## ドキュメント
 
-### ガイド（初心者向け）
+全ドキュメントの一覧と読み方は **[docs/README.md](docs/README.md)** を参照してください。
 
-- [セットアップガイド](docs/guides/SETUP.md) - 開発環境の構築手順
-- [開発ガイド](docs/guides/DEVELOPMENT.md) - コーディング規約、テスト方法
-- [デプロイガイド](docs/guides/DEPLOYMENT.md) - 本番環境へのデプロイ
-- [デモ手順書](docs/guides/DEMO.md) - デモ環境の構築と手順
-
-### エンタープライズ仕様書（学習用テキスト）
-
-- [ログ管理仕様書](docs/specifications/LOGGING.md) - 構造化ログ、相関ID、マスキング
-- [エラー処理仕様書](docs/specifications/ERROR_HANDLING.md) - エラー階層、リトライ、サーキットブレーカー
-- [セキュリティ仕様書](docs/specifications/SECURITY.md) - JWT認証、RBAC、OWASP対策
-- [インフラ仕様書](docs/specifications/INFRASTRUCTURE.md) - Docker、CI/CD、Terraform
-- [AIプロバイダー仕様書](docs/specifications/AI_PROVIDERS.md) - マルチクラウドAI、音声サービス
+| 対象 | ドキュメント | 概要 |
+| ---- | ---------- | ---- |
+| ユーザー | [ユーザーマニュアル](docs/manuals/USER_MANUAL.md) | 全操作手順（案件・タスク・インタビュー・レポート） |
+| 開発者 | [セットアップガイド](docs/guides/SETUP.md) | 開発環境の構築手順 |
+| 開発者 | [開発ガイド](docs/guides/DEVELOPMENT.md) | コーディング規約、テスト方法 |
+| 開発者 | [アーキテクチャ](docs/ARCHITECTURE.md) | システム設計、コンポーネント構成、データフロー |
+| 開発者 | [デモ手順書](docs/guides/DEMO.md) | デモ環境の構築と手順 |
+| 運用者 | [デプロイガイド](docs/guides/DEPLOYMENT.md) | 本番環境へのデプロイ |
+| 運用者 | [運用マニュアル](docs/manuals/OPERATION_MANUAL.md) | 日常運用、監視、インシデント対応 |
+| 運用者 | [保守マニュアル](docs/manuals/MAINTENANCE_MANUAL.md) | DB保守、ログ管理、障害復旧 |
+| 学習 | [仕様書一覧](docs/specifications/README.md) | ログ、エラー処理、セキュリティ、インフラ、AI |
 
 ## ライセンス
 
