@@ -96,8 +96,8 @@ services:
       # Security
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3001","http://127.0.0.1:3001"]}
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-false}
-      # Demo
-      SEED_DEMO: ${SEED_DEMO:-true}
+      # Demo (Docker起動時のみデフォルトtrue、.envで上書き可)
+      SEED_DEMO: ${SEED_DEMO:-false}
     ports:
       - "${BACKEND_PORT:-8001}:8000"
     depends_on:

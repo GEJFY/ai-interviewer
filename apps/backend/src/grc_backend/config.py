@@ -74,13 +74,17 @@ class Settings(BaseSettings):
     azure_openai_api_key: str = Field(default="")
     azure_openai_endpoint: str = Field(default="")
     azure_openai_deployment_name: str = Field(default="gpt-5-nano")
-    azure_openai_api_version: str = Field(default="2025-12-01-preview")
+    azure_openai_deployment_gpt52: str = Field(default="gpt-5.2")
+    azure_openai_deployment_gpt5_nano: str = Field(default="gpt-5-nano")
+    azure_openai_deployment_claude: str = Field(default="claude-sonnet-4.6-opus")
+    azure_openai_deployment_embedding: str = Field(default="text-embedding-3-large")
+    azure_openai_api_version: str = Field(default="2024-12-01")
 
     # AWS Bedrock
     aws_access_key_id: str = Field(default="")
     aws_secret_access_key: str = Field(default="")
     aws_region: str = Field(default="ap-northeast-1")
-    aws_bedrock_model_id: str = Field(default="anthropic.claude-sonnet-4-5-20250929-v1:0")
+    aws_bedrock_model_id: str = Field(default="anthropic.claude-sonnet-4.6-opus-v1:0")
 
     # GCP Vertex AI
     gcp_project_id: str = Field(default="")

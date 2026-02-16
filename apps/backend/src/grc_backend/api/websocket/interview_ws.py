@@ -1,15 +1,24 @@
 """WebSocket endpoint for real-time interview sessions."""
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from grc_ai.dialogue import InterviewAgent, InterviewContext
 from grc_backend.api.deps import get_ai_provider, get_db
 from grc_backend.config import get_settings
 from grc_core.enums import InterviewStatus, Speaker
-from grc_core.repositories import InterviewRepository, TaskRepository, TemplateRepository
+from grc_core.repositories import (
+    InterviewRepository,
+    TaskRepository,
+    TemplateRepository,
+    UserRepository,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -49,6 +58,57 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+async def _authenticate_websocket(websocket: WebSocket, db: AsyncSession):
+    """WebSocket接続時にJWTトークンを検証してユーザーを返す。
+
+    クエリパラメータ ?token=xxx またはサブプロトコルからトークンを取得する。
+    """
+    settings = get_settings()
+
+    # クエリパラメータからトークン取得
+    token = websocket.query_params.get("token")
+
+    if not token:
+        # Sec-WebSocket-Protocol ヘッダーからの取得（ブラウザ対応）
+        protocols = websocket.headers.get("sec-websocket-protocol", "")
+        for proto in protocols.split(","):
+            proto = proto.strip()
+            if proto.startswith("access_token."):
+                token = proto[len("access_token.") :]
+                break
+
+    if not token:
+        await websocket.close(code=4001, reason="Authentication required")
+        return None
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+        if payload.get("type") != "access":
+            await websocket.close(code=4001, reason="Invalid token type")
+            return None
+
+        user_id = payload.get("sub")
+        if not user_id:
+            await websocket.close(code=4001, reason="Invalid token")
+            return None
+
+        user_repo = UserRepository(db)
+        user = await user_repo.get(user_id)
+        if not user:
+            await websocket.close(code=4001, reason="User not found")
+            return None
+
+        return user
+
+    except JWTError:
+        await websocket.close(code=4001, reason="Invalid or expired token")
+        return None
+
+
 @router.websocket("/{interview_id}/stream")
 async def interview_websocket(
     websocket: WebSocket,
@@ -56,6 +116,8 @@ async def interview_websocket(
     db: AsyncSession = Depends(get_db),
 ):
     """WebSocket endpoint for real-time interview interaction.
+
+    Authentication: クエリパラメータ ?token=<JWT> でアクセストークンを渡す。
 
     Message format (client -> server):
     {
@@ -73,6 +135,11 @@ async def interview_websocket(
         "payload": { ... }
     }
     """
+    # JWT認証
+    current_user = await _authenticate_websocket(websocket, db)
+    if current_user is None:
+        return
+
     settings = get_settings()
     ai_provider = get_ai_provider(settings)
 
@@ -100,9 +167,10 @@ async def interview_websocket(
                 questions = [q.get("question", "") for q in template.questions]
 
         # Create interview context
+        org_name = getattr(current_user, "organization_name", None) or "Organization"
         context = InterviewContext(
             interview_id=interview_id,
-            organization_name="Organization",  # TODO: Get from user context
+            organization_name=org_name,
             use_case_type=task.use_case_type if task else "general",
             interview_purpose=task.description if task else "Interview",
             questions=questions or ["一般的なヒアリングを行います。"],
