@@ -8,28 +8,24 @@
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim AS builder
 
-# Install build dependencies
+# Install build dependencies and uv in single layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir uv
 
-# Set working directory
 WORKDIR /app
 
-# Install uv for faster package management
-RUN pip install uv
-
-# Copy dependency files
+# Copy dependency files (cached layer when deps don't change)
 COPY pyproject.toml ./
 COPY packages/@grc/core/pyproject.toml packages/@grc/core/
 COPY packages/@grc/ai/pyproject.toml packages/@grc/ai/
 
-# Create virtual environment and install dependencies
+# Create virtual environment and install production dependencies
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install production dependencies only
 RUN uv pip install --no-cache-dir \
     fastapi[standard]==0.115.0 \
     uvicorn[standard]==0.32.0 \
@@ -65,24 +61,23 @@ RUN uv pip install --no-cache-dir \
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim AS production
 
-# Security: Create non-root user
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Security: Create non-root user and install runtime deps in single layer
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser \
+    && apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     ca-certificates \
     curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH="/app/src:/app/packages/@grc/core/src:/app/packages/@grc/ai/src"
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH="/app/src:/app/packages/@grc/core/src:/app/packages/@grc/ai/src" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8000
 
 # Copy application code
 COPY apps/backend/src ./src
@@ -92,22 +87,13 @@ COPY packages/@grc/ai/src ./packages/@grc/ai/src
 # Set ownership to non-root user
 RUN chown -R appuser:appgroup /app
 
-# Switch to non-root user
 USER appuser
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
-# Expose port
 EXPOSE 8000
 
-# Environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PORT=8000
-
-# Default command
 CMD ["uvicorn", "grc_backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 
 # -----------------------------------------------------------------------------
@@ -115,10 +101,8 @@ CMD ["uvicorn", "grc_backend.main:app", "--host", "0.0.0.0", "--port", "8000", "
 # -----------------------------------------------------------------------------
 FROM production AS development
 
-# Switch to root for development setup
 USER root
 
-# Install development tools
 RUN pip install --no-cache-dir \
     pytest==8.3.0 \
     pytest-asyncio==0.24.0 \
@@ -128,8 +112,6 @@ RUN pip install --no-cache-dir \
     ruff==0.8.0 \
     pre-commit==4.0.0
 
-# Switch back to non-root user
 USER appuser
 
-# Development command with reload
 CMD ["uvicorn", "grc_backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
