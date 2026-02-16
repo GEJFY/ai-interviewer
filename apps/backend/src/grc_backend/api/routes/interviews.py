@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession
+from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession, InterviewerUser
 from grc_core.enums import InterviewStatus
 from grc_core.repositories import InterviewRepository, TaskRepository
 from grc_core.schemas import (
@@ -53,7 +53,7 @@ async def list_interviews(
 async def create_interview(
     interview_data: InterviewCreate,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: InterviewerUser,
 ) -> InterviewRead:
     """Create a new interview."""
     # Verify task exists
@@ -102,7 +102,7 @@ async def start_interview(
     interview_id: str,
     start_data: InterviewStart,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: InterviewerUser,
 ) -> InterviewRead:
     """Start an interview session."""
     repo = InterviewRepository(db)
@@ -131,7 +131,7 @@ async def start_interview(
 async def pause_interview(
     interview_id: str,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: InterviewerUser,
 ) -> InterviewRead:
     """Pause an interview session."""
     repo = InterviewRepository(db)
@@ -151,7 +151,7 @@ async def pause_interview(
 async def resume_interview(
     interview_id: str,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: InterviewerUser,
 ) -> InterviewRead:
     """Resume a paused interview session."""
     repo = InterviewRepository(db)
@@ -172,7 +172,7 @@ async def complete_interview(
     interview_id: str,
     complete_data: InterviewComplete,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: InterviewerUser,
     ai_provider: AIProviderDep,
 ) -> InterviewRead:
     """Complete an interview session."""
@@ -225,7 +225,7 @@ async def update_interview(
     interview_id: str,
     interview_data: InterviewUpdate,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: InterviewerUser,
 ) -> InterviewRead:
     """Update an interview."""
     repo = InterviewRepository(db)

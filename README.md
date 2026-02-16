@@ -155,10 +155,12 @@ pnpm start
 
 起動方法によってポート番号が異なります。
 
-| 起動方法                    | Backend | Frontend | 説明             |
-| --------------------------- | ------- | -------- | ---------------- |
-| Direct (uvicorn / pnpm dev) | 8000    | 3000     | ローカル直接起動 |
-| Docker (docker-compose up)  | 8001    | 3001     | Docker経由の起動 |
+| 起動方法                    | Backend (ホスト) | Backend (コンテナ内部) | Frontend (ホスト) | 説明             |
+| --------------------------- | ---------------- | ---------------------- | ----------------- | ---------------- |
+| Direct (uvicorn / pnpm dev) | 8000             | -                      | 3000              | ローカル直接起動 |
+| Docker (docker-compose up)  | 8001             | 8000                   | 3001              | Docker経由の起動 |
+
+> **注**: Docker環境ではホストの `BACKEND_PORT` (デフォルト8001) がコンテナ内部の8000にマッピングされます。
 
 Direct 起動の場合:
 
@@ -223,6 +225,8 @@ ai-interviewer/
 | `/api/v1/auth/login` | POST | ログイン |
 | `/api/v1/auth/register` | POST | ユーザー登録 |
 | `/api/v1/auth/refresh` | POST | トークンリフレッシュ |
+| `/api/v1/auth/logout` | POST | ログアウト |
+| `/api/v1/auth/sso/azure` | POST | Azure AD SSO認証 |
 | `/api/v1/auth/me` | GET | 現在のユーザー情報 |
 
 ### Projects (`/api/v1/projects`)

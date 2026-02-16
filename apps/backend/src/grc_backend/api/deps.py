@@ -105,6 +105,19 @@ async def require_manager_or_admin(
     return current_user
 
 
+async def require_interviewer_or_above(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> User:
+    """Require interviewer, manager, or admin role (block viewer-only users)."""
+    if current_user.role == "viewer":
+        raise AuthorizationError(
+            message="Interviewer access or above required",
+            resource="interview_endpoint",
+            action="modify",
+        )
+    return current_user
+
+
 def get_ai_provider(
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> AIProvider:
@@ -138,6 +151,7 @@ def get_ai_provider(
 # Type aliases for dependency injection
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_active_user)]
+InterviewerUser = Annotated[User, Depends(require_interviewer_or_above)]
 AdminUser = Annotated[User, Depends(require_admin)]
 ManagerUser = Annotated[User, Depends(require_manager_or_admin)]
 AIProviderDep = Annotated[AIProvider, Depends(get_ai_provider)]
