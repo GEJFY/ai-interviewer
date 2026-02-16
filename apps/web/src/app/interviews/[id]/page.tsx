@@ -49,6 +49,8 @@ export default function InterviewPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentAIResponse, setCurrentAIResponse] = useState('');
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [durationMinutes, setDurationMinutes] = useState(30);
+  const [timeWarningLevel, setTimeWarningLevel] = useState<'normal' | 'warning' | 'critical' | 'exceeded'>('normal');
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [transcribingText, setTranscribingText] = useState('');
@@ -171,12 +173,21 @@ export default function InterviewPage() {
         break;
 
       case 'status':
+        if (response.payload.status === 'connected' && response.payload.duration_minutes) {
+          setDurationMinutes(response.payload.duration_minutes);
+        }
         if (response.payload.status === 'paused') setIsPaused(true);
         else if (response.payload.status === 'resumed') setIsPaused(false);
         else if (response.payload.status === 'completed') {
           setIsCompleted(true);
           setIsConnected(false);
         }
+        break;
+
+      case 'time_warning':
+        if (response.payload.level === 'exceeded') setTimeWarningLevel('exceeded');
+        else if (response.payload.level === 'critical') setTimeWarningLevel('critical');
+        else if (response.payload.level === 'warning') setTimeWarningLevel('warning');
         break;
 
       case 'error':
@@ -225,10 +236,13 @@ export default function InterviewPage() {
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const mins = Math.floor(Math.abs(seconds) / 60);
+    const secs = Math.abs(seconds) % 60;
+    const prefix = seconds < 0 ? '-' : '';
+    return `${prefix}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const remainingSeconds = durationMinutes * 60 - elapsedTime;
 
   return (
     <div className="flex flex-col h-screen bg-[rgb(var(--bg))]">
@@ -255,10 +269,16 @@ export default function InterviewPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* タイマー */}
-          <div className="flex items-center gap-2 text-surface-500 dark:text-surface-400">
+          {/* カウントダウンタイマー */}
+          <div className={cn(
+            'flex items-center gap-2 px-2.5 py-1 rounded-lg transition-colors',
+            timeWarningLevel === 'exceeded' && 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+            timeWarningLevel === 'critical' && 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 animate-pulse',
+            timeWarningLevel === 'warning' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+            timeWarningLevel === 'normal' && 'text-surface-500 dark:text-surface-400',
+          )}>
             <Clock className="w-4 h-4" />
-            <span className="font-mono text-sm">{formatTime(elapsedTime)}</span>
+            <span className="font-mono text-sm">{formatTime(remainingSeconds)}</span>
           </div>
 
           {/* 接続ステータス */}

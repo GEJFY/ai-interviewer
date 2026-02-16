@@ -87,6 +87,9 @@ class PromptManager:
 ## 現在のフェーズ
 {phase_hint}
 
+## 時間管理
+{time_hint}
+
 ## 行動規範
 - 一度に複数の質問をしない（必ず1つずつ）
 - 相手の回答を遮らない
@@ -101,6 +104,7 @@ class PromptManager:
             "interview_purpose",
             "questions",
             "phase_hint",
+            "time_hint",
         ],
     )
 
@@ -161,6 +165,9 @@ class PromptManager:
 ## 現在のフェーズ
 {phase_hint}
 
+## 時間管理
+{time_hint}
+
 ## 行動規範
 - 一度に複数の質問をしない（必ず1つずつ）
 - 個人を特定しうる情報を引き出さない
@@ -168,7 +175,13 @@ class PromptManager:
 - 回答者のプライバシーを最大限尊重する
 - 会話のペースは相手に合わせる
 """,
-        required_vars=["organization_name", "interview_purpose", "questions", "phase_hint"],
+        required_vars=[
+            "organization_name",
+            "interview_purpose",
+            "questions",
+            "phase_hint",
+            "time_hint",
+        ],
     )
 
     # Dynamic prompts
@@ -264,6 +277,7 @@ class PromptManager:
         questions: list[str],
         is_anonymous: bool = False,
         phase_hint: str = "",
+        time_hint: str = "",
     ) -> str:
         """Generate a system prompt for an interview.
 
@@ -274,6 +288,7 @@ class PromptManager:
             questions: List of questions to ask
             is_anonymous: Whether the interview is anonymous
             phase_hint: Current interview phase hint
+            time_hint: Current time management hint
 
         Returns:
             Formatted system prompt
@@ -282,6 +297,7 @@ class PromptManager:
         use_case_desc = cls.USE_CASE_DESCRIPTIONS.get(
             use_case_type, "GRCに関するインタビューを実施します。"
         )
+        default_time_hint = "設定時間に合わせて適切なペースで質問を進めてください。"
 
         if is_anonymous:
             return cls.ANONYMOUS_INTERVIEW_SYSTEM.format(
@@ -289,6 +305,7 @@ class PromptManager:
                 interview_purpose=interview_purpose,
                 questions=questions_text,
                 phase_hint=phase_hint or "フェーズ1: アイスブレイク（導入）から開始してください。",
+                time_hint=time_hint or default_time_hint,
             )
         else:
             return cls.INTERVIEW_SYSTEM.format(
@@ -297,4 +314,5 @@ class PromptManager:
                 interview_purpose=interview_purpose,
                 questions=questions_text,
                 phase_hint=phase_hint or "フェーズ1: アイスブレイク（導入）から開始してください。",
+                time_hint=time_hint or default_time_hint,
             )
