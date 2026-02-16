@@ -3,7 +3,6 @@
 Supports multiple identity providers:
 - Azure AD (Microsoft Entra ID)
 - Okta
-- Generic OIDC/SAML providers
 """
 
 import logging
@@ -25,8 +24,6 @@ class SSOProvider(StrEnum):
 
     AZURE_AD = "azure_ad"
     OKTA = "okta"
-    GOOGLE = "google"
-    OIDC = "oidc"  # Generic OIDC
 
 
 @dataclass
