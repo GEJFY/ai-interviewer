@@ -132,7 +132,7 @@ async def interview_websocket(
 
     Message format (server -> client):
     {
-        "type": "ai_response" | "transcription" | "status" | "error",
+        "type": "ai_response" | "transcription" | "status" | "error" | "time_warning" | "coverage_update",
         "payload": { ... }
     }
     """
@@ -190,8 +190,15 @@ async def interview_websocket(
         agent = InterviewAgent(ai_provider, context)
         manager.set_agent(interview_id, agent)
 
+        # Load carry-over context from previous session if available
+        if interview.extra_metadata and interview.extra_metadata.get("carry_over"):
+            agent.load_carry_over(interview.extra_metadata["carry_over"])
+
         # Track which time warnings have been sent
         time_warnings_sent: set[str] = set()
+        # Track user message count for periodic coverage assessment
+        user_message_count = 0
+        coverage_check_interval = 5
 
         # Send status with duration info
         await manager.send_message(
@@ -237,6 +244,7 @@ async def interview_websocket(
             if msg_type == "message":
                 # Text message from user
                 user_content = payload.get("content", "")
+                user_message_count += 1
 
                 # Save user message to transcript
                 timestamp = int(time.time() * 1000)
@@ -344,6 +352,33 @@ async def interview_websocket(
                         },
                     )
 
+                # Periodic coverage assessment
+                if user_message_count % coverage_check_interval == 0:
+                    try:
+                        coverage = await agent.assess_coverage()
+                        await manager.send_message(
+                            interview_id,
+                            {
+                                "type": "coverage_update",
+                                "payload": coverage,
+                            },
+                        )
+                        if coverage.get("suggest_end"):
+                            await manager.send_message(
+                                interview_id,
+                                {
+                                    "type": "status",
+                                    "payload": {
+                                        "status": "suggest_end",
+                                        "message": "十分な情報が得られました。終了を検討してください。",
+                                    },
+                                },
+                            )
+                    except Exception:
+                        logger.warning(
+                            "Coverage assessment failed for %s", interview_id, exc_info=True
+                        )
+
             elif msg_type == "control":
                 action = payload.get("action")
 
@@ -374,6 +409,26 @@ async def interview_websocket(
                         timestamp_ms=int(time.time() * 1000),
                     )
 
+                    # Generate carry-over context for future sessions
+                    try:
+                        coverage = await agent.assess_coverage()
+                        carry_over = agent.generate_carry_over(coverage)
+                    except Exception:
+                        logger.warning(
+                            "Carry-over generation failed for %s",
+                            interview_id,
+                            exc_info=True,
+                        )
+                        coverage = None
+                        carry_over = agent.generate_carry_over()
+
+                    # Save carry-over and coverage to extra_metadata
+                    interview.extra_metadata = {
+                        **(interview.extra_metadata or {}),
+                        "carry_over": carry_over,
+                        "final_coverage": coverage,
+                    }
+
                     # Complete interview
                     await interview_repo.complete(
                         interview_id,
@@ -398,6 +453,8 @@ async def interview_websocket(
                             "payload": {
                                 "status": "completed",
                                 "summary": summary,
+                                "coverage": coverage,
+                                "carry_over": carry_over,
                             },
                         },
                     )

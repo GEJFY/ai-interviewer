@@ -714,3 +714,195 @@ class TestTimeManagement:
             questions=["Q1"],
         )
         assert "ペース" in prompt
+
+
+# --- カバレッジ評価テスト ---
+
+
+class TestCoverageAssessment:
+    """カバレッジ評価機能のテスト。"""
+
+    @pytest.fixture
+    def mock_provider(self):
+        provider = AsyncMock()
+        provider.chat.return_value = ChatResponse(
+            content="AIの応答", model="test", finish_reason="stop"
+        )
+        return provider
+
+    @pytest.fixture
+    def context_with_questions(self):
+        return InterviewContext(
+            interview_id="coverage-test-001",
+            organization_name="カバレッジテスト社",
+            use_case_type="audit_process",
+            interview_purpose="カバレッジテスト",
+            questions=["質問1: 業務フローは？", "質問2: リスクは？", "質問3: 改善案は？"],
+        )
+
+    @pytest.fixture
+    def agent(self, mock_provider, context_with_questions):
+        return InterviewAgent(provider=mock_provider, context=context_with_questions)
+
+    @pytest.mark.asyncio
+    async def test_assess_coverage_empty_history(self, agent):
+        """履歴が空の場合、カバレッジ0%が返されること。"""
+        result = await agent.assess_coverage()
+        assert result["overall_percentage"] == 0
+        assert len(result["questions"]) == 3
+        assert all(q["status"] == "unanswered" for q in result["questions"])
+        assert result["suggest_end"] is False
+
+    @pytest.mark.asyncio
+    async def test_assess_coverage_with_valid_json(self, agent, mock_provider):
+        """AIが正しいJSONを返した場合、パース結果が返されること。"""
+        agent.history.append(DialogueTurn(role="ai", content="こんにちは", timestamp_ms=1000))
+        agent.history.append(
+            DialogueTurn(role="user", content="業務フローは...", timestamp_ms=2000)
+        )
+
+        mock_provider.chat.return_value = ChatResponse(
+            content='{"overall_percentage": 40, "questions": [{"question": "Q1", "status": "answered", "percentage": 80}, {"question": "Q2", "status": "unanswered", "percentage": 0}, {"question": "Q3", "status": "partial", "percentage": 40}], "suggest_end": false}',
+            model="test",
+            finish_reason="stop",
+        )
+
+        result = await agent.assess_coverage()
+        assert result["overall_percentage"] == 40
+        assert len(result["questions"]) == 3
+        assert result["suggest_end"] is False
+
+    @pytest.mark.asyncio
+    async def test_assess_coverage_json_fallback(self, agent, mock_provider):
+        """AIがJSONでない応答を返した場合、フォールバック推定が使われること。"""
+        agent.history.append(DialogueTurn(role="ai", content="こんにちは", timestamp_ms=1000))
+        agent.history.append(DialogueTurn(role="user", content="回答", timestamp_ms=2000))
+
+        mock_provider.chat.return_value = ChatResponse(
+            content="JSONでない応答です。", model="test", finish_reason="stop"
+        )
+
+        result = await agent.assess_coverage()
+        assert isinstance(result["overall_percentage"], int)
+        assert "questions" in result
+        assert "suggest_end" in result
+
+    @pytest.mark.asyncio
+    async def test_assess_coverage_markdown_code_block(self, agent, mock_provider):
+        """AI応答がMarkdownコードブロック付きJSONの場合もパースできること。"""
+        agent.history.append(DialogueTurn(role="ai", content="Hi", timestamp_ms=1000))
+        agent.history.append(DialogueTurn(role="user", content="Hello", timestamp_ms=2000))
+
+        mock_provider.chat.return_value = ChatResponse(
+            content='```json\n{"overall_percentage": 75, "questions": [], "suggest_end": false}\n```',
+            model="test",
+            finish_reason="stop",
+        )
+
+        result = await agent.assess_coverage()
+        assert result["overall_percentage"] == 75
+
+
+# --- 持ち越し (carry_over) テスト ---
+
+
+class TestCarryOver:
+    """セッション持ち越し機能のテスト。"""
+
+    @pytest.fixture
+    def mock_provider(self):
+        provider = AsyncMock()
+        provider.chat.return_value = ChatResponse(
+            content="AIの応答", model="test", finish_reason="stop"
+        )
+        return provider
+
+    @pytest.fixture
+    def context(self):
+        return InterviewContext(
+            interview_id="carry-over-test-001",
+            organization_name="持ち越しテスト社",
+            use_case_type="risk_assessment",
+            interview_purpose="リスク評価",
+            questions=["Q1: 現状は？", "Q2: リスクは？", "Q3: 対策は？", "Q4: 優先度は？"],
+        )
+
+    @pytest.fixture
+    def agent(self, mock_provider, context):
+        return InterviewAgent(provider=mock_provider, context=context)
+
+    def test_generate_carry_over_without_coverage(self, agent):
+        """coverage引数なしでcarry_overが生成されること。"""
+        agent.history = [
+            DialogueTurn(role="ai", content="こんにちは", timestamp_ms=1000),
+            DialogueTurn(role="user", content="よろしく", timestamp_ms=2000),
+            DialogueTurn(role="ai", content="Q1について", timestamp_ms=3000),
+            DialogueTurn(role="user", content="現状は...", timestamp_ms=4000),
+        ]
+
+        result = agent.generate_carry_over()
+        assert result["carry_over"] is True
+        assert result["previous_interview_id"] == "carry-over-test-001"
+        assert result["coverage_percentage"] == 0
+        assert result["total_turns"] == 4
+        # 2 user messages → covered 2 of 4 questions → unanswered = ["Q3: 対策は？", "Q4: 優先度は？"]
+        assert len(result["unanswered_questions"]) == 2
+
+    def test_generate_carry_over_with_coverage(self, agent):
+        """coverage引数ありでcarry_overにカバレッジ情報が含まれること。"""
+        agent.history = [
+            DialogueTurn(role="ai", content="Hi", timestamp_ms=1000),
+            DialogueTurn(role="user", content="Hello", timestamp_ms=2000),
+        ]
+
+        coverage = {
+            "overall_percentage": 60,
+            "questions": [
+                {"question": "Q1", "status": "answered", "percentage": 100},
+                {"question": "Q2", "status": "partial", "percentage": 50},
+                {"question": "Q3", "status": "unanswered", "percentage": 0},
+                {"question": "Q4", "status": "unanswered", "percentage": 0},
+            ],
+            "suggest_end": False,
+        }
+
+        result = agent.generate_carry_over(coverage)
+        assert result["coverage_percentage"] == 60
+        # partial + unanswered = 3 questions
+        assert len(result["unanswered_questions"]) == 3
+        assert "Q2" in result["unanswered_questions"][0]
+
+    def test_load_carry_over(self, agent):
+        """load_carry_overでコンテキストにcarry_overが設定されること。"""
+        carry_over = {
+            "carry_over": True,
+            "previous_interview_id": "prev-001",
+            "coverage_percentage": 45,
+            "unanswered_questions": ["Q3", "Q4"],
+            "total_turns": 8,
+        }
+
+        agent.load_carry_over(carry_over)
+        assert agent.context.metadata["carry_over"] == carry_over
+        assert agent.context.metadata["carry_over"]["previous_interview_id"] == "prev-001"
+
+    def test_carry_over_in_system_prompt(self, agent):
+        """carry_over読み込み後、システムプロンプトにmetadataが反映されること。"""
+        carry_over = {
+            "carry_over": True,
+            "previous_interview_id": "prev-001",
+            "unanswered_questions": ["Q3", "Q4"],
+        }
+        agent.load_carry_over(carry_over)
+
+        # metadata にcarry_overが入っていることを確認
+        assert "carry_over" in agent.context.metadata
+
+    def test_get_transcript_after_carry_over(self, agent):
+        """carry_over読み込み後もget_transcriptが正常に動作すること。"""
+        agent.load_carry_over({"carry_over": True, "unanswered_questions": ["Q3"]})
+        agent.history.append(DialogueTurn(role="ai", content="前回の続き", timestamp_ms=1000))
+
+        transcript = agent.get_transcript()
+        assert len(transcript) == 1
+        assert transcript[0]["content"] == "前回の続き"

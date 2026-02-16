@@ -1,7 +1,7 @@
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
 
 export type MessageType = 'message' | 'audio_chunk' | 'control';
-export type ResponseType = 'ai_response' | 'transcription' | 'status' | 'error' | 'time_warning';
+export type ResponseType = 'ai_response' | 'transcription' | 'status' | 'error' | 'time_warning' | 'coverage_update';
 
 export interface WSMessage {
   type: MessageType;
@@ -28,6 +28,11 @@ export interface WSResponse {
     duration_minutes?: number;
     level?: string;
     remaining_seconds?: number;
+    overall_percentage?: number;
+    questions?: Array<{ question: string; status: string; percentage: number }>;
+    suggest_end?: boolean;
+    coverage?: Record<string, unknown>;
+    carry_over?: Record<string, unknown>;
   };
 }
 

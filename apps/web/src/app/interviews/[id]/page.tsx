@@ -19,6 +19,7 @@ import {
   Loader2,
   Zap,
   ArrowLeft,
+  CheckCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import logger from '@/lib/logger';
@@ -55,6 +56,8 @@ export default function InterviewPage() {
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [transcribingText, setTranscribingText] = useState('');
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
+  const [coveragePercentage, setCoveragePercentage] = useState<number | null>(null);
+  const [suggestEnd, setSuggestEnd] = useState(false);
 
   const wsRef = useRef<InterviewWebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -176,7 +179,9 @@ export default function InterviewPage() {
         if (response.payload.status === 'connected' && response.payload.duration_minutes) {
           setDurationMinutes(response.payload.duration_minutes);
         }
-        if (response.payload.status === 'paused') setIsPaused(true);
+        if (response.payload.status === 'suggest_end') {
+          setSuggestEnd(true);
+        } else if (response.payload.status === 'paused') setIsPaused(true);
         else if (response.payload.status === 'resumed') setIsPaused(false);
         else if (response.payload.status === 'completed') {
           setIsCompleted(true);
@@ -188,6 +193,15 @@ export default function InterviewPage() {
         if (response.payload.level === 'exceeded') setTimeWarningLevel('exceeded');
         else if (response.payload.level === 'critical') setTimeWarningLevel('critical');
         else if (response.payload.level === 'warning') setTimeWarningLevel('warning');
+        break;
+
+      case 'coverage_update':
+        if (response.payload.overall_percentage !== undefined) {
+          setCoveragePercentage(response.payload.overall_percentage);
+        }
+        if (response.payload.suggest_end) {
+          setSuggestEnd(true);
+        }
         break;
 
       case 'error':
@@ -269,6 +283,43 @@ export default function InterviewPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* カバレッジプログレス */}
+          {coveragePercentage !== null && (
+            <div className="flex items-center gap-2 px-2.5 py-1">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className={cn(
+                  'w-4 h-4',
+                  coveragePercentage >= 90 ? 'text-emerald-500' :
+                  coveragePercentage >= 60 ? 'text-accent-500' :
+                  'text-surface-400'
+                )} />
+                <div className="w-20 h-1.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all duration-500',
+                      coveragePercentage >= 90 ? 'bg-emerald-500' :
+                      coveragePercentage >= 60 ? 'bg-accent-500' :
+                      'bg-surface-400'
+                    )}
+                    style={{ width: `${coveragePercentage}%` }}
+                  />
+                </div>
+                <span className={cn(
+                  'text-xs font-medium tabular-nums',
+                  coveragePercentage >= 90 ? 'text-emerald-600 dark:text-emerald-400' :
+                  'text-surface-500 dark:text-surface-400'
+                )}>
+                  {coveragePercentage}%
+                </span>
+              </div>
+              {suggestEnd && (
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  完了可
+                </span>
+              )}
+            </div>
+          )}
+
           {/* カウントダウンタイマー */}
           <div className={cn(
             'flex items-center gap-2 px-2.5 py-1 rounded-lg transition-colors',
