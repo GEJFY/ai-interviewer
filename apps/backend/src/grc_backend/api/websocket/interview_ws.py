@@ -1,6 +1,7 @@
 """WebSocket endpoint for real-time interview sessions."""
 
 import logging
+import time
 from typing import Any
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
@@ -221,8 +222,6 @@ async def interview_websocket(
                 user_content = payload.get("content", "")
 
                 # Save user message to transcript
-                import time
-
                 timestamp = int(time.time() * 1000)
 
                 await interview_repo.add_transcript_entry(
