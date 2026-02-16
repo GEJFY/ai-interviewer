@@ -10,6 +10,8 @@ terraform {
 }
 
 provider "azurerm" {
+  subscription_id = "4c268b5b-6450-4eb9-aa0e-d124d5db65f0"
+
   features {
     resource_group {
       prevent_deletion_if_contains_resources = false
@@ -225,9 +227,9 @@ resource "azurerm_storage_container" "reports" {
   container_access_type = "private"
 }
 
-# Azure AI Foundry / Azure OpenAI (if selected)
+# Azure AI Foundry (if selected)
 resource "azurerm_cognitive_account" "openai" {
-  count               = var.ai_provider == "azure_openai" ? 1 : 0
+  count               = var.ai_provider == "azure_foundry" ? 1 : 0
   name                = "${var.resource_prefix}-openai-${var.suffix}"
   location            = var.location
   resource_group_name = azurerm_resource_group.main.name
@@ -239,7 +241,7 @@ resource "azurerm_cognitive_account" "openai" {
 
 # GPT-5.2 - Latest Flagship Model
 resource "azurerm_cognitive_deployment" "gpt52" {
-  count                = var.ai_provider == "azure_openai" ? 1 : 0
+  count                = var.ai_provider == "azure_foundry" ? 1 : 0
   name                 = "gpt-5.2"
   cognitive_account_id = azurerm_cognitive_account.openai[0].id
 
@@ -257,7 +259,7 @@ resource "azurerm_cognitive_deployment" "gpt52" {
 
 # GPT-5 Nano - Ultra-efficient Model
 resource "azurerm_cognitive_deployment" "gpt5nano" {
-  count                = var.ai_provider == "azure_openai" ? 1 : 0
+  count                = var.ai_provider == "azure_foundry" ? 1 : 0
   name                 = "gpt-5-nano"
   cognitive_account_id = azurerm_cognitive_account.openai[0].id
 
@@ -275,7 +277,7 @@ resource "azurerm_cognitive_deployment" "gpt5nano" {
 
 # GPT-4o - Still widely used
 resource "azurerm_cognitive_deployment" "gpt4o" {
-  count                = var.ai_provider == "azure_openai" ? 1 : 0
+  count                = var.ai_provider == "azure_foundry" ? 1 : 0
   name                 = "gpt-4o"
   cognitive_account_id = azurerm_cognitive_account.openai[0].id
 
@@ -293,7 +295,7 @@ resource "azurerm_cognitive_deployment" "gpt4o" {
 
 # Claude Sonnet 4.6 Opus via Azure AI Foundry
 resource "azurerm_cognitive_deployment" "claude_sonnet_46_opus" {
-  count                = var.ai_provider == "azure_openai" ? 1 : 0
+  count                = var.ai_provider == "azure_foundry" ? 1 : 0
   name                 = "claude-sonnet-4.6-opus"
   cognitive_account_id = azurerm_cognitive_account.openai[0].id
 
@@ -311,7 +313,7 @@ resource "azurerm_cognitive_deployment" "claude_sonnet_46_opus" {
 
 # Claude 4.6 Sonnet via Azure AI Foundry
 resource "azurerm_cognitive_deployment" "claude_46_sonnet" {
-  count                = var.ai_provider == "azure_openai" ? 1 : 0
+  count                = var.ai_provider == "azure_foundry" ? 1 : 0
   name                 = "claude-4.6-sonnet"
   cognitive_account_id = azurerm_cognitive_account.openai[0].id
 
@@ -329,7 +331,7 @@ resource "azurerm_cognitive_deployment" "claude_46_sonnet" {
 
 # Embedding Model
 resource "azurerm_cognitive_deployment" "embedding" {
-  count                = var.ai_provider == "azure_openai" ? 1 : 0
+  count                = var.ai_provider == "azure_foundry" ? 1 : 0
   name                 = "text-embedding-3-large"
   cognitive_account_id = azurerm_cognitive_account.openai[0].id
 
@@ -658,11 +660,11 @@ output "speech_key" {
 }
 
 output "openai_endpoint" {
-  value = var.ai_provider == "azure_openai" ? azurerm_cognitive_account.openai[0].endpoint : null
+  value = var.ai_provider == "azure_foundry" ? azurerm_cognitive_account.openai[0].endpoint : null
 }
 
 output "openai_key" {
-  value     = var.ai_provider == "azure_openai" ? azurerm_cognitive_account.openai[0].primary_access_key : null
+  value     = var.ai_provider == "azure_foundry" ? azurerm_cognitive_account.openai[0].primary_access_key : null
   sensitive = true
 }
 

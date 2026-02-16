@@ -33,7 +33,7 @@ def _validate_ai_provider(settings) -> None:
     provider = settings.ai_provider
     if provider == "azure":
         if not settings.azure_openai_api_key or not settings.azure_openai_endpoint:
-            logger.warning("Azure OpenAI credentials not configured")
+            logger.warning("Azure AI Foundry credentials not configured")
     elif provider == "aws":
         if not settings.aws_access_key_id:
             logger.info("AWS credentials not set - using IAM role authentication")
@@ -130,6 +130,17 @@ def create_app() -> FastAPI:
         debug=settings.debug,
     )
     setup_security(app, security_config)
+
+    # OpenTelemetry (opt-in via OTEL_ENABLED=true)
+    from grc_backend.core.telemetry import setup_telemetry
+
+    setup_telemetry(
+        app,
+        service_name=settings.otel_service_name,
+        environment=settings.environment,
+        otel_enabled=settings.otel_enabled,
+        appinsights_connection_string=settings.applicationinsights_connection_string,
+    )
 
     # Include routers
     app.include_router(health.router, prefix="/api/v1", tags=["Health"])

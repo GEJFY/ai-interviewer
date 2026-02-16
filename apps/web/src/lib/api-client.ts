@@ -76,6 +76,10 @@ export const api = {
       const response = await apiClient.get('/auth/me');
       return response.data;
     },
+    ssoAzure: async (idToken: string) => {
+      const response = await apiClient.post('/auth/sso/azure', { id_token: idToken });
+      return response.data;
+    },
   },
 
   // Projects

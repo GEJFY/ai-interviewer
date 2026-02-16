@@ -3,8 +3,8 @@
 from pydantic import BaseModel, Field
 
 
-class AzureOpenAIConfig(BaseModel):
-    """Azure OpenAI configuration."""
+class AzureFoundryConfig(BaseModel):
+    """Azure AI Foundry configuration."""
 
     api_key: str
     endpoint: str  # https://your-resource.openai.azure.com/
@@ -45,7 +45,7 @@ class AIConfig(BaseModel):
     """Combined AI configuration."""
 
     provider: str = Field(default="azure", pattern="^(azure|aws|gcp|local)$")
-    azure: AzureOpenAIConfig | None = None
+    azure: AzureFoundryConfig | None = None
     aws: AWSBedrockConfig | None = None
     gcp: GCPVertexConfig | None = None
     ollama: OllamaConfig | None = None

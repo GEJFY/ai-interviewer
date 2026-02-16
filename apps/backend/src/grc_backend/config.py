@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     # AI Provider (azure, aws, gcp, local)
     ai_provider: str = Field(default="azure")
 
-    # Azure OpenAI
+    # Azure AI Foundry (env vars keep AZURE_OPENAI_ prefix for Azure Portal compat)
     azure_openai_api_key: str = Field(default="")
     azure_openai_endpoint: str = Field(default="")
     azure_openai_deployment_name: str = Field(default="gpt-5-nano")
@@ -105,6 +105,16 @@ class Settings(BaseSettings):
 
     # GCP Speech (uses gcp_project_id from above)
 
+    # OpenTelemetry / Monitoring (opt-in)
+    otel_enabled: bool = Field(default=False)
+    otel_service_name: str = Field(default="ai-interviewer")
+    applicationinsights_connection_string: str = Field(default="")
+
+    # Azure Entra ID SSO (opt-in)
+    azure_ad_client_id: str = Field(default="")
+    azure_ad_client_secret: str = Field(default="")
+    azure_ad_tenant_id: str = Field(default="")
+
     @model_validator(mode="after")
     def _validate_production_secrets(self) -> "Settings":
         """production環境でデフォルトSECRET_KEYの使用をブロック。"""
@@ -124,6 +134,11 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.environment == "production"
+
+    @property
+    def sso_enabled(self) -> bool:
+        """Check if Azure AD SSO is configured."""
+        return bool(self.azure_ad_client_id and self.azure_ad_tenant_id)
 
 
 @lru_cache

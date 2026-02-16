@@ -1,5 +1,8 @@
 """Authentication endpoints."""
 
+import base64
+import json
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
@@ -13,6 +16,8 @@ from grc_backend.api.deps import CurrentUser, DBSession, get_settings_dep
 from grc_backend.config import Settings
 from grc_core.repositories import UserRepository
 from grc_core.schemas import UserCreate, UserRead
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -191,6 +196,77 @@ async def register(
 
     await db.commit()
     return UserRead.model_validate(user)
+
+
+class AzureSSORequest(BaseModel):
+    """Azure AD SSO token request."""
+
+    id_token: str
+
+
+@router.post("/sso/azure", response_model=Token)
+async def sso_azure(
+    request: AzureSSORequest,
+    db: DBSession,
+    settings: Annotated[Settings, Depends(get_settings_dep)],
+) -> Token:
+    """Authenticate via Azure Entra ID SSO.
+
+    Azure AD の id_token を検証し、ユーザーを自動作成/マッピングして
+    JWT トークンを発行する。
+    """
+    if not settings.sso_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Azure AD SSO is not configured",
+        )
+
+    # id_token の payload をデコードしてクレームを取得
+    try:
+        parts = request.id_token.split(".")
+        if len(parts) != 3:
+            raise ValueError("Invalid token format")
+        payload = parts[1]
+        # Base64 パディング補完
+        payload += "=" * (4 - len(payload) % 4)
+        decoded = json.loads(base64.urlsafe_b64decode(payload))
+
+        email = decoded.get("preferred_username") or decoded.get("email") or decoded.get("upn")
+        name = decoded.get("name", "")
+        tid = decoded.get("tid", "")
+
+        if not email:
+            raise ValueError("No email claim found in token")
+
+        # テナント ID 検証
+        if tid != settings.azure_ad_tenant_id:
+            raise ValueError("Token tenant ID mismatch")
+
+    except (ValueError, json.JSONDecodeError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid Azure AD token: {e!s}",
+        ) from e
+
+    # ユーザー検索・自動作成
+    user_repo = UserRepository(db)
+    user = await user_repo.get_by_email(email)
+
+    if not user:
+        user = await user_repo.create(
+            email=email,
+            name=name or email.split("@")[0],
+            role="user",
+            organization_id=None,
+            password_hash=None,
+            auth_provider="azure_ad",
+        )
+        await db.commit()
+
+    access_token = create_access_token(data={"sub": user.id}, settings=settings)
+    refresh_token = create_refresh_token(data={"sub": user.id}, settings=settings)
+
+    return Token(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.get("/me", response_model=UserRead)
