@@ -69,6 +69,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
     logging:
       driver: json-file
       options:
@@ -115,6 +120,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
     logging:
       driver: json-file
       options:

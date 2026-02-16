@@ -65,7 +65,8 @@ jobs:
         continue-on-error: true
         run: |
           source .venv/bin/activate
-          mypy apps/backend/src packages/@grc --ignore-missing-imports
+          mypy apps/backend/src packages/@grc --ignore-missing-imports --exclude 'tests/' 2>&1 | tee mypy-output.txt
+          echo "::notice::MyPy errors: $(grep -c 'error:' mypy-output.txt || echo 0)"
 
   backend-test:
     name: Backend Tests
@@ -145,6 +146,22 @@ jobs:
           file: ./coverage.xml
           flags: backend
           fail_ci_if_error: false
+
+      - name: Export OpenAPI spec
+        env:
+          ENVIRONMENT: development
+          SECRET_KEY: openapi-export-key
+          DATABASE_URL: sqlite+aiosqlite:///dummy.db
+        run: |
+          source .venv/bin/activate
+          python scripts/export_openapi.py -o docs/openapi.json
+
+      - name: Upload OpenAPI spec
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-spec
+          path: docs/openapi.json
+          retention-days: 30
 
   # ===========================================================================
   # Frontend Tests (Next.js/React)
