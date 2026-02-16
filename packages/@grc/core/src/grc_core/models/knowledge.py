@@ -39,9 +39,7 @@ class KnowledgeItem(Base, TimestampMixin):
     embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
 
     # Native pgvector column for efficient similarity search
-    embedding_vector: Mapped[list[float] | None] = mapped_column(
-        Vector(1536), nullable=True
-    )
+    embedding_vector: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
 
     # Additional metadata
     extra_metadata: Mapped[dict[str, Any]] = mapped_column(

@@ -69,15 +69,10 @@ async def search_knowledge(
     # Try pgvector-based search first (items with embedding_vector)
     vector_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
 
-    query = (
-        select(
-            KnowledgeItem,
-            literal_column(
-                f"1 - (embedding_vector <=> '{vector_str}'::vector)"
-            ).label("score"),
-        )
-        .where(KnowledgeItem.embedding_vector.isnot(None))
-    )
+    query = select(
+        KnowledgeItem,
+        literal_column(f"1 - (embedding_vector <=> '{vector_str}'::vector)").label("score"),
+    ).where(KnowledgeItem.embedding_vector.isnot(None))
 
     # Filter by organization
     if current_user.organization_id:
@@ -117,9 +112,7 @@ async def search_knowledge(
                 KnowledgeItem.source_type == search_request.source_type
             )
         if search_request.tags:
-            fallback_query = fallback_query.where(
-                KnowledgeItem.tags.overlap(search_request.tags)
-            )
+            fallback_query = fallback_query.where(KnowledgeItem.tags.overlap(search_request.tags))
 
         fb_result = await db.execute(fallback_query)
         items = fb_result.scalars().all()

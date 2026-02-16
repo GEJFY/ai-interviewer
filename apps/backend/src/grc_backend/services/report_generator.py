@@ -770,21 +770,30 @@ class ReportGeneratorService:
             elements.append(Paragraph("Risk Control Matrix", heading_style))
             table_data = [["Risk ID", "Description", "Control", "Residual"]]
             for item in content["items"]:
-                table_data.append([
-                    str(item.get("risk_id", "")),
-                    str(item.get("risk_description", ""))[:60],
-                    str(item.get("control_description", ""))[:40],
-                    str(item.get("residual_risk", "")),
-                ])
+                table_data.append(
+                    [
+                        str(item.get("risk_id", "")),
+                        str(item.get("risk_description", ""))[:60],
+                        str(item.get("control_description", ""))[:40],
+                        str(item.get("residual_risk", "")),
+                    ]
+                )
             t = Table(table_data, colWidths=[50, 180, 150, 70])
             t.setStyle(
-                TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTSIZE", (0, 0), (-1, -1), 9),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
-                ])
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                        ("FONTSIZE", (0, 0), (-1, -1), 9),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                        (
+                            "ROWBACKGROUNDS",
+                            (0, 1),
+                            (-1, -1),
+                            [colors.white, colors.HexColor("#F2F2F2")],
+                        ),
+                    ]
+                )
             )
             elements.append(t)
         else:
@@ -800,13 +809,9 @@ class ReportGeneratorService:
                     pass  # skip duplicate title
                 elif line.startswith("- ") or line.startswith("* "):
                     bullet_text = line[2:]
-                    elements.append(
-                        Paragraph(f"\u2022 {bullet_text}", styles["Normal"])
-                    )
+                    elements.append(Paragraph(f"\u2022 {bullet_text}", styles["Normal"]))
                 elif line.startswith("**") and line.endswith("**"):
-                    elements.append(
-                        Paragraph(f"<b>{line.strip('*')}</b>", styles["Normal"])
-                    )
+                    elements.append(Paragraph(f"<b>{line.strip('*')}</b>", styles["Normal"]))
                 else:
                     elements.append(Paragraph(line, styles["Normal"]))
 
