@@ -384,7 +384,9 @@ class TestInterviewPhaseManagement:
         # 3 user turns → main phase (3 user turns, 10 questions → ratio = 3/20 = 0.15 < 0.6)
         for i in range(6):
             role = "user" if i % 2 == 0 else "ai"
-            agent.history.append(DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000))
+            agent.history.append(
+                DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000)
+            )
 
         hint = agent._get_phase_hint()
         assert agent.phase == InterviewPhase.MAIN
@@ -395,7 +397,9 @@ class TestInterviewPhaseManagement:
         # Need user_turns/max(total_questions*2, 1) >= 0.6 → user_turns >= 12 for 10 questions
         for i in range(24):
             role = "user" if i % 2 == 0 else "ai"
-            agent.history.append(DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000))
+            agent.history.append(
+                DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000)
+            )
 
         hint = agent._get_phase_hint()
         assert agent.phase == InterviewPhase.DEEP_DIVE
@@ -406,7 +410,9 @@ class TestInterviewPhaseManagement:
         # Need user_turns/max(total_questions*2, 1) >= 0.85 → user_turns >= 17 for 10 questions
         for i in range(40):
             role = "user" if i % 2 == 0 else "ai"
-            agent.history.append(DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000))
+            agent.history.append(
+                DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000)
+            )
 
         hint = agent._get_phase_hint()
         assert agent.phase == InterviewPhase.CLOSING
