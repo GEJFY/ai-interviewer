@@ -36,7 +36,7 @@ test.describe('Settings Page', () => {
     await page.getByRole('tab', { name: /AIプロバイダー/i }).or(page.getByText('AIプロバイダー').first()).click();
 
     // 全プロバイダーが表示されること
-    await expect(page.getByText('Azure OpenAI').first()).toBeVisible();
+    await expect(page.getByText('Azure AI Foundry').first()).toBeVisible();
     await expect(page.getByText('AWS Bedrock').first()).toBeVisible();
     await expect(page.getByText('GCP Vertex AI').first()).toBeVisible();
     await expect(page.getByText('Local LLM (Ollama)').first()).toBeVisible();
