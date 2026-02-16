@@ -148,6 +148,18 @@ jobs:
           flags: backend
           fail_ci_if_error: false
 
+      - name: Validate Alembic migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
+        run: |
+          source .venv/bin/activate
+          uv pip install alembic
+          cd apps/backend
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+          echo "✓ Alembic upgrade/downgrade/upgrade cycle passed"
+
       - name: Export OpenAPI spec
         env:
           ENVIRONMENT: development
