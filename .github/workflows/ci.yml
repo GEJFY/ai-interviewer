@@ -41,6 +41,9 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Install dependencies
         run: |
@@ -105,6 +108,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         id: setup-uv
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
         continue-on-error: true
 
       - name: Install uv (fallback via pip)
@@ -285,6 +291,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         id: setup-uv-ollama
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
         continue-on-error: true
 
       - name: Install uv (fallback via pip)

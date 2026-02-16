@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useAudioRecorder, AudioChunk } from '@/hooks/useAudioRecorder';
+import logger from '@/lib/logger';
 
 interface VoiceInputProps {
   /** Callback when audio chunk is recorded */
@@ -62,7 +63,7 @@ export function VoiceInput({
     onChunk: onAudioChunk,
     onStop: onRecordingComplete,
     onError: (error) => {
-      console.error('Recording error:', error);
+      logger.error('Recording error:', error);
       setErrorMessage('マイクへのアクセスに失敗しました');
     },
   });

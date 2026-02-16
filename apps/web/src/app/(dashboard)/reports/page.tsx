@@ -18,6 +18,7 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
+import logger from '@/lib/logger';
 import { Button, Modal, ModalBody, ModalFooter, Select, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -111,7 +112,7 @@ function ReportsContent() {
       document.body.removeChild(a);
       toast.success('エクスポートが完了しました');
     } catch (error) {
-      console.error('Export failed:', error);
+      logger.error('Export failed:', error);
       toast.error('エクスポートに失敗しました');
     }
   };
