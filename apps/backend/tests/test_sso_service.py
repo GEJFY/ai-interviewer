@@ -16,7 +16,6 @@ from grc_backend.services.sso_service import (
     SSOUser,
 )
 
-
 # --- データクラス / enum テスト ---
 
 
@@ -27,8 +26,7 @@ class TestSSODataClasses:
         """SSOProviderのenum値が正しいこと。"""
         assert SSOProvider.AZURE_AD == "azure_ad"
         assert SSOProvider.OKTA == "okta"
-        assert SSOProvider.GOOGLE == "google"
-        assert SSOProvider.OIDC == "oidc"
+        assert len(SSOProvider) == 2
 
     def test_sso_user_creation(self):
         """SSOUserが正しく作成されること。"""
@@ -189,12 +187,12 @@ class TestSSOService:
         """非対応プロバイダーでValueErrorが発生すること。"""
         service = SSOService()
         config = SSOConfig(
-            provider=SSOProvider.GOOGLE,
+            provider="unsupported_provider",
             client_id="test",
             client_secret="test",
         )
         with pytest.raises(ValueError, match="Unsupported SSO provider"):
-            service.register_provider("google", config)
+            service.register_provider("unsupported", config)
 
     def test_get_provider_names(self):
         """登録済みプロバイダー名が取得できること。"""
