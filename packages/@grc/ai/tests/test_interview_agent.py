@@ -12,6 +12,7 @@ from grc_ai.dialogue.interview_agent import (
     DialogueTurn,
     InterviewAgent,
     InterviewContext,
+    InterviewPhase,
 )
 from grc_ai.dialogue.prompts import PromptManager, PromptTemplate
 
@@ -80,10 +81,12 @@ class TestDataClasses:
 class TestInterviewAgent:
     """InterviewAgent のテスト。"""
 
-    def test_init_sets_system_prompt(self, agent):
-        """初期化時にsystem_promptが設定されること。"""
-        assert len(agent.system_prompt) > 0
-        assert "テスト株式会社" in agent.system_prompt
+    def test_init_builds_system_prompt(self, agent):
+        """_build_system_prompt()が組織名とフェーズヒントを含むこと。"""
+        prompt = agent._build_system_prompt()
+        assert len(prompt) > 0
+        assert "テスト株式会社" in prompt
+        assert "フェーズ" in prompt
 
     def test_init_state(self, agent):
         """初期状態が正しいこと。"""
@@ -91,6 +94,7 @@ class TestInterviewAgent:
         assert agent.is_completed is False
         assert agent.history == []
         assert agent.current_question_index == 0
+        assert agent.phase == InterviewPhase.ICE_BREAKING
 
     @pytest.mark.asyncio
     async def test_start_returns_opening_message(self, agent, mock_provider):
@@ -295,3 +299,238 @@ class TestPromptManager:
             transcript="AI: こんにちは\n回答者: よろしくお願いします",
         )
         assert "コンプライアンス調査" in result
+
+    def test_system_prompt_contains_phase_hint(self):
+        """システムプロンプトにphase_hintが含まれること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            phase_hint="フェーズ2: 本題",
+        )
+        assert "フェーズ2: 本題" in prompt
+
+    def test_system_prompt_default_phase_hint(self):
+        """phase_hint未指定時にデフォルトが使われること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        assert "アイスブレイク" in prompt
+
+    def test_anonymous_prompt_contains_phase_hint(self):
+        """匿名プロンプトにもphase_hintが含まれること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="匿名テスト",
+            questions=["Q1"],
+            is_anonymous=True,
+            phase_hint="フェーズ3: 深掘り",
+        )
+        assert "フェーズ3: 深掘り" in prompt
+
+
+# --- フェーズ管理テスト ---
+
+
+class TestInterviewPhaseManagement:
+    """インタビューフェーズ管理のテスト。"""
+
+    @pytest.fixture
+    def mock_provider(self):
+        provider = AsyncMock()
+        provider.chat.return_value = ChatResponse(
+            content="AIの応答", model="test", finish_reason="stop"
+        )
+        return provider
+
+    @pytest.fixture
+    def context_with_questions(self):
+        return InterviewContext(
+            interview_id="phase-test-001",
+            organization_name="フェーズテスト社",
+            use_case_type="audit_process",
+            interview_purpose="フェーズ管理テスト",
+            questions=[f"質問{i}" for i in range(1, 11)],  # 10 questions
+        )
+
+    @pytest.fixture
+    def agent(self, mock_provider, context_with_questions):
+        return InterviewAgent(provider=mock_provider, context=context_with_questions)
+
+    def test_initial_phase_is_ice_breaking(self, agent):
+        """初期フェーズがアイスブレイクであること。"""
+        hint = agent._get_phase_hint()
+        assert agent.phase == InterviewPhase.ICE_BREAKING
+        assert "アイスブレイク" in hint
+
+    def test_phase_ice_breaking_with_few_turns(self, agent):
+        """ユーザーターン数が少ない場合、アイスブレイクのままであること。"""
+        agent.history.append(DialogueTurn(role="ai", content="こんにちは", timestamp_ms=1000))
+        agent.history.append(DialogueTurn(role="user", content="よろしく", timestamp_ms=2000))
+        agent.history.append(DialogueTurn(role="ai", content="ありがとう", timestamp_ms=3000))
+        agent.history.append(DialogueTurn(role="user", content="はい", timestamp_ms=4000))
+
+        hint = agent._get_phase_hint()
+        assert agent.phase == InterviewPhase.ICE_BREAKING
+        assert "ラポール" in hint
+
+    def test_phase_transitions_to_main(self, agent):
+        """ターン数が増えるとメインフェーズに遷移すること。"""
+        # 3 user turns → main phase (3 user turns, 10 questions → ratio = 3/20 = 0.15 < 0.6)
+        for i in range(6):
+            role = "user" if i % 2 == 0 else "ai"
+            agent.history.append(DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000))
+
+        hint = agent._get_phase_hint()
+        assert agent.phase == InterviewPhase.MAIN
+        assert "本題" in hint
+
+    def test_phase_transitions_to_deep_dive(self, agent):
+        """カバレッジが60%以上で深掘りフェーズに遷移すること。"""
+        # Need user_turns/max(total_questions*2, 1) >= 0.6 → user_turns >= 12 for 10 questions
+        for i in range(24):
+            role = "user" if i % 2 == 0 else "ai"
+            agent.history.append(DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000))
+
+        hint = agent._get_phase_hint()
+        assert agent.phase == InterviewPhase.DEEP_DIVE
+        assert "深掘り" in hint
+
+    def test_phase_transitions_to_closing(self, agent):
+        """カバレッジが85%以上でクロージングフェーズに遷移すること。"""
+        # Need user_turns/max(total_questions*2, 1) >= 0.85 → user_turns >= 17 for 10 questions
+        for i in range(40):
+            role = "user" if i % 2 == 0 else "ai"
+            agent.history.append(DialogueTurn(role=role, content=f"turn {i}", timestamp_ms=i * 1000))
+
+        hint = agent._get_phase_hint()
+        assert agent.phase == InterviewPhase.CLOSING
+        assert "クロージング" in hint
+
+    def test_phase_hint_injected_into_system_prompt(self, agent):
+        """フェーズヒントがシステムプロンプトに注入されること。"""
+        prompt = agent._build_system_prompt()
+        assert "フェーズ1: アイスブレイク" in prompt
+        assert "フェーズテスト社" in prompt
+
+    def test_phase_enum_values(self):
+        """InterviewPhaseのenum値が正しいこと。"""
+        assert InterviewPhase.ICE_BREAKING == "ice_breaking"
+        assert InterviewPhase.MAIN == "main"
+        assert InterviewPhase.DEEP_DIVE == "deep_dive"
+        assert InterviewPhase.CLOSING == "closing"
+
+
+# --- プロンプト内容検証テスト ---
+
+
+class TestPromptContent:
+    """プロンプトの内容が要件を満たしているかの検証テスト。"""
+
+    def test_standard_prompt_has_four_phases(self):
+        """標準プロンプトに4フェーズが定義されていること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        assert "フェーズ1" in prompt
+        assert "フェーズ2" in prompt
+        assert "フェーズ3" in prompt
+        assert "フェーズ4" in prompt
+
+    def test_standard_prompt_has_facilitation_techniques(self):
+        """標準プロンプトにファシリテーション技法が含まれること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="audit_process",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        assert "相槌" in prompt
+        assert "傾聴" in prompt
+        assert "パラフレーズ" in prompt
+        assert "プロービング" in prompt
+
+    def test_standard_prompt_has_aizuchi_examples(self):
+        """標準プロンプトに相槌の具体例が含まれること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        assert "なるほど" in prompt
+        assert "そうなんですね" in prompt
+        assert "興味深いですね" in prompt
+
+    def test_standard_prompt_has_behavioral_rules(self):
+        """標準プロンプトに行動規範が含まれること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+        )
+        assert "一度に複数の質問をしない" in prompt
+        assert "誘導的な質問を避け" in prompt
+
+    def test_anonymous_prompt_has_anonymity_emphasis(self):
+        """匿名プロンプトに匿名性の強調が含まれること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="匿名テスト",
+            questions=["Q1"],
+            is_anonymous=True,
+        )
+        assert "完全匿名" in prompt
+        assert "個人を特定" in prompt
+        assert "非批判的" in prompt
+
+    def test_anonymous_prompt_has_four_phases(self):
+        """匿名プロンプトにも4フェーズが定義されていること。"""
+        prompt = PromptManager.get_system_prompt(
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="匿名テスト",
+            questions=["Q1"],
+            is_anonymous=True,
+        )
+        assert "フェーズ1" in prompt
+        assert "フェーズ2" in prompt
+        assert "フェーズ3" in prompt
+        assert "フェーズ4" in prompt
+
+    @pytest.mark.asyncio
+    async def test_start_uses_duration_from_metadata(self):
+        """start()がmetadataのduration_minutesを使用すること。"""
+        provider = AsyncMock()
+        provider.chat.return_value = ChatResponse(
+            content="こんにちは！本日は60分のインタビューです。",
+            model="test",
+            finish_reason="stop",
+        )
+
+        ctx = InterviewContext(
+            interview_id="duration-test",
+            organization_name="テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="テスト",
+            questions=["Q1"],
+            metadata={"duration_minutes": 60},
+        )
+        agent = InterviewAgent(provider=provider, context=ctx)
+        await agent.start()
+
+        # The opening prompt should contain "約60分"
+        call_args = provider.chat.call_args
+        messages = call_args[0][0]
+        user_msg = [m for m in messages if m.role == "user"][0]
+        assert "約60分" in user_msg.content

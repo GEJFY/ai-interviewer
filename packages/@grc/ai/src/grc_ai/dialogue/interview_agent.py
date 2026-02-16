@@ -3,10 +3,20 @@
 import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from grc_ai.base import AIProvider, ChatMessage, MessageRole
 from grc_ai.dialogue.prompts import PromptManager
+
+
+class InterviewPhase(str, Enum):
+    """Interview phase enum."""
+
+    ICE_BREAKING = "ice_breaking"
+    MAIN = "main"
+    DEEP_DIVE = "deep_dive"
+    CLOSING = "closing"
 
 
 @dataclass
@@ -59,23 +69,69 @@ class InterviewAgent:
         # Conversation history
         self.history: list[DialogueTurn] = []
 
-        # System prompt
-        self.system_prompt = PromptManager.get_system_prompt(
-            organization_name=context.organization_name,
-            use_case_type=context.use_case_type,
-            interview_purpose=context.interview_purpose,
-            questions=context.questions,
-            is_anonymous=context.is_anonymous,
-        )
+        # Phase tracking
+        self.phase = InterviewPhase.ICE_BREAKING
 
         # State tracking
         self.current_question_index = 0
         self.is_started = False
         self.is_completed = False
 
+    def _get_phase_hint(self) -> str:
+        """Determine the current interview phase hint based on conversation progress.
+
+        Returns:
+            Phase hint string to inject into the system prompt
+        """
+        user_turns = sum(1 for t in self.history if t.role == "user")
+        total_questions = len(self.context.questions)
+
+        if user_turns == 0:
+            self.phase = InterviewPhase.ICE_BREAKING
+            return "フェーズ1: アイスブレイク（導入）— 自己紹介と挨拶から始めてください。場を和ませ、安心感を与えることが最優先です。"
+
+        if user_turns <= 2:
+            self.phase = InterviewPhase.ICE_BREAKING
+            return "フェーズ1: アイスブレイク（導入）— まだ導入フェーズです。ラポール（信頼関係）の構築に努め、自然に本題へ遷移してください。"
+
+        # Estimate question coverage based on conversation length
+        coverage_ratio = min(user_turns / max(total_questions * 2, 1), 1.0)
+
+        if coverage_ratio < 0.6:
+            self.phase = InterviewPhase.MAIN
+            return (
+                f"フェーズ2: 本題（メイン質問）— 質問リストに沿って自然な会話で進めてください。"
+                f"会話ターン数: {user_turns}, 質問数: {total_questions}"
+            )
+
+        if coverage_ratio < 0.85:
+            self.phase = InterviewPhase.DEEP_DIVE
+            return (
+                f"フェーズ3: 深掘り（フォローアップ）— 重要な回答を掘り下げ、具体例やエピソードを引き出してください。"
+                f"会話ターン数: {user_turns}, 質問数: {total_questions}"
+            )
+
+        self.phase = InterviewPhase.CLOSING
+        return (
+            "フェーズ4: クロージング（まとめ）— 要点を振り返り、追加コメントの機会を設けて、"
+            "感謝を伝えて丁寧にインタビューを終了してください。"
+        )
+
+    def _build_system_prompt(self) -> str:
+        """Build system prompt with current phase hint."""
+        return PromptManager.get_system_prompt(
+            organization_name=self.context.organization_name,
+            use_case_type=self.context.use_case_type,
+            interview_purpose=self.context.interview_purpose,
+            questions=self.context.questions,
+            is_anonymous=self.context.is_anonymous,
+            phase_hint=self._get_phase_hint(),
+        )
+
     def _build_messages(self) -> list[ChatMessage]:
         """Build message list for the AI provider."""
-        messages = [ChatMessage(role=MessageRole.SYSTEM, content=self.system_prompt)]
+        system_prompt = self._build_system_prompt()
+        messages = [ChatMessage(role=MessageRole.SYSTEM, content=system_prompt)]
 
         for turn in self.history:
             role = MessageRole.ASSISTANT if turn.role == "ai" else MessageRole.USER
@@ -98,18 +154,23 @@ class InterviewAgent:
         if self.is_started:
             raise RuntimeError("Interview already started")
 
+        # Read duration from task settings if available
+        duration_minutes = self.context.metadata.get("duration_minutes", 30)
+        estimated_duration = f"約{duration_minutes}分"
+
         # Generate opening message
         opening_prompt = PromptManager.GENERATE_OPENING.format(
             interviewer_name="AI インタビュアー",
             purpose=self.context.interview_purpose,
-            estimated_duration="約15-30分",
+            estimated_duration=estimated_duration,
             anonymity_note="このインタビューは匿名です。"
             if self.context.is_anonymous
             else "回答は記録されます。",
         )
 
+        system_prompt = self._build_system_prompt()
         messages = [
-            ChatMessage(role=MessageRole.SYSTEM, content=self.system_prompt),
+            ChatMessage(role=MessageRole.SYSTEM, content=system_prompt),
             ChatMessage(role=MessageRole.USER, content=opening_prompt),
         ]
 
