@@ -46,9 +46,9 @@ variable "region" {
 }
 
 variable "ai_provider" {
-  description = "AI/LLM provider (azure_openai, aws_bedrock, gcp_vertex, anthropic)"
+  description = "AI/LLM provider (azure_foundry, aws_bedrock, gcp_vertex, anthropic)"
   type        = string
-  default     = "azure_openai"
+  default     = "azure_foundry"
 }
 
 # cloud_provider variable kept for tfvars compatibility

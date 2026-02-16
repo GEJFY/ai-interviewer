@@ -123,7 +123,7 @@ const MOCK_TEMPLATES = {
 const MOCK_PROVIDERS = {
   providers: [
     {
-      provider: 'azure_openai',
+      provider: 'azure_foundry',
       is_configured: true,
       capabilities: { realtime: true, vision: true, tools: true },
     },
@@ -143,7 +143,7 @@ const MOCK_PROVIDERS = {
       capabilities: { realtime: true, vision: false, tools: false },
     },
   ],
-  active_provider: 'azure_openai',
+  active_provider: 'azure_foundry',
 };
 
 // ---------------------------------------------------------------------------
@@ -223,7 +223,7 @@ async function setupApiMocks(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        provider: 'azure_openai',
+        provider: 'azure_foundry',
         status: 'success',
         message: '\u63a5\u7d9a\u6210\u529f',
         model_used: 'gpt-5-nano',

@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from grc_ai.config import AIConfig, AWSBedrockConfig, AzureOpenAIConfig, GCPVertexConfig
+from grc_ai.config import AIConfig, AWSBedrockConfig, AzureFoundryConfig, GCPVertexConfig
 from grc_ai.factory import AIProviderType, create_ai_provider
 
 # --- AIProviderType テスト ---
@@ -53,7 +53,7 @@ class TestCreateAIProvider:
     def test_azure_without_config_raises(self):
         """Azure設定なしでValueErrorが発生すること。"""
         config = AIConfig(provider="azure", azure=None)
-        with pytest.raises(ValueError, match="Azure OpenAI configuration is required"):
+        with pytest.raises(ValueError, match="Azure AI Foundry configuration is required"):
             create_ai_provider(config)
 
     def test_aws_without_config_raises(self):
@@ -68,12 +68,12 @@ class TestCreateAIProvider:
         with pytest.raises(ValueError, match="GCP Vertex AI configuration is required"):
             create_ai_provider(config)
 
-    @patch("grc_ai.providers.azure_openai.AzureOpenAIProvider.__init__", return_value=None)
+    @patch("grc_ai.providers.azure_foundry.AzureFoundryProvider.__init__", return_value=None)
     def test_azure_with_config_creates_provider(self, mock_init):
         """Azure設定ありでプロバイダーが作成されること。"""
         config = AIConfig(
             provider="azure",
-            azure=AzureOpenAIConfig(
+            azure=AzureFoundryConfig(
                 api_key="test-key",
                 endpoint="https://test.openai.azure.com/",
             ),

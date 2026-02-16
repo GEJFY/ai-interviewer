@@ -22,9 +22,9 @@ class TestModelsListEndpoint:
         """プロバイダーフィルタのテスト。"""
         from grc_ai.models import get_models_by_provider
 
-        azure_models = get_models_by_provider("azure_openai")
+        azure_models = get_models_by_provider("azure_foundry")
         assert len(azure_models) > 0
-        assert all(m.provider == "azure_openai" for m in azure_models)
+        assert all(m.provider == "azure_foundry" for m in azure_models)
 
         local_models = get_models_by_provider("local")
         assert len(local_models) > 0
@@ -74,7 +74,7 @@ class TestProvidersEndpoint:
         from grc_ai.models import PROVIDER_CAPABILITIES
 
         providers = list(PROVIDER_CAPABILITIES.keys())
-        assert "azure_openai" in providers
+        assert "azure_foundry" in providers
         assert "aws_bedrock" in providers
         assert "gcp_vertex" in providers
         assert "local" in providers
@@ -100,7 +100,7 @@ class TestConnectionTestEndpoint:
         mock_settings = MagicMock()
         mock_settings.azure_openai_api_key = "test-key"
         mock_settings.azure_openai_endpoint = "https://test.openai.azure.com/"
-        assert _check_provider_configured("azure_openai", mock_settings) is True
+        assert _check_provider_configured("azure_foundry", mock_settings) is True
 
     @pytest.mark.asyncio
     async def test_azure_provider_check_not_configured(self):
@@ -110,4 +110,4 @@ class TestConnectionTestEndpoint:
         mock_settings = MagicMock()
         mock_settings.azure_openai_api_key = ""
         mock_settings.azure_openai_endpoint = ""
-        assert _check_provider_configured("azure_openai", mock_settings) is False
+        assert _check_provider_configured("azure_foundry", mock_settings) is False

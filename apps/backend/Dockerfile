@@ -49,6 +49,8 @@ RUN uv pip install --no-cache-dir \
     opentelemetry-sdk==1.28.0 \
     opentelemetry-instrumentation-fastapi==0.49b0 \
     opentelemetry-exporter-otlp==1.28.0 \
+    azure-monitor-opentelemetry-exporter>=1.0.0b31 \
+    msal>=1.31.0 \
     openai>=1.50.0 \
     azure-identity==1.19.0 \
     azure-cognitiveservices-speech==1.42.0 \

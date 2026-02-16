@@ -110,7 +110,7 @@ class TestAzureAIFoundryConnection:
         # Verify model configuration
         from grc_ai.models import get_models_by_provider
 
-        azure_models = get_models_by_provider("azure_openai")
+        azure_models = get_models_by_provider("azure_foundry")
 
         model_ids = [m.model_id for m in azure_models]
         assert len(model_ids) > 0
@@ -367,7 +367,7 @@ class TestMultiCloudProviderSwitching:
         # Verify all providers are configured
         assert "openai" in PROVIDER_CAPABILITIES
         assert "anthropic" in PROVIDER_CAPABILITIES
-        assert "azure_openai" in PROVIDER_CAPABILITIES
+        assert "azure_foundry" in PROVIDER_CAPABILITIES
         assert "aws_bedrock" in PROVIDER_CAPABILITIES
         assert "gcp_vertex" in PROVIDER_CAPABILITIES
 
@@ -472,7 +472,7 @@ class TestConnectionSummary:
         expected_providers = {
             "openai",
             "anthropic",
-            "azure_openai",
+            "azure_foundry",
             "aws_bedrock",
             "gcp_vertex",
             "local",

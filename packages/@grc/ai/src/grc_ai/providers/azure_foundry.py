@@ -1,4 +1,8 @@
-"""Azure OpenAI provider implementation."""
+"""Azure AI Foundry provider implementation.
+
+Uses the OpenAI SDK's AsyncAzureOpenAI client, which is fully compatible
+with Azure AI Foundry (formerly Azure OpenAI Service).
+"""
 
 from collections.abc import AsyncIterator
 
@@ -12,17 +16,17 @@ from grc_ai.base import (
     ChatResponse,
     EmbeddingResponse,
 )
-from grc_ai.config import AzureOpenAIConfig
+from grc_ai.config import AzureFoundryConfig
 
 
-class AzureOpenAIProvider(AIProvider):
-    """Azure OpenAI API provider."""
+class AzureFoundryProvider(AIProvider):
+    """Azure AI Foundry provider."""
 
-    def __init__(self, config: AzureOpenAIConfig) -> None:
-        """Initialize Azure OpenAI provider.
+    def __init__(self, config: AzureFoundryConfig) -> None:
+        """Initialize Azure AI Foundry provider.
 
         Args:
-            config: Azure OpenAI configuration
+            config: Azure AI Foundry configuration
         """
         self.config = config
         self.client = AsyncAzureOpenAI(
@@ -44,7 +48,7 @@ class AzureOpenAIProvider(AIProvider):
         max_tokens: int = 4096,
         **kwargs,
     ) -> ChatResponse:
-        """Generate a chat completion using Azure OpenAI."""
+        """Generate a chat completion using Azure AI Foundry."""
         deployment = model or self.config.deployment_name
 
         response = await self.client.chat.completions.create(
@@ -76,7 +80,7 @@ class AzureOpenAIProvider(AIProvider):
         max_tokens: int = 4096,
         **kwargs,
     ) -> AsyncIterator[ChatChunk]:
-        """Stream a chat completion using Azure OpenAI."""
+        """Stream a chat completion using Azure AI Foundry."""
         deployment = model or self.config.deployment_name
 
         stream = await self.client.chat.completions.create(
@@ -110,7 +114,7 @@ class AzureOpenAIProvider(AIProvider):
         model: str | None = None,
         **kwargs,
     ) -> EmbeddingResponse:
-        """Generate an embedding using Azure OpenAI."""
+        """Generate an embedding using Azure AI Foundry."""
         deployment = model or self.config.embedding_deployment
 
         response = await self.client.embeddings.create(

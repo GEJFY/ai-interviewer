@@ -73,7 +73,7 @@ class TestModelLookup:
 
     def test_get_models_by_provider_azure(self):
         """Azureプロバイダーのモデル取得。"""
-        models = get_models_by_provider("azure_openai")
+        models = get_models_by_provider("azure_foundry")
         assert len(models) > 0
 
     def test_get_models_by_tier_economy(self):
@@ -150,7 +150,7 @@ class TestProviderCapabilities:
 
     def test_all_providers_present(self):
         """全プロバイダーが登録されていること。"""
-        expected = ["openai", "anthropic", "azure_openai", "aws_bedrock", "gcp_vertex", "local"]
+        expected = ["openai", "anthropic", "azure_foundry", "aws_bedrock", "gcp_vertex", "local"]
         for p in expected:
             assert p in PROVIDER_CAPABILITIES, f"Missing provider: {p}"
 

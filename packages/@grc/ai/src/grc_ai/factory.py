@@ -5,7 +5,7 @@ from enum import StrEnum
 from grc_ai.base import AIProvider
 from grc_ai.config import AIConfig
 from grc_ai.providers.aws_bedrock import AWSBedrockProvider
-from grc_ai.providers.azure_openai import AzureOpenAIProvider
+from grc_ai.providers.azure_foundry import AzureFoundryProvider
 from grc_ai.providers.gcp_vertex import GCPVertexProvider
 from grc_ai.providers.ollama_provider import OllamaProvider
 
@@ -36,8 +36,8 @@ def create_ai_provider(config: AIConfig) -> AIProvider:
     match provider_type:
         case AIProviderType.AZURE:
             if config.azure is None:
-                raise ValueError("Azure OpenAI configuration is required")
-            return AzureOpenAIProvider(config.azure)
+                raise ValueError("Azure AI Foundry configuration is required")
+            return AzureFoundryProvider(config.azure)
 
         case AIProviderType.AWS:
             if config.aws is None:

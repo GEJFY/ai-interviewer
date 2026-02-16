@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Loader2, Zap } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api-client';
 
 const loginSchema = z.object({
   email: z.string().email('有効なメールアドレスを入力してください'),
@@ -21,6 +22,9 @@ export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ssoLoading, setSsoLoading] = useState(false);
+
+  const ssoEnabled = process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID && process.env.NEXT_PUBLIC_AZURE_AD_TENANT_ID;
 
   const {
     register,
@@ -29,6 +33,31 @@ export default function LoginPage() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Azure AD SSO リダイレクト後の id_token 処理
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.includes('id_token=')) return;
+    const params = new URLSearchParams(hash.substring(1));
+    const idToken = params.get('id_token');
+    if (!idToken) return;
+
+    // URLからフラグメントを削除
+    window.history.replaceState(null, '', window.location.pathname);
+
+    (async () => {
+      setSsoLoading(true);
+      try {
+        const tokens = await api.auth.ssoAzure(idToken);
+        localStorage.setItem('access_token', tokens.access_token);
+        localStorage.setItem('refresh_token', tokens.refresh_token);
+        router.push('/dashboard');
+      } catch {
+        setError('Azure AD 認証に失敗しました');
+        setSsoLoading(false);
+      }
+    })();
+  }, []);
 
   const onSubmit = async (data: LoginForm) => {
     setError(null);
@@ -153,6 +182,43 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            {ssoEnabled && (
+              <>
+                <div className="mt-6 flex items-center gap-3">
+                  <div className="flex-1 h-px bg-surface-200 dark:bg-surface-700" />
+                  <span className="text-xs text-surface-400 dark:text-surface-500">または</span>
+                  <div className="flex-1 h-px bg-surface-200 dark:bg-surface-700" />
+                </div>
+
+                <button
+                  type="button"
+                  disabled={ssoLoading}
+                  onClick={async () => {
+                    setSsoLoading(true);
+                    setError(null);
+                    try {
+                      const clientId = process.env.NEXT_PUBLIC_AZURE_AD_CLIENT_ID!;
+                      const tenantId = process.env.NEXT_PUBLIC_AZURE_AD_TENANT_ID!;
+                      const redirectUri = `${window.location.origin}/login`;
+                      const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=id_token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid+profile+email&response_mode=fragment&nonce=${Date.now()}`;
+                      window.location.href = authUrl;
+                    } catch {
+                      setError('SSO認証の開始に失敗しました');
+                      setSsoLoading(false);
+                    }
+                  }}
+                  className="mt-4 w-full py-3 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 rounded-lg font-medium hover:bg-surface-50 dark:hover:bg-surface-700 transition-all flex items-center justify-center gap-2"
+                >
+                  {ssoLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Shield className="w-5 h-5" />
+                  )}
+                  Azure AD でログイン
+                </button>
+              </>
+            )}
 
             <div className="mt-6 text-center text-sm text-surface-500 dark:text-surface-400">
               アカウントをお持ちでない方は{' '}

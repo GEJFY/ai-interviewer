@@ -51,8 +51,8 @@ const THEME_OPTIONS = [
 const AI_PROVIDERS = [
   {
     id: 'azure',
-    name: 'Azure OpenAI',
-    description: 'Microsoft Azure上のOpenAIサービス',
+    name: 'Azure AI Foundry',
+    description: 'Microsoft Azure AI Foundry',
     icon: '☁️',
     fields: [
       { key: 'azure_openai_api_key', label: 'API Key', type: 'password' },

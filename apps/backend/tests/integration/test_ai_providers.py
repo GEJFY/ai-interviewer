@@ -36,14 +36,14 @@ class TestAIProviderAbstraction:
     async def test_create_azure_openai_provider(self):
         """Azure OpenAI provider should be created correctly."""
         config = {
-            "provider": "azure_openai",
+            "provider": "azure_foundry",
             "endpoint": "https://test.openai.azure.com/",
             "api_key": "test-key",
             "deployment_name": "gpt-4o",
         }
 
         # Verify config structure
-        assert config["provider"] == "azure_openai"
+        assert config["provider"] == "azure_foundry"
         assert "endpoint" in config
         assert "api_key" in config
 
@@ -289,7 +289,7 @@ class TestModelSelection:
         """Provider-specific model should be retrievable."""
         from grc_ai.models import get_models_by_provider
 
-        azure_models = get_models_by_provider("azure_openai")
+        azure_models = get_models_by_provider("azure_foundry")
         assert len(azure_models) > 0
 
         anthropic_models = get_models_by_provider("anthropic")

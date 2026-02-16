@@ -299,15 +299,15 @@ ANTHROPIC_MODELS = {
 }
 
 # =============================================================================
-# Azure OpenAI / Azure AI Foundry Models
+# Azure AI Foundry Models
 # =============================================================================
 
-AZURE_OPENAI_MODELS = {
+AZURE_FOUNDRY_MODELS = {
     # GPT-5 Series on Azure AI Foundry
     "azure-gpt-5.2": ModelConfig(
         model_id="gpt-5.2",
         display_name="Azure GPT-5.2",
-        provider="azure_openai",
+        provider="azure_foundry",
         tier=ModelTier.FLAGSHIP,
         capabilities=[
             ModelCapability.CHAT,
@@ -327,7 +327,7 @@ AZURE_OPENAI_MODELS = {
     "azure-gpt-5-nano": ModelConfig(
         model_id="gpt-5-nano",
         display_name="Azure GPT-5 Nano",
-        provider="azure_openai",
+        provider="azure_foundry",
         tier=ModelTier.ECONOMY,
         capabilities=[
             ModelCapability.CHAT,
@@ -346,7 +346,7 @@ AZURE_OPENAI_MODELS = {
     "azure-claude-sonnet-4.6-opus": ModelConfig(
         model_id="claude-sonnet-4.6-opus",
         display_name="Azure Claude Sonnet 4.6 Opus",
-        provider="azure_openai",
+        provider="azure_foundry",
         tier=ModelTier.FLAGSHIP,
         capabilities=[
             ModelCapability.CHAT,
@@ -364,7 +364,7 @@ AZURE_OPENAI_MODELS = {
     "azure-claude-4.6-sonnet": ModelConfig(
         model_id="claude-4.6-sonnet",
         display_name="Azure Claude 4.6 Sonnet",
-        provider="azure_openai",
+        provider="azure_foundry",
         tier=ModelTier.PREMIUM,
         capabilities=[
             ModelCapability.CHAT,
@@ -383,7 +383,7 @@ AZURE_OPENAI_MODELS = {
     "azure-gpt-4o": ModelConfig(
         model_id="gpt-4o",
         display_name="Azure GPT-4o",
-        provider="azure_openai",
+        provider="azure_foundry",
         tier=ModelTier.STANDARD,
         capabilities=[ModelCapability.CHAT, ModelCapability.VISION, ModelCapability.REALTIME],
         context_window=128000,
@@ -772,7 +772,7 @@ LOCAL_MODELS = {
 ALL_MODELS: dict[str, ModelConfig] = {
     **OPENAI_MODELS,
     **ANTHROPIC_MODELS,
-    **AZURE_OPENAI_MODELS,
+    **AZURE_FOUNDRY_MODELS,
     **AWS_BEDROCK_MODELS,
     **GCP_VERTEX_MODELS,
     **LOCAL_MODELS,
@@ -966,7 +966,7 @@ PROVIDER_CAPABILITIES = {
         "supports_tools": True,
         "supports_realtime": True,
     },
-    "azure_openai": {
+    "azure_foundry": {
         "latest_model": "azure-gpt-5.2",
         "claude_model": "azure-claude-sonnet-4.6-opus",
         "economy_model": "azure-gpt-5-nano",
