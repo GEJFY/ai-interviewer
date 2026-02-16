@@ -351,9 +351,16 @@ async def export_report(
     report_id: str,
     db: DBSession,
     current_user: CurrentUser,
-    format: str = Query("json", pattern="^(json|pdf|docx)$"),
+    format: str = Query("json", pattern="^(json|pdf|docx|xlsx)$"),
 ) -> StreamingResponse:
     """Export a report in various formats."""
+    from grc_backend.services.report_generator import (
+        ExportFormat,
+        GeneratedReport,
+        ReportGeneratorService,
+    )
+    from grc_backend.services.report_generator import ReportType as ServiceReportType
+
     repo = ReportRepository(db)
     report = await repo.get(report_id)
 
@@ -370,12 +377,46 @@ async def export_report(
             media_type="application/json",
             headers={"Content-Disposition": f"attachment; filename=report_{report_id}.json"},
         )
-    else:
-        # PDF/DOCX export would require additional libraries
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail=f"Export to {format} is not yet implemented",
-        )
+
+    # Map DB report type to service report type
+    type_map = {
+        ReportType.SUMMARY: ServiceReportType.SUMMARY,
+        ReportType.PROCESS_DOC: ServiceReportType.PROCESS_DOC,
+        ReportType.RCM: ServiceReportType.RCM,
+        ReportType.AUDIT_WORKPAPER: ServiceReportType.AUDIT_WORKPAPER,
+    }
+    service_type = type_map.get(report.report_type, ServiceReportType.SUMMARY)
+
+    generated = GeneratedReport(
+        report_type=service_type,
+        title=report.title,
+        generated_at=report.created_at,
+        content=report.content or {},
+    )
+
+    format_map = {
+        "docx": (
+            ExportFormat.WORD,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "docx",
+        ),
+        "xlsx": (
+            ExportFormat.EXCEL,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "xlsx",
+        ),
+        "pdf": (ExportFormat.PDF, "application/pdf", "pdf"),
+    }
+    export_fmt, media_type, ext = format_map[format]
+
+    service = ReportGeneratorService()
+    data = await service.export_report(generated, export_fmt)
+
+    return StreamingResponse(
+        io.BytesIO(data),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename=report_{report_id}.{ext}"},
+    )
 
 
 @router.post("/{report_id}/approve", response_model=ReportRead)

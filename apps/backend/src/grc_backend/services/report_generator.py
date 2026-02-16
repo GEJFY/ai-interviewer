@@ -536,27 +536,282 @@ class ReportGeneratorService:
         return "\n".join(lines)
 
     async def _export_to_word(self, report: GeneratedReport) -> bytes:
-        """Export report to Word format."""
-        # This would use python-docx in a real implementation
-        # For now, return a placeholder
-        logger.warning("Word export not fully implemented, returning markdown")
-        return self._export_to_markdown(report).encode("utf-8")
+        """Export report to Word (.docx) format."""
+        from io import BytesIO
+
+        from docx import Document
+        from docx.shared import Pt
+
+        doc = Document()
+
+        # Style
+        style = doc.styles["Normal"]
+        style.font.size = Pt(11)
+        style.font.name = "Calibri"
+
+        content = report.content
+        title = content.get("title", "Report")
+
+        doc.add_heading(title, level=0)
+
+        # Metadata
+        meta_fields = {
+            "date": "Date",
+            "prepared_by": "Prepared by",
+            "process_owner": "Process Owner",
+            "department": "Department",
+        }
+        for key, label in meta_fields.items():
+            if key in content:
+                doc.add_paragraph(f"{label}: {content[key]}")
+
+        if report.report_type == ReportType.SUMMARY:
+            if "summary" in content:
+                doc.add_heading("Summary", level=1)
+                doc.add_paragraph(content["summary"])
+            if "key_findings" in content:
+                doc.add_heading("Key Findings", level=1)
+                for f in content["key_findings"]:
+                    doc.add_paragraph(
+                        f"{f.get('topic', '')}: {f.get('finding', '')} "
+                        f"({f.get('significance', '')})",
+                        style="List Bullet",
+                    )
+            if "follow_up_items" in content:
+                doc.add_heading("Follow-up Items", level=1)
+                for item in content["follow_up_items"]:
+                    doc.add_paragraph(item, style="List Bullet")
+
+        elif report.report_type == ReportType.PROCESS_DOC:
+            for field_key, heading in [
+                ("objective", "Objective"),
+                ("scope", "Scope"),
+                ("narrative", "Process Narrative"),
+            ]:
+                if field_key in content:
+                    doc.add_heading(heading, level=1)
+                    doc.add_paragraph(str(content[field_key]))
+            if "process_steps" in content:
+                doc.add_heading("Process Steps", level=1)
+                for step in content["process_steps"]:
+                    doc.add_heading(
+                        f"Step {step.get('step_number', '')}: {step.get('description', '')}",
+                        level=2,
+                    )
+                    if step.get("responsible_party"):
+                        doc.add_paragraph(f"Responsible: {step['responsible_party']}")
+                    if step.get("system_used"):
+                        doc.add_paragraph(f"System: {step['system_used']}")
+
+        elif report.report_type == ReportType.RCM:
+            if "items" in content and content["items"]:
+                doc.add_heading("Risk Control Matrix", level=1)
+                headers = ["Risk ID", "Description", "Control", "Residual Risk"]
+                table = doc.add_table(rows=1, cols=len(headers))
+                table.style = "Table Grid"
+                for i, h in enumerate(headers):
+                    table.rows[0].cells[i].text = h
+                for item in content["items"]:
+                    row = table.add_row()
+                    row.cells[0].text = str(item.get("risk_id", ""))
+                    row.cells[1].text = str(item.get("risk_description", ""))
+                    row.cells[2].text = str(item.get("control_description", ""))
+                    row.cells[3].text = str(item.get("residual_risk", ""))
+
+        elif report.report_type == ReportType.AUDIT_WORKPAPER:
+            for field_key, heading in [
+                ("objective", "Audit Objective"),
+                ("scope", "Scope"),
+                ("methodology", "Methodology"),
+            ]:
+                if field_key in content:
+                    doc.add_heading(heading, level=1)
+                    doc.add_paragraph(str(content[field_key]))
+            if "findings" in content and content["findings"]:
+                doc.add_heading("Findings", level=1)
+                for f in content["findings"]:
+                    doc.add_heading(
+                        f"{f.get('finding_id', '')}: {f.get('description', '')}",
+                        level=2,
+                    )
+                    if f.get("recommendation"):
+                        doc.add_paragraph(f"Recommendation: {f['recommendation']}")
+            if "conclusion" in content:
+                doc.add_heading("Conclusion", level=1)
+                doc.add_paragraph(content["conclusion"])
+
+        buf = BytesIO()
+        doc.save(buf)
+        return buf.getvalue()
 
     async def _export_to_excel(self, report: GeneratedReport) -> bytes:
-        """Export report to Excel format."""
-        # This would use openpyxl in a real implementation
-        # For now, return a placeholder
-        logger.warning("Excel export not fully implemented")
-        import json
+        """Export report to Excel (.xlsx) format."""
+        from io import BytesIO
 
-        return json.dumps(report.content, ensure_ascii=False).encode("utf-8")
+        from openpyxl import Workbook
+        from openpyxl.styles import Alignment, Font, PatternFill
+
+        wb = Workbook()
+        ws = wb.active
+        content = report.content
+
+        header_font = Font(bold=True, size=12)
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_font_white = Font(bold=True, size=11, color="FFFFFF")
+
+        ws.title = content.get("title", "Report")[:31]  # Excel max 31 chars
+
+        if report.report_type == ReportType.RCM and "items" in content:
+            columns = [
+                ("risk_id", "Risk ID", 12),
+                ("risk_description", "Risk Description", 40),
+                ("risk_category", "Category", 20),
+                ("likelihood", "Likelihood", 12),
+                ("impact", "Impact", 12),
+                ("control_id", "Control ID", 12),
+                ("control_description", "Control Description", 40),
+                ("control_type", "Control Type", 15),
+                ("control_frequency", "Frequency", 12),
+                ("residual_risk", "Residual Risk", 15),
+            ]
+            for col_idx, (_, header, width) in enumerate(columns, 1):
+                cell = ws.cell(row=1, column=col_idx, value=header)
+                cell.font = header_font_white
+                cell.fill = header_fill
+                cell.alignment = Alignment(horizontal="center")
+                ws.column_dimensions[chr(64 + col_idx)].width = width
+            for row_idx, item in enumerate(content["items"], 2):
+                for col_idx, (key, _, _) in enumerate(columns, 1):
+                    ws.cell(row=row_idx, column=col_idx, value=str(item.get(key, "")))
+
+        elif report.report_type == ReportType.PROCESS_DOC and "process_steps" in content:
+            columns = [
+                ("step_number", "Step #", 8),
+                ("description", "Description", 50),
+                ("responsible_party", "Responsible", 20),
+                ("system_used", "System", 20),
+            ]
+            for col_idx, (_, header, width) in enumerate(columns, 1):
+                cell = ws.cell(row=1, column=col_idx, value=header)
+                cell.font = header_font_white
+                cell.fill = header_fill
+                ws.column_dimensions[chr(64 + col_idx)].width = width
+            for row_idx, step in enumerate(content["process_steps"], 2):
+                for col_idx, (key, _, _) in enumerate(columns, 1):
+                    ws.cell(row=row_idx, column=col_idx, value=str(step.get(key, "")))
+
+        else:
+            # Generic key-value export for other report types
+            ws.cell(row=1, column=1, value="Key").font = header_font
+            ws.cell(row=1, column=2, value="Value").font = header_font
+            ws.column_dimensions["A"].width = 25
+            ws.column_dimensions["B"].width = 60
+            row = 2
+            for key, value in content.items():
+                ws.cell(row=row, column=1, value=str(key))
+                if isinstance(value, list | dict):
+                    import json
+
+                    ws.cell(row=row, column=2, value=json.dumps(value, ensure_ascii=False))
+                else:
+                    ws.cell(row=row, column=2, value=str(value))
+                row += 1
+
+        buf = BytesIO()
+        wb.save(buf)
+        return buf.getvalue()
 
     async def _export_to_pdf(self, report: GeneratedReport) -> bytes:
         """Export report to PDF format."""
-        # This would use reportlab or weasyprint in a real implementation
-        # For now, return markdown as placeholder
-        logger.warning("PDF export not fully implemented, returning markdown")
-        return self._export_to_markdown(report).encode("utf-8")
+        from io import BytesIO
+
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import mm
+        from reportlab.platypus import (
+            Paragraph,
+            SimpleDocTemplate,
+            Spacer,
+            Table,
+            TableStyle,
+        )
+
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=20 * mm, bottomMargin=20 * mm)
+        styles = getSampleStyleSheet()
+        content = report.content
+        elements: list = []
+
+        # Title
+        title_style = ParagraphStyle(
+            "CustomTitle", parent=styles["Title"], fontSize=18, spaceAfter=12
+        )
+        elements.append(Paragraph(content.get("title", "Report"), title_style))
+        elements.append(Spacer(1, 6 * mm))
+
+        # Metadata
+        meta_style = styles["Normal"]
+        for key, label in [
+            ("date", "Date"),
+            ("prepared_by", "Prepared by"),
+            ("process_owner", "Process Owner"),
+        ]:
+            if key in content:
+                elements.append(Paragraph(f"<b>{label}:</b> {content[key]}", meta_style))
+
+        elements.append(Spacer(1, 4 * mm))
+
+        heading_style = ParagraphStyle(
+            "CustomHeading", parent=styles["Heading2"], fontSize=14, spaceAfter=6
+        )
+
+        if report.report_type == ReportType.RCM and "items" in content:
+            elements.append(Paragraph("Risk Control Matrix", heading_style))
+            table_data = [["Risk ID", "Description", "Control", "Residual"]]
+            for item in content["items"]:
+                table_data.append([
+                    str(item.get("risk_id", "")),
+                    str(item.get("risk_description", ""))[:60],
+                    str(item.get("control_description", ""))[:40],
+                    str(item.get("residual_risk", "")),
+                ])
+            t = Table(table_data, colWidths=[50, 180, 150, 70])
+            t.setStyle(
+                TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
+                ])
+            )
+            elements.append(t)
+        else:
+            # Render markdown-like content for other types
+            md = self._export_to_markdown(report)
+            for line in md.split("\n"):
+                line = line.strip()
+                if not line:
+                    elements.append(Spacer(1, 2 * mm))
+                elif line.startswith("## "):
+                    elements.append(Paragraph(line[3:], heading_style))
+                elif line.startswith("# "):
+                    pass  # skip duplicate title
+                elif line.startswith("- ") or line.startswith("* "):
+                    bullet_text = line[2:]
+                    elements.append(
+                        Paragraph(f"\u2022 {bullet_text}", styles["Normal"])
+                    )
+                elif line.startswith("**") and line.endswith("**"):
+                    elements.append(
+                        Paragraph(f"<b>{line.strip('*')}</b>", styles["Normal"])
+                    )
+                else:
+                    elements.append(Paragraph(line, styles["Normal"]))
+
+        doc.build(elements)
+        return buf.getvalue()
 
 
 # Singleton instance

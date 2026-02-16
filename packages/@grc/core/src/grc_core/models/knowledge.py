@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import ARRAY, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -34,9 +35,13 @@ class KnowledgeItem(Base, TimestampMixin):
 
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
-    # Vector embedding for similarity search (stored as JSON array)
-    # In production, use pgvector extension: Vector(1536)
+    # Legacy JSONB embedding (kept for backward compatibility)
     embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
+
+    # Native pgvector column for efficient similarity search
+    embedding_vector: Mapped[list[float] | None] = mapped_column(
+        Vector(1536), nullable=True
+    )
 
     # Additional metadata
     extra_metadata: Mapped[dict[str, Any]] = mapped_column(

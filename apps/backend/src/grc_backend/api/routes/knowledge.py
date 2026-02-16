@@ -60,16 +60,24 @@ async def search_knowledge(
     current_user: CurrentUser,
     ai_provider: AIProviderDep,
 ) -> dict:
-    """Search knowledge items using semantic search."""
-    from sqlalchemy import select
-
-    KnowledgeRepository(db)
+    """Search knowledge items using semantic search via pgvector."""
+    from sqlalchemy import literal_column, select, text
 
     # Generate embedding for the query
     query_embedding = await ai_provider.embed(search_request.query)
 
-    # Build base query
-    query = select(KnowledgeItem)
+    # Try pgvector-based search first (items with embedding_vector)
+    vector_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
+
+    query = (
+        select(
+            KnowledgeItem,
+            literal_column(
+                f"1 - (embedding_vector <=> '{vector_str}'::vector)"
+            ).label("score"),
+        )
+        .where(KnowledgeItem.embedding_vector.isnot(None))
+    )
 
     # Filter by organization
     if current_user.organization_id:
@@ -83,38 +91,54 @@ async def search_knowledge(
     if search_request.tags:
         query = query.where(KnowledgeItem.tags.overlap(search_request.tags))
 
-    # Execute query to get all matching items
+    query = query.order_by(text("score DESC")).limit(search_request.limit)
+
     result = await db.execute(query)
-    items = result.scalars().all()
-
-    # Calculate similarity scores in Python
-    # In production with pgvector, this would be done in SQL
-    scored_items = []
-    for item in items:
-        if item.embedding:
-            # Cosine similarity
-            score = _cosine_similarity(query_embedding, item.embedding)
-            scored_items.append((item, score))
-        else:
-            # Text-based fallback: simple keyword matching
-            query_lower = search_request.query.lower()
-            content_lower = item.content.lower()
-            title_lower = item.title.lower()
-
-            if query_lower in content_lower or query_lower in title_lower:
-                # Assign a moderate score for keyword matches
-                scored_items.append((item, 0.5))
-
-    # Sort by score and limit
-    scored_items.sort(key=lambda x: x[1], reverse=True)
-    top_items = scored_items[: search_request.limit]
+    rows = result.all()
 
     # Convert to response
     response_items = []
-    for item, score in top_items:
+    for row in rows:
+        item = row[0]
+        score = float(row[1])
         item_dict = KnowledgeItemRead.model_validate(item).model_dump()
         item_dict["relevance_score"] = score
         response_items.append(item_dict)
+
+    # Fallback: if no pgvector results, use JSONB embedding with Python similarity
+    if not response_items:
+        fallback_query = select(KnowledgeItem)
+        if current_user.organization_id:
+            fallback_query = fallback_query.where(
+                KnowledgeItem.organization_id == current_user.organization_id
+            )
+        if search_request.source_type:
+            fallback_query = fallback_query.where(
+                KnowledgeItem.source_type == search_request.source_type
+            )
+        if search_request.tags:
+            fallback_query = fallback_query.where(
+                KnowledgeItem.tags.overlap(search_request.tags)
+            )
+
+        fb_result = await db.execute(fallback_query)
+        items = fb_result.scalars().all()
+
+        scored_items = []
+        for item in items:
+            if item.embedding:
+                score = _cosine_similarity(query_embedding, item.embedding)
+                scored_items.append((item, score))
+            else:
+                query_lower = search_request.query.lower()
+                if query_lower in item.content.lower() or query_lower in item.title.lower():
+                    scored_items.append((item, 0.5))
+
+        scored_items.sort(key=lambda x: x[1], reverse=True)
+        for item, score in scored_items[: search_request.limit]:
+            item_dict = KnowledgeItemRead.model_validate(item).model_dump()
+            item_dict["relevance_score"] = score
+            response_items.append(item_dict)
 
     return {"items": response_items, "total": len(response_items)}
 
@@ -176,6 +200,7 @@ async def create_knowledge(
         source_interview_id=knowledge_data.source_interview_id,
         tags=knowledge_data.tags,
         embedding=embedding,
+        embedding_vector=embedding,
         metadata=knowledge_data.metadata,
     )
 
