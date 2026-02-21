@@ -422,18 +422,35 @@ async def interview_websocket(
                         coverage = None
                         carry_over = agent.generate_carry_over()
 
-                    # Save carry-over and coverage to extra_metadata
+                    # Evaluate interview quality
+                    try:
+                        quality = await agent.evaluate_quality()
+                    except Exception:
+                        logger.warning(
+                            "Quality evaluation failed for %s",
+                            interview_id,
+                            exc_info=True,
+                        )
+                        quality = None
+
+                    # Save carry-over, coverage, and quality to extra_metadata
                     interview.extra_metadata = {
                         **(interview.extra_metadata or {}),
                         "carry_over": carry_over,
                         "final_coverage": coverage,
+                        "quality": quality,
                     }
+
+                    # Merge quality into ai_analysis
+                    ai_analysis = {**summary}
+                    if quality:
+                        ai_analysis["quality"] = quality
 
                     # Complete interview
                     await interview_repo.complete(
                         interview_id,
                         summary=summary.get("summary"),
-                        ai_analysis=summary,
+                        ai_analysis=ai_analysis,
                     )
 
                     # Update task status
@@ -455,6 +472,7 @@ async def interview_websocket(
                                 "summary": summary,
                                 "coverage": coverage,
                                 "carry_over": carry_over,
+                                "quality": quality,
                             },
                         },
                     )
