@@ -5,6 +5,7 @@ from grc_core.models.base import Base, TimestampMixin
 from grc_core.models.interview import Interview
 from grc_core.models.interviewee import Interviewee
 from grc_core.models.knowledge import KnowledgeItem
+from grc_core.models.notification import Notification
 from grc_core.models.organization import Organization
 from grc_core.models.project import Project
 from grc_core.models.report import Report
@@ -27,4 +28,5 @@ __all__ = [
     "Report",
     "KnowledgeItem",
     "AuditLog",
+    "Notification",
 ]

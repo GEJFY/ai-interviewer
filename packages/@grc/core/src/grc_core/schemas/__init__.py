@@ -13,6 +13,7 @@ from grc_core.schemas.knowledge import (
     KnowledgeItemRead,
     KnowledgeSearchRequest,
 )
+from grc_core.schemas.notification import NotificationCreate, NotificationRead, UnreadCountResponse
 from grc_core.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 from grc_core.schemas.report import ReportCreate, ReportGenerate, ReportRead
 from grc_core.schemas.task import TaskCreate, TaskRead, TaskUpdate
@@ -48,4 +49,7 @@ __all__ = [
     "KnowledgeItemCreate",
     "KnowledgeItemRead",
     "KnowledgeSearchRequest",
+    "NotificationCreate",
+    "NotificationRead",
+    "UnreadCountResponse",
 ]

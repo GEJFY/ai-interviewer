@@ -12,7 +12,6 @@ import {
   Search,
   Settings,
   LogOut,
-  Bell,
   PanelLeftClose,
   PanelLeft,
   Menu,
@@ -21,6 +20,7 @@ import {
 import { cn } from '@/lib/cn';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const navigation = [
   { name: 'ダッシュボード', href: '/dashboard', icon: LayoutDashboard },
@@ -161,9 +161,7 @@ export default function DashboardLayout({
           </button>
           <div className="flex-1 hidden md:block" />
           <div className="flex items-center gap-2">
-            <button className="p-2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-lg transition-colors relative">
-              <Bell className="w-5 h-5" />
-            </button>
+            <NotificationBell />
           </div>
         </header>
 

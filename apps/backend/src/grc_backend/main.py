@@ -13,6 +13,7 @@ from grc_backend.api.routes import (
     interviews,
     knowledge,
     models,
+    notifications,
     projects,
     reports,
     tasks,
@@ -153,6 +154,7 @@ def create_app() -> FastAPI:
     app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
     app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["Knowledge"])
     app.include_router(models.router, prefix="/api/v1/models", tags=["Models"])
+    app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["Notifications"])
 
     # WebSocket endpoint
     app.include_router(interview_ws.router, prefix="/api/v1/interviews", tags=["WebSocket"])
