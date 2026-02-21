@@ -15,6 +15,7 @@ from grc_backend.api.routes import (
     models,
     projects,
     reports,
+    sharing,
     tasks,
     templates,
 )
@@ -153,6 +154,10 @@ def create_app() -> FastAPI:
     app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
     app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["Knowledge"])
     app.include_router(models.router, prefix="/api/v1/models", tags=["Models"])
+
+    # Sharing endpoints (share link creation on interviews, public access on /share)
+    app.include_router(sharing.router, prefix="/api/v1/interviews", tags=["Sharing"])
+    app.include_router(sharing.public_router, prefix="/api/v1/share", tags=["Sharing"])
 
     # WebSocket endpoint
     app.include_router(interview_ws.router, prefix="/api/v1/interviews", tags=["WebSocket"])
