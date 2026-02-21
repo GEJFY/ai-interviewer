@@ -11,6 +11,7 @@ from grc_core.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from grc_core.models.interview import Interview
+    from grc_core.models.notification import Notification
     from grc_core.models.organization import Organization
     from grc_core.models.project import Project
     from grc_core.models.report import Report
@@ -62,4 +63,7 @@ class User(Base, TimestampMixin):
     )
     approved_reports: Mapped[list["Report"]] = relationship(
         "Report", back_populates="approved_by_user", foreign_keys="Report.approved_by"
+    )
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="user", cascade="all, delete-orphan"
     )

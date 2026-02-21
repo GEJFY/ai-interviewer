@@ -2,6 +2,7 @@
 
 from grc_core.repositories.base import BaseRepository
 from grc_core.repositories.interview import InterviewRepository
+from grc_core.repositories.notification import NotificationRepository
 from grc_core.repositories.project import ProjectRepository
 from grc_core.repositories.task import TaskRepository
 from grc_core.repositories.template import TemplateRepository
@@ -14,4 +15,5 @@ __all__ = [
     "TaskRepository",
     "TemplateRepository",
     "UserRepository",
+    "NotificationRepository",
 ]
