@@ -20,6 +20,7 @@ import {
   Zap,
   ArrowLeft,
   CheckCircle,
+  Lightbulb,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import logger from '@/lib/logger';
@@ -58,6 +59,7 @@ export default function InterviewPage() {
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
   const [coveragePercentage, setCoveragePercentage] = useState<number | null>(null);
   const [suggestEnd, setSuggestEnd] = useState(false);
+  const [followupSuggestions, setFollowupSuggestions] = useState<string[]>([]);
 
   const wsRef = useRef<InterviewWebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -204,6 +206,12 @@ export default function InterviewPage() {
         }
         break;
 
+      case 'followup_suggestions':
+        if (response.payload.suggestions) {
+          setFollowupSuggestions(response.payload.suggestions);
+        }
+        break;
+
       case 'error':
         logger.error('WebSocket error:', response.payload.message);
         setIsLoading(false);
@@ -232,6 +240,7 @@ export default function InterviewPage() {
     wsRef.current.sendMessage(inputValue);
     setInputValue('');
     setIsLoading(true);
+    setFollowupSuggestions([]);
   };
 
   const togglePause = () => {
@@ -464,6 +473,27 @@ export default function InterviewPage() {
       {!isCompleted && (
         <div className="border-t border-surface-200 dark:border-surface-800 bg-[rgb(var(--bg-elevated))] p-4">
           <div className="max-w-3xl mx-auto">
+            {/* フォローアップ提案 */}
+            {followupSuggestions.length > 0 && (
+              <div className="mb-2 flex items-start gap-2">
+                <Lightbulb className="w-4 h-4 text-amber-500 mt-1 flex-shrink-0" />
+                <div className="flex flex-wrap gap-1.5">
+                  {followupSuggestions.map((suggestion, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setInputValue(suggestion);
+                        setFollowupSuggestions([]);
+                      }}
+                      className="px-3 py-1.5 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors text-left"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* リアルタイム文字起こし */}
             {transcribingText && (
               <div className="mb-2 px-4 py-2 bg-surface-50 dark:bg-surface-800 rounded-lg text-surface-500 dark:text-surface-400 text-sm italic">
