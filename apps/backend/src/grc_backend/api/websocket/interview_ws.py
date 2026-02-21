@@ -169,7 +169,7 @@ async def interview_websocket(
 
     Message format (server -> client):
     {
-        "type": "ai_response" | "transcription" | "status" | "error" | "time_warning" | "coverage_update",
+        "type": "ai_response" | "transcription" | "status" | "error" | "time_warning" | "coverage_update" | "followup_suggestions",
         "payload": { ... }
     }
     """
@@ -387,6 +387,24 @@ async def interview_websocket(
                                 "message": "残り約5分です。",
                             },
                         },
+                    )
+
+                # Generate follow-up suggestions after each response
+                try:
+                    followups = await agent.suggest_followups(user_content)
+                    if followups:
+                        await manager.send_message(
+                            interview_id,
+                            {
+                                "type": "followup_suggestions",
+                                "payload": {"suggestions": followups},
+                            },
+                        )
+                except Exception:
+                    logger.debug(
+                        "Followup suggestion failed for %s",
+                        interview_id,
+                        exc_info=True,
                     )
 
                 # Periodic coverage assessment
