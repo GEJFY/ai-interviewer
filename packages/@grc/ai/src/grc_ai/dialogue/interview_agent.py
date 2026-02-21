@@ -588,6 +588,103 @@ JSON配列で出力: ["質問1", "質問2", "質問3"]
 
         return []
 
+    async def evaluate_branching(
+        self,
+        branch_rules: list[dict[str, Any]],
+    ) -> list[str]:
+        """Evaluate conditional branching rules against the latest answer.
+
+        Each rule has::
+
+            {
+                "condition": "回答がリスクの存在を示す場合",
+                "questions": ["具体的なリスク事象は？", "影響範囲は？"]
+            }
+
+        The AI judges whether the latest user answer triggers any condition.
+        Triggered questions are returned so the caller can inject them.
+
+        Args:
+            branch_rules: List of condition → questions mappings
+
+        Returns:
+            List of additional questions to inject (may be empty)
+        """
+        if not branch_rules or not self.history:
+            return []
+
+        # Get the last user answer
+        user_turns = [t for t in self.history if t.role == "user"]
+        if not user_turns:
+            return []
+
+        last_answer = user_turns[-1].content
+
+        # Also get the last AI question for context
+        ai_turns = [t for t in self.history if t.role == "ai"]
+        last_question = ai_turns[-1].content if ai_turns else ""
+
+        rules_text = "\n".join(
+            f'{i + 1}. 条件: "{r["condition"]}"  →  追加質問: {r["questions"]}'
+            for i, r in enumerate(branch_rules)
+        )
+
+        prompt = f"""以下のインタビューの最新やり取りに対し、条件分岐ルールを評価してください。
+
+## 直前のAIの質問
+{last_question}
+
+## 回答者の回答
+{last_answer}
+
+## 条件分岐ルール
+{rules_text}
+
+## 出力形式（JSON）
+トリガーされたルールの番号のリストを返してください。
+どの条件にも該当しない場合は空リストを返してください。
+{{"triggered": [1, 3]}}  ← 例
+"""
+
+        messages = [
+            ChatMessage(
+                role=MessageRole.SYSTEM,
+                content="条件分岐の判定を行います。JSONフォーマットで出力してください。",
+            ),
+            ChatMessage(role=MessageRole.USER, content=prompt),
+        ]
+
+        response = await self.provider.chat(messages, temperature=0.2, max_tokens=256)
+
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+            result = json.loads(content)
+            triggered_indices = result.get("triggered", [])
+        except (json.JSONDecodeError, AttributeError):
+            return []
+
+        # Collect questions from triggered rules
+        additional_questions: list[str] = []
+        for idx in triggered_indices:
+            rule_index = idx - 1  # 1-based → 0-based
+            if 0 <= rule_index < len(branch_rules):
+                additional_questions.extend(branch_rules[rule_index].get("questions", []))
+
+        # Inject into context questions (deduplicate)
+        existing = set(self.context.questions)
+        new_questions = [q for q in additional_questions if q not in existing]
+        if new_questions:
+            # Insert after current position
+            insert_pos = min(self.current_question_index + 1, len(self.context.questions))
+            for i, q in enumerate(new_questions):
+                self.context.questions.insert(insert_pos + i, q)
+
+        return new_questions
+
     def get_transcript(self) -> list[dict[str, Any]]:
         """Get the full transcript of the interview.
 
