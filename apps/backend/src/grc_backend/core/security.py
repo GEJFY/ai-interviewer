@@ -33,7 +33,7 @@ class SecurityConfig:
     """Security configuration for the application."""
 
     # CORS settings
-    cors_origins: list[str] = field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: list[str] = field(default_factory=lambda: ["http://localhost:3100"])
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = field(default_factory=lambda: ["*"])
     cors_allow_headers: list[str] = field(default_factory=lambda: ["*"])
@@ -87,7 +87,7 @@ class SecurityConfig:
 
         if env == "production":
             return cls(
-                cors_origins=cors_from_env or ["https://localhost:3000"],
+                cors_origins=cors_from_env or ["https://localhost:3100"],
                 rate_limit_enabled=True,
                 rate_limit_requests=60,
                 ip_allowlist_enabled=False,
@@ -98,7 +98,7 @@ class SecurityConfig:
             )
         elif env == "staging":
             return cls(
-                cors_origins=cors_from_env or ["http://localhost:3000"],
+                cors_origins=cors_from_env or ["http://localhost:3100"],
                 rate_limit_enabled=True,
                 rate_limit_requests=120,
                 debug=False,
@@ -106,7 +106,7 @@ class SecurityConfig:
             )
         else:  # development
             return cls(
-                cors_origins=cors_from_env or ["http://localhost:3000", "http://127.0.0.1:3000"],
+                cors_origins=cors_from_env or ["http://localhost:3100", "http://127.0.0.1:3100"],
                 rate_limit_enabled=False,
                 hsts_enabled=False,
                 csp_enabled=False,

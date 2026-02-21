@@ -386,24 +386,24 @@ jobs:
 
       - name: Build frontend
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8001
-          NEXT_PUBLIC_WS_URL: ws://localhost:8001
+          NEXT_PUBLIC_API_URL: http://localhost:8100
+          NEXT_PUBLIC_WS_URL: ws://localhost:8100
         run: pnpm --filter web build
 
       - name: Start frontend server
         working-directory: apps/web
         run: |
-          npx next start -p 3001 &
+          npx next start -p 3100 &
           sleep 5
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8001
-          NEXT_PUBLIC_WS_URL: ws://localhost:8001
+          NEXT_PUBLIC_API_URL: http://localhost:8100
+          NEXT_PUBLIC_WS_URL: ws://localhost:8100
 
       - name: Run E2E tests
         working-directory: apps/web
         env:
-          E2E_BASE_URL: http://localhost:3001
-          NEXT_PUBLIC_API_URL: http://localhost:8001
+          E2E_BASE_URL: http://localhost:3100
+          NEXT_PUBLIC_API_URL: http://localhost:8100
         run: npx playwright test --reporter=html
 
       - name: Upload E2E test results

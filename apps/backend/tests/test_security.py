@@ -26,7 +26,7 @@ class TestSecurityConfig:
     def test_default_values(self):
         """デフォルト設定値が正しいこと。"""
         config = SecurityConfig()
-        assert config.cors_origins == ["http://localhost:3000"]
+        assert config.cors_origins == ["http://localhost:3100"]
         assert config.cors_allow_credentials is True
         assert config.rate_limit_enabled is True
         assert config.rate_limit_requests == 100
@@ -51,7 +51,7 @@ class TestSecurityConfig:
         assert config.rate_limit_enabled is True
         assert config.rate_limit_requests == 120
         assert config.debug is False
-        assert "http://localhost:3000" in config.cors_origins
+        assert "http://localhost:3100" in config.cors_origins
 
     def test_from_env_development(self):
         """development環境の設定が正しいこと。"""

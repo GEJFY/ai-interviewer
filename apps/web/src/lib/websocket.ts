@@ -1,4 +1,4 @@
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8100';
 
 export type MessageType = 'message' | 'audio_chunk' | 'control';
 export type ResponseType = 'ai_response' | 'transcription' | 'status' | 'error' | 'time_warning' | 'coverage_update' | 'followup_suggestions';

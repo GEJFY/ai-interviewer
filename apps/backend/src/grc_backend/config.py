@@ -22,11 +22,11 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="postgresql+asyncpg://grc_user:grc_password@localhost:5432/ai_interviewer"
+        default="postgresql+asyncpg://grc_user:grc_password@localhost:5433/ai_interviewer"
     )
 
     # Redis
-    redis_url: str = Field(default="redis://localhost:6379/0")
+    redis_url: str = Field(default="redis://localhost:6380/0")
 
     # Security
     secret_key: str = Field(default="dev-secret-key-change-in-production")
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
 
     # CORS (str | list[str] で pydantic-settings v2 の JSON パースエラーを回避)
     cors_origins: str | list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"]
+        default=["http://localhost:3100", "http://localhost:8100"]
     )
 
     @field_validator("cors_origins", mode="before")

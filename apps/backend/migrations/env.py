@@ -45,7 +45,7 @@ def get_url():
 
     return os.environ.get(
         "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_interview",
+        "postgresql+asyncpg://postgres:postgres@localhost:5433/ai_interview",
     )
 
 

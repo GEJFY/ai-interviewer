@@ -151,7 +151,7 @@ const MOCK_PROVIDERS = {
 // ---------------------------------------------------------------------------
 
 async function setupApiMocks(page: Page) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
 
   // Auth: login
   await page.route(`${apiBase}/api/v1/auth/login`, (route) => {
