@@ -1,6 +1,12 @@
 """Interview management endpoints."""
 
+import csv
+import io
+import json
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Query, status
+from fastapi.responses import StreamingResponse
 
 from grc_backend.api.deps import AIProviderDep, CurrentUser, DBSession, InterviewerUser
 from grc_backend.core.errors import NotFoundError, ValidationError
@@ -209,6 +215,101 @@ async def get_transcript(
 
     entries = await repo.get_transcript(interview_id)
     return [TranscriptEntryRead.model_validate(e) for e in entries]
+
+
+@router.get("/{interview_id}/transcript/export")
+async def export_transcript(
+    interview_id: str,
+    db: DBSession,
+    current_user: CurrentUser,
+    format: str = Query("json", pattern="^(json|csv|txt)$"),
+) -> StreamingResponse:
+    """Export interview transcript in various formats.
+
+    Formats:
+    - json: 構造化JSON（タイムスタンプ・話者・内容）
+    - csv: CSV形式（Excel等で開ける）
+    - txt: プレーンテキスト（読みやすい会話録）
+    """
+    repo = InterviewRepository(db)
+    interview = await _get_interview_or_raise(repo, interview_id)
+    entries = await repo.get_transcript(interview_id)
+
+    task_repo = TaskRepository(db)
+    task = await task_repo.get(interview.task_id) if interview.task_id else None
+    task_name = task.name if task else "interview"
+
+    # ファイル名用のタイムスタンプ
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    base_filename = f"transcript_{task_name}_{timestamp}"
+
+    if format == "json":
+        data = {
+            "interview_id": interview_id,
+            "task_name": task_name,
+            "status": interview.status.value
+            if hasattr(interview.status, "value")
+            else str(interview.status),
+            "started_at": interview.started_at.isoformat() if interview.started_at else None,
+            "completed_at": interview.completed_at.isoformat() if interview.completed_at else None,
+            "duration_seconds": interview.duration_seconds,
+            "entries": [
+                {
+                    "speaker": e.speaker.value if hasattr(e.speaker, "value") else str(e.speaker),
+                    "content": e.content,
+                    "timestamp_ms": e.timestamp_ms,
+                    "timestamp": datetime.fromtimestamp(e.timestamp_ms / 1000, tz=UTC).isoformat(),
+                }
+                for e in entries
+            ],
+        }
+        content = json.dumps(data, ensure_ascii=False, indent=2)
+        return StreamingResponse(
+            io.BytesIO(content.encode("utf-8")),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={base_filename}.json"},
+        )
+
+    if format == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["timestamp", "speaker", "content"])
+        for e in entries:
+            ts = datetime.fromtimestamp(e.timestamp_ms / 1000, tz=UTC).strftime("%Y-%m-%d %H:%M:%S")
+            speaker = e.speaker.value if hasattr(e.speaker, "value") else str(e.speaker)
+            writer.writerow([ts, speaker, e.content])
+
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode("utf-8-sig")),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={base_filename}.csv"},
+        )
+
+    # txt format
+    lines = []
+    lines.append(f"インタビュー記録: {task_name}")
+    lines.append(f"インタビューID: {interview_id}")
+    if interview.started_at:
+        lines.append(f"開始日時: {interview.started_at.strftime('%Y-%m-%d %H:%M')}")
+    if interview.duration_seconds:
+        mins = interview.duration_seconds // 60
+        lines.append(f"所要時間: {mins}分")
+    lines.append("=" * 60)
+    lines.append("")
+
+    for e in entries:
+        ts = datetime.fromtimestamp(e.timestamp_ms / 1000, tz=UTC).strftime("%H:%M:%S")
+        speaker_label = "AI" if str(e.speaker) in ("ai", "Speaker.AI") else "回答者"
+        lines.append(f"[{ts}] {speaker_label}:")
+        lines.append(e.content)
+        lines.append("")
+
+    content = "\n".join(lines)
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8")),
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={base_filename}.txt"},
+    )
 
 
 @router.put("/{interview_id}", response_model=InterviewRead)
