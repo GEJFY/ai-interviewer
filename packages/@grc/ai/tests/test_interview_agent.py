@@ -906,3 +906,117 @@ class TestCarryOver:
         transcript = agent.get_transcript()
         assert len(transcript) == 1
         assert transcript[0]["content"] == "前回の続き"
+
+
+# --- 品質スコアリングテスト ---
+
+
+class TestQualityScoring:
+    """インタビュー品質スコアリング機能のテスト。"""
+
+    @pytest.fixture
+    def mock_provider(self):
+        provider = AsyncMock()
+        provider.chat.return_value = ChatResponse(
+            content="AIの応答", model="test", finish_reason="stop"
+        )
+        return provider
+
+    @pytest.fixture
+    def context(self):
+        return InterviewContext(
+            interview_id="quality-test-001",
+            organization_name="品質テスト社",
+            use_case_type="compliance_survey",
+            interview_purpose="品質評価テスト",
+            questions=["Q1: 現状は？", "Q2: リスクは？", "Q3: 対策は？"],
+        )
+
+    @pytest.fixture
+    def agent(self, mock_provider, context):
+        return InterviewAgent(provider=mock_provider, context=context)
+
+    @pytest.mark.asyncio
+    async def test_evaluate_quality_empty_history(self, agent):
+        """履歴が空の場合、スコア0が返されること。"""
+        result = await agent.evaluate_quality()
+        assert result["overall_score"] == 0
+        assert result["recommendation"] == "retry"
+        assert result["strengths"] == []
+        assert result["improvements"] == []
+
+    @pytest.mark.asyncio
+    async def test_evaluate_quality_valid_json(self, agent, mock_provider):
+        """AIが正しいJSON評価を返した場合、パース結果が返されること。"""
+        agent.history = [
+            DialogueTurn(role="ai", content="こんにちは", timestamp_ms=1000),
+            DialogueTurn(role="user", content="詳細な回答です", timestamp_ms=2000),
+        ]
+
+        mock_provider.chat.return_value = ChatResponse(
+            content='{"overall_score": 4.2, "dimensions": {"depth": {"score": 4, "comment": "good"}, "coverage": {"score": 4, "comment": "ok"}, "rapport": {"score": 5, "comment": "excellent"}, "evidence": {"score": 3, "comment": "fair"}, "actionability": {"score": 5, "comment": "great"}}, "strengths": ["good rapport"], "improvements": ["more evidence"], "recommendation": "accept"}',
+            model="test",
+            finish_reason="stop",
+        )
+
+        result = await agent.evaluate_quality()
+        assert result["overall_score"] == 4.2
+        assert result["dimensions"]["depth"]["score"] == 4
+        assert result["recommendation"] == "accept"
+        assert len(result["strengths"]) == 1
+        assert len(result["improvements"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_evaluate_quality_json_fallback(self, agent, mock_provider):
+        """AIがJSONでない応答を返した場合、フォールバック推定が使われること。"""
+        agent.history = [
+            DialogueTurn(role="ai", content="こんにちは", timestamp_ms=1000),
+            DialogueTurn(
+                role="user",
+                content="現状の業務フローについて詳しくお話しします。まず承認プロセスがあり...",
+                timestamp_ms=2000,
+            ),
+        ]
+
+        mock_provider.chat.return_value = ChatResponse(
+            content="JSONでない応答", model="test", finish_reason="stop"
+        )
+
+        result = await agent.evaluate_quality()
+        assert isinstance(result["overall_score"], float)
+        assert "dimensions" in result
+        assert "depth" in result["dimensions"]
+        assert "recommendation" in result
+
+    @pytest.mark.asyncio
+    async def test_evaluate_quality_dimensions(self, agent, mock_provider):
+        """5つの評価軸すべてが含まれること。"""
+        agent.history = [
+            DialogueTurn(role="ai", content="Hi", timestamp_ms=1000),
+            DialogueTurn(role="user", content="Hello", timestamp_ms=2000),
+        ]
+
+        mock_provider.chat.return_value = ChatResponse(
+            content="not json", model="test", finish_reason="stop"
+        )
+
+        result = await agent.evaluate_quality()
+        expected_dims = ["depth", "coverage", "rapport", "evidence", "actionability"]
+        for dim in expected_dims:
+            assert dim in result["dimensions"]
+            assert "score" in result["dimensions"][dim]
+
+    @pytest.mark.asyncio
+    async def test_evaluate_quality_recommendation_values(self, agent, mock_provider):
+        """recommendationが有効な値であること。"""
+        agent.history = [
+            DialogueTurn(role="ai", content="Hi", timestamp_ms=1000),
+            DialogueTurn(role="user", content="a", timestamp_ms=2000),
+        ]
+
+        mock_provider.chat.return_value = ChatResponse(
+            content="fallback", model="test", finish_reason="stop"
+        )
+
+        result = await agent.evaluate_quality()
+        assert result["recommendation"] in ("accept", "supplement", "retry")

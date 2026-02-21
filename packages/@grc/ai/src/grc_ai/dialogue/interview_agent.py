@@ -522,6 +522,113 @@ class InterviewAgent:
         """
         self.context.metadata["carry_over"] = carry_over
 
+    async def evaluate_quality(self) -> dict[str, Any]:
+        """Evaluate the quality of the completed interview.
+
+        Scores the interview on multiple dimensions (1-5 scale):
+        - depth: 回答の深さ・具体性
+        - coverage: 質問カバレッジの充実度
+        - rapport: ラポール構築・対話の自然さ
+        - evidence: 具体的なエビデンスや事例の有無
+        - actionability: 得られた情報の実用性
+
+        Returns:
+            Quality assessment dict with scores, overall score, and improvement notes
+        """
+        if not self.history:
+            return {
+                "overall_score": 0,
+                "dimensions": {},
+                "strengths": [],
+                "improvements": [],
+                "recommendation": "retry",
+            }
+
+        transcript_text = "\n".join(
+            f"{'AI' if t.role == 'ai' else '回答者'}: {t.content}" for t in self.history
+        )
+        questions_text = "\n".join(f"{i + 1}. {q}" for i, q in enumerate(self.context.questions))
+
+        prompt = f"""以下のインタビュー記録を品質評価してください。
+
+## インタビュー目的
+{self.context.interview_purpose}
+
+## 質問リスト
+{questions_text}
+
+## インタビュー記録
+{transcript_text}
+
+## 評価基準（各1-5点）
+1. depth（回答の深さ）: 表面的=1, 具体的で詳細=5
+2. coverage（カバレッジ）: ほぼ未回答=1, 全質問に十分な回答=5
+3. rapport（ラポール）: 機械的=1, 自然で信頼関係のある対話=5
+4. evidence（エビデンス）: 抽象的のみ=1, 具体例・数値・事実が豊富=5
+5. actionability（実用性）: 活用困難=1, 即座にアクション可能=5
+
+## 出力形式（JSON）
+{{
+    "overall_score": 1-5の平均スコア（小数点1桁）,
+    "dimensions": {{
+        "depth": {{"score": 1-5, "comment": "理由"}},
+        "coverage": {{"score": 1-5, "comment": "理由"}},
+        "rapport": {{"score": 1-5, "comment": "理由"}},
+        "evidence": {{"score": 1-5, "comment": "理由"}},
+        "actionability": {{"score": 1-5, "comment": "理由"}}
+    }},
+    "strengths": ["良かった点1", "良かった点2"],
+    "improvements": ["改善点1", "改善点2"],
+    "recommendation": "accept（十分）/ supplement（追加情報推奨）/ retry（再実施推奨）"
+}}
+"""
+        messages = [
+            ChatMessage(
+                role=MessageRole.SYSTEM,
+                content="インタビュー品質評価の専門家として、JSONフォーマットで評価結果を出力してください。",
+            ),
+            ChatMessage(role=MessageRole.USER, content=prompt),
+        ]
+
+        response = await self.provider.chat(
+            messages,
+            temperature=0.2,
+            max_tokens=2048,
+        )
+
+        try:
+            content = response.content.strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+            return json.loads(content)
+        except json.JSONDecodeError:
+            # Fallback: estimate from conversation metrics
+            user_turns = sum(1 for t in self.history if t.role == "user")
+            total_q = len(self.context.questions)
+            avg_length = sum(len(t.content) for t in self.history if t.role == "user") / max(
+                user_turns, 1
+            )
+
+            depth = min(int(avg_length / 50) + 1, 5)
+            coverage = min(int((user_turns / max(total_q, 1)) * 5), 5)
+            estimated = round((depth + coverage + 3 + 2 + 3) / 5, 1)
+
+            return {
+                "overall_score": estimated,
+                "dimensions": {
+                    "depth": {"score": depth, "comment": "自動推定"},
+                    "coverage": {"score": coverage, "comment": "自動推定"},
+                    "rapport": {"score": 3, "comment": "自動推定"},
+                    "evidence": {"score": 2, "comment": "自動推定"},
+                    "actionability": {"score": 3, "comment": "自動推定"},
+                },
+                "strengths": [],
+                "improvements": ["AI品質評価の詳細分析に失敗しました。"],
+                "recommendation": "supplement" if estimated < 3.5 else "accept",
+            }
+
     def get_transcript(self) -> list[dict[str, Any]]:
         """Get the full transcript of the interview.
 
