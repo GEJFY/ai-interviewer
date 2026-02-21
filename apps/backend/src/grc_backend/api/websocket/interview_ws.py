@@ -198,11 +198,16 @@ async def interview_websocket(
         task = await task_repo.get(interview.task_id)
 
         questions = []
+        branch_rules: list[dict] = []
         if task and task.template_id:
             template_repo = TemplateRepository(db)
             template = await template_repo.get(task.template_id)
             if template:
                 questions = [q.get("question", "") for q in template.questions]
+                # Collect conditional branching rules
+                for q in template.questions:
+                    for cond in q.get("conditions", []):
+                        branch_rules.append(cond)
 
         # Read duration setting
         duration_minutes = (
@@ -406,6 +411,29 @@ async def interview_websocket(
                         interview_id,
                         exc_info=True,
                     )
+
+                # Conditional branching evaluation
+                if branch_rules:
+                    try:
+                        new_qs = await agent.evaluate_branching(branch_rules)
+                        if new_qs:
+                            await manager.send_message(
+                                interview_id,
+                                {
+                                    "type": "status",
+                                    "payload": {
+                                        "status": "branch_triggered",
+                                        "added_questions": new_qs,
+                                        "total_questions": len(agent.context.questions),
+                                    },
+                                },
+                            )
+                    except Exception:
+                        logger.warning(
+                            "Branch evaluation failed for %s",
+                            interview_id,
+                            exc_info=True,
+                        )
 
                 # Periodic coverage assessment
                 if user_message_count % coverage_check_interval == 0:
