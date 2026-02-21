@@ -1,5 +1,6 @@
 """WebSocket endpoint for real-time interview sessions."""
 
+import base64
 import logging
 import time
 from typing import Any
@@ -9,6 +10,7 @@ from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from grc_ai.dialogue import InterviewAgent, InterviewContext
+from grc_ai.speech.base import AudioFormat, TranscriptionResult
 from grc_backend.api.deps import get_ai_provider, get_db
 from grc_backend.config import get_settings
 from grc_core.enums import InterviewStatus, Speaker
@@ -57,6 +59,41 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+def _get_stt_provider(settings):
+    """Get STT provider based on application settings.
+
+    Returns None if no speech provider is configured.
+    """
+    try:
+        from grc_ai.speech.factory import create_speech_to_text
+
+        speech_provider = getattr(settings, "speech_provider", None)
+        if not speech_provider:
+            return None
+
+        config = {}
+        if speech_provider == "azure":
+            config = {
+                "subscription_key": getattr(settings, "azure_speech_key", ""),
+                "region": getattr(settings, "azure_speech_region", "japaneast"),
+            }
+        elif speech_provider == "aws":
+            config = {
+                "region_name": getattr(settings, "aws_region", "ap-northeast-1"),
+            }
+        elif speech_provider == "gcp":
+            config = {
+                "project_id": getattr(settings, "gcp_project_id", ""),
+            }
+        else:
+            return None
+
+        return create_speech_to_text(speech_provider, **config)
+    except Exception:
+        logger.debug("STT provider not available", exc_info=True)
+        return None
 
 
 async def _authenticate_websocket(websocket: WebSocket, db: AsyncSession):
@@ -462,14 +499,110 @@ async def interview_websocket(
                     break
 
             elif msg_type == "audio_chunk":
-                # Audio processing (Phase 2)
-                await manager.send_message(
-                    interview_id,
-                    {
-                        "type": "error",
-                        "payload": {"message": "Audio processing not yet implemented"},
-                    },
-                )
+                # Decode audio and transcribe via STT
+                audio_b64 = payload.get("audio", "")
+                if not audio_b64:
+                    continue
+
+                try:
+                    audio_bytes = base64.b64decode(audio_b64)
+                except Exception:
+                    continue
+
+                # Try to get STT provider
+                stt_provider = _get_stt_provider(settings)
+                if stt_provider is None:
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "error",
+                            "payload": {"message": "Speech-to-text provider not configured"},
+                        },
+                    )
+                    continue
+
+                try:
+                    result: TranscriptionResult = await stt_provider.transcribe(
+                        audio_bytes,
+                        language=interview.language or "ja-JP",
+                        format=AudioFormat.WEBM,
+                    )
+
+                    if result.text.strip():
+                        # Send interim transcription
+                        await manager.send_message(
+                            interview_id,
+                            {
+                                "type": "transcription",
+                                "payload": {
+                                    "speaker": "interviewee",
+                                    "text": result.text,
+                                    "isFinal": result.is_final,
+                                    "confidence": result.confidence,
+                                },
+                            },
+                        )
+
+                        # If final, process as a normal message
+                        if result.is_final:
+                            user_message_count += 1
+                            timestamp = int(time.time() * 1000)
+
+                            await interview_repo.add_transcript_entry(
+                                interview_id=interview_id,
+                                speaker=Speaker.INTERVIEWEE,
+                                content=result.text,
+                                timestamp_ms=timestamp,
+                            )
+
+                            # Get AI response (streaming)
+                            full_response = ""
+                            async for chunk in agent.respond_stream(result.text):
+                                full_response += chunk
+                                await manager.send_message(
+                                    interview_id,
+                                    {
+                                        "type": "ai_response",
+                                        "payload": {
+                                            "content": chunk,
+                                            "isPartial": True,
+                                        },
+                                    },
+                                )
+
+                            await interview_repo.add_transcript_entry(
+                                interview_id=interview_id,
+                                speaker=Speaker.AI,
+                                content=full_response,
+                                timestamp_ms=int(time.time() * 1000),
+                            )
+                            await db.commit()
+
+                            await manager.send_message(
+                                interview_id,
+                                {
+                                    "type": "ai_response",
+                                    "payload": {
+                                        "content": "",
+                                        "isPartial": False,
+                                        "isFinal": True,
+                                    },
+                                },
+                            )
+
+                except Exception:
+                    logger.warning(
+                        "STT processing failed for %s",
+                        interview_id,
+                        exc_info=True,
+                    )
+                    await manager.send_message(
+                        interview_id,
+                        {
+                            "type": "error",
+                            "payload": {"message": "音声認識処理に失敗しました"},
+                        },
+                    )
 
     except WebSocketDisconnect:
         manager.disconnect(interview_id)
