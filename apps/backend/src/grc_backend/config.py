@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="postgresql+asyncpg://grc_user:grc_password@localhost:5433/ai_interviewer"
+        default="postgresql+asyncpg://grc_user:grc_password@localhost:5434/ai_interviewer"
     )
 
     # Redis
