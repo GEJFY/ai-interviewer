@@ -60,6 +60,10 @@ describe('api-client', () => {
       expect(typeof api.auth.login).toBe('function');
       expect(typeof api.auth.register).toBe('function');
       expect(typeof api.auth.me).toBe('function');
+      expect(typeof api.auth.changePassword).toBe('function');
+      expect(typeof api.auth.listUsers).toBe('function');
+      expect(typeof api.auth.adminResetPassword).toBe('function');
+      expect(typeof api.auth.ssoAzure).toBe('function');
     });
 
     it('projects名前空間が定義されていること', () => {
