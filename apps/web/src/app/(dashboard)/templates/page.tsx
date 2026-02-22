@@ -16,6 +16,7 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
+import { USE_CASE_LABELS, USE_CASE_OPTIONS } from '@/lib/constants';
 import { Button, Modal, ModalBody, ModalFooter, Input, Select, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,33 +28,13 @@ interface Template {
   id: string;
   name: string;
   description: string | null;
-  use_case_type: string;
-  is_published: boolean;
+  useCaseType: string;
+  isPublished: boolean;
   version: number;
   questions: Array<{ question: string; order: number }>;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const USE_CASE_LABELS: Record<string, string> = {
-  compliance_survey: 'コンプライアンス意識調査',
-  whistleblower_investigation: '内部通報調査',
-  process_review: '業務プロセスヒアリング',
-  control_evaluation: '統制評価（J-SOX）',
-  risk_assessment: 'リスクアセスメント',
-  board_effectiveness: '取締役会実効性評価',
-  tacit_knowledge: 'ナレッジ抽出',
-  hr_interview: '人事面談',
-  exit_interview: '退職面談',
-  incident_investigation: 'インシデント調査',
-  vendor_assessment: 'ベンダー評価',
-  project_review: 'プロジェクトレビュー',
-};
-
-const USE_CASE_OPTIONS = Object.entries(USE_CASE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -159,8 +140,8 @@ export default function TemplatesPage() {
                   <div className="p-2 bg-accent-500/10 rounded-lg">
                     <FileText className="w-5 h-5 text-accent-500" />
                   </div>
-                  <Badge variant={template.is_published ? 'success' : 'default'}>
-                    {template.is_published ? (
+                  <Badge variant={template.isPublished ? 'success' : 'default'}>
+                    {template.isPublished ? (
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         公開中
@@ -177,7 +158,7 @@ export default function TemplatesPage() {
                   {template.name}
                 </h3>
                 <p className="text-sm text-surface-500 dark:text-surface-400 mb-3">
-                  {USE_CASE_LABELS[template.use_case_type] || template.use_case_type}
+                  {USE_CASE_LABELS[template.useCaseType] || template.useCaseType}
                 </p>
                 {template.description && (
                   <p className="text-sm text-surface-500 dark:text-surface-400 line-clamp-2 mb-3">
@@ -191,7 +172,7 @@ export default function TemplatesPage() {
               </Link>
               <div className="border-t border-surface-200 dark:border-surface-700 px-4 py-3 flex justify-between items-center">
                 <span className="text-xs text-surface-400">
-                  {format(new Date(template.updated_at), 'yyyy/MM/dd更新', { locale: ja })}
+                  {format(new Date(template.updatedAt), 'yyyy/MM/dd更新', { locale: ja })}
                 </span>
                 <div className="relative">
                   <button

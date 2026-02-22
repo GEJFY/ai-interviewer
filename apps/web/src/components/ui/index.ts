@@ -18,3 +18,6 @@ export { EmptyState } from './empty-state';
 export { Breadcrumb } from './breadcrumb';
 
 export { ConfirmDialog } from './confirm-dialog';
+
+export { Tooltip } from './tooltip';
+export type { TooltipProps } from './tooltip';

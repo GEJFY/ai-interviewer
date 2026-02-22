@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   User,
+  Users,
   Bell,
   Shield,
   Palette,
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import api from '@/lib/api-client';
-import { Button, Input, Select, toast } from '@/components/ui';
+import { Button, Input, Modal, ModalBody, ModalFooter, Select, Tooltip, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,8 +32,8 @@ interface UserProfile {
   email: string;
   name: string;
   role: string;
-  organization_id: string | null;
-  mfa_enabled: boolean;
+  organizationId: string | null;
+  mfaEnabled: boolean;
 }
 
 const LANGUAGE_OPTIONS = [
@@ -108,6 +109,17 @@ export default function SettingsPage() {
   const [providerConfig, setProviderConfig] = useState<Record<string, string>>({});
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
+  // Password change
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Admin user management
+  const [resetUserId, setResetUserId] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+
   const { data: user, isLoading } = useQuery({
     queryKey: ['user'],
     queryFn: api.auth.me,
@@ -128,6 +140,39 @@ export default function SettingsPage() {
     },
     onError: () => {
       toast.error('プロフィールの保存に失敗しました');
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: () => api.auth.changePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      setIsPasswordModalOpen(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      toast.success('パスワードを変更しました');
+    },
+    onError: () => {
+      toast.error('パスワードの変更に失敗しました。現在のパスワードを確認してください');
+    },
+  });
+
+  const { data: adminUsers } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: api.auth.listUsers,
+    enabled: user?.role === 'admin',
+  });
+
+  const adminResetMutation = useMutation({
+    mutationFn: () => api.auth.adminResetPassword(resetUserId, resetNewPassword),
+    onSuccess: () => {
+      setIsResetModalOpen(false);
+      setResetUserId('');
+      setResetNewPassword('');
+      toast.success('パスワードをリセットしました');
+    },
+    onError: () => {
+      toast.error('パスワードリセットに失敗しました');
     },
   });
 
@@ -158,6 +203,7 @@ export default function SettingsPage() {
     { id: 'notifications', label: '通知', icon: Bell },
     { id: 'appearance', label: '外観', icon: Palette },
     { id: 'security', label: 'セキュリティ', icon: Shield },
+    ...(user?.role === 'admin' ? [{ id: 'users', label: 'ユーザー管理', icon: Users }] : []),
   ];
 
   if (isLoading) {
@@ -216,9 +262,11 @@ export default function SettingsPage() {
                 <Input label="メールアドレス" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 <div>
                   <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">役割</label>
-                  <p className="text-surface-500 dark:text-surface-400">
-                    {user?.role === 'admin' ? '管理者' : user?.role === 'manager' ? 'マネージャー' : user?.role === 'interviewer' ? 'インタビュアー' : '閲覧者'}
-                  </p>
+                  <Tooltip content="役割により利用できる機能が異なります。管理者に変更を依頼してください" position="right">
+                    <p className="text-surface-500 dark:text-surface-400 cursor-help">
+                      {user?.role === 'admin' ? '管理者' : user?.role === 'manager' ? 'マネージャー' : user?.role === 'interviewer' ? 'インタビュアー' : '閲覧者'}
+                    </p>
+                  </Tooltip>
                 </div>
               </div>
               <div className="pt-4 border-t border-surface-200 dark:border-surface-700">
@@ -319,7 +367,9 @@ export default function SettingsPage() {
                   <div className="p-3 bg-surface-50 dark:bg-surface-800 rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <Zap className="w-4 h-4 text-amber-500" />
-                      <span className="text-sm font-medium text-surface-900 dark:text-surface-100">リアルタイム対話</span>
+                      <Tooltip content="インタビュー中の応答速度を重視する場合に最適です" position="top">
+                        <span className="text-sm font-medium text-surface-900 dark:text-surface-100 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">リアルタイム対話</span>
+                      </Tooltip>
                     </div>
                     <p className="text-xs text-surface-500 dark:text-surface-400">
                       低遅延モデル推奨: Claude Haiku, GPT-5 Nano, Gemini Flash Lite
@@ -328,7 +378,9 @@ export default function SettingsPage() {
                   <div className="p-3 bg-surface-50 dark:bg-surface-800 rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <DollarSign className="w-4 h-4 text-emerald-500" />
-                      <span className="text-sm font-medium text-surface-900 dark:text-surface-100">分析・レポート</span>
+                      <Tooltip content="レポート生成や分析結果の精度を重視する場合に最適です" position="top">
+                        <span className="text-sm font-medium text-surface-900 dark:text-surface-100 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">分析・レポート</span>
+                      </Tooltip>
                     </div>
                     <p className="text-xs text-surface-500 dark:text-surface-400">
                       高精度モデル推奨: Claude Opus, GPT-5.2, Gemini Pro
@@ -410,25 +462,164 @@ export default function SettingsPage() {
                 セキュリティ設定
               </h2>
               <div className="space-y-4">
-                {[
-                  { icon: Key, title: 'パスワード変更', desc: '定期的にパスワードを変更することをお勧めします', action: 'パスワードを変更' },
-                  { icon: Shield, title: '二要素認証 (MFA)', desc: user?.mfa_enabled ? '二要素認証は有効です' : 'セキュリティ強化のためMFAを設定してください', action: user?.mfa_enabled ? '設定を管理' : 'MFAを設定' },
-                  { icon: Globe, title: 'アクティブセッション', desc: '現在ログイン中のデバイスを管理します', action: 'セッションを管理' },
-                ].map((item) => (
-                  <div key={item.title} className="p-4 bg-surface-50 dark:bg-surface-800 rounded-xl">
-                    <div className="flex items-center gap-3 mb-3">
-                      <item.icon className="w-5 h-5 text-surface-500 dark:text-surface-400" />
-                      <h3 className="font-medium text-surface-900 dark:text-surface-100">{item.title}</h3>
+                <div className="p-4 bg-surface-50 dark:bg-surface-800 rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Key className="w-5 h-5 text-surface-500 dark:text-surface-400" />
+                    <h3 className="font-medium text-surface-900 dark:text-surface-100">パスワード変更</h3>
+                  </div>
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">定期的にパスワードを変更することをお勧めします</p>
+                  <Button variant="outline" size="sm" onClick={() => setIsPasswordModalOpen(true)}>パスワードを変更</Button>
+                </div>
+                <div className="p-4 bg-surface-50 dark:bg-surface-800 rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Shield className="w-5 h-5 text-surface-500 dark:text-surface-400" />
+                    <h3 className="font-medium text-surface-900 dark:text-surface-100">二要素認証 (MFA)</h3>
+                  </div>
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">
+                    {user?.mfaEnabled ? '二要素認証は有効です' : 'セキュリティ強化のためMFAを設定してください'}
+                  </p>
+                  <Button variant="outline" size="sm">{user?.mfaEnabled ? '設定を管理' : 'MFAを設定'}</Button>
+                </div>
+                <div className="p-4 bg-surface-50 dark:bg-surface-800 rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Globe className="w-5 h-5 text-surface-500 dark:text-surface-400" />
+                    <h3 className="font-medium text-surface-900 dark:text-surface-100">アクティブセッション</h3>
+                  </div>
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">現在ログイン中のデバイスを管理します</p>
+                  <Button variant="outline" size="sm">セッションを管理</Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ユーザー管理 (admin only) */}
+          {activeTab === 'users' && user?.role === 'admin' && (
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-surface-50 mb-1">
+                  ユーザー管理
+                </h2>
+                <p className="text-sm text-surface-500 dark:text-surface-400">
+                  登録ユーザーの一覧確認とパスワードリセットができます
+                </p>
+              </div>
+              <div className="divide-y divide-surface-100 dark:divide-surface-800">
+                {adminUsers?.map((u: UserProfile) => (
+                  <div key={u.id} className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="font-medium text-surface-900 dark:text-surface-100">{u.name}</p>
+                      <p className="text-sm text-surface-500 dark:text-surface-400">{u.email}</p>
                     </div>
-                    <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">{item.desc}</p>
-                    <Button variant="outline" size="sm">{item.action}</Button>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={u.role === 'admin' ? 'accent' : u.role === 'manager' ? 'info' : 'default'}>
+                        {u.role === 'admin' ? '管理者' : u.role === 'manager' ? 'マネージャー' : u.role === 'interviewer' ? 'インタビュアー' : '閲覧者'}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setResetUserId(u.id);
+                          setResetNewPassword('');
+                          setIsResetModalOpen(true);
+                        }}
+                      >
+                        PW リセット
+                      </Button>
+                    </div>
                   </div>
                 ))}
+                {(!adminUsers || adminUsers.length === 0) && (
+                  <p className="py-4 text-surface-400 text-sm">ユーザーが見つかりません</p>
+                )}
               </div>
             </div>
           )}
         </Card>
       </div>
+
+      {/* Password Change Modal */}
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        title="パスワード変更"
+        size="sm"
+      >
+        <ModalBody>
+          <div className="space-y-4">
+            <Input
+              label="現在のパスワード"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+            <Input
+              label="新しいパスワード"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="8文字以上"
+            />
+            <Input
+              label="新しいパスワード（確認）"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            {newPassword && confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-sm text-red-500">パスワードが一致しません</p>
+            )}
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+            キャンセル
+          </Button>
+          <Button
+            variant="accent"
+            onClick={() => changePasswordMutation.mutate()}
+            isLoading={changePasswordMutation.isPending}
+            disabled={!currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 8}
+          >
+            変更
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Admin Password Reset Modal */}
+      <Modal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        title="パスワードリセット"
+        size="sm"
+      >
+        <ModalBody>
+          <div className="space-y-4">
+            <p className="text-sm text-surface-500 dark:text-surface-400">
+              選択したユーザーのパスワードを新しいものに設定します。
+            </p>
+            <Input
+              label="新しいパスワード"
+              type="password"
+              value={resetNewPassword}
+              onChange={(e) => setResetNewPassword(e.target.value)}
+              placeholder="8文字以上"
+            />
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setIsResetModalOpen(false)}>
+            キャンセル
+          </Button>
+          <Button
+            variant="accent"
+            onClick={() => adminResetMutation.mutate()}
+            isLoading={adminResetMutation.isPending}
+            disabled={resetNewPassword.length < 8}
+          >
+            リセット
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

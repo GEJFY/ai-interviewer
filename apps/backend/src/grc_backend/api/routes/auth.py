@@ -11,7 +11,7 @@ from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
-from grc_backend.api.deps import CurrentUser, DBSession, get_settings_dep
+from grc_backend.api.deps import AdminUser, CurrentUser, DBSession, get_settings_dep
 from grc_backend.config import Settings
 from grc_core.repositories import UserRepository
 from grc_core.schemas import UserCreate, UserRead
@@ -316,3 +316,85 @@ async def logout(
 async def get_current_user_info(current_user: CurrentUser) -> UserRead:
     """Get current user information."""
     return UserRead.model_validate(current_user)
+
+
+class ChangePasswordRequest(BaseModel):
+    """Password change request."""
+
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: CurrentUser,
+    db: DBSession,
+) -> None:
+    """Change current user's password."""
+    if not current_user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="SSO users cannot change password here",
+        )
+
+    if not verify_password(request.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    if len(request.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 8 characters",
+        )
+
+    user_repo = UserRepository(db)
+    new_hash = get_password_hash(request.new_password)
+    await user_repo.update_password(current_user.id, new_hash)
+    await db.commit()
+
+
+class AdminResetPasswordRequest(BaseModel):
+    """Admin password reset request."""
+
+    user_id: str
+    new_password: str
+
+
+@router.get("/admin/users", response_model=list[UserRead])
+async def list_users(
+    admin_user: AdminUser,
+    db: DBSession,
+) -> list[UserRead]:
+    """List all users (admin only)."""
+    user_repo = UserRepository(db)
+    users = await user_repo.get_multi(limit=500)
+    return [UserRead.model_validate(u) for u in users]
+
+
+@router.post("/admin/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_reset_password(
+    request: AdminResetPasswordRequest,
+    admin_user: AdminUser,
+    db: DBSession,
+) -> None:
+    """Reset a user's password (admin only)."""
+    user_repo = UserRepository(db)
+    user = await user_repo.get(request.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if len(request.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 8 characters",
+        )
+
+    new_hash = get_password_hash(request.new_password)
+    await user_repo.update_password(request.user_id, new_hash)
+    await db.commit()

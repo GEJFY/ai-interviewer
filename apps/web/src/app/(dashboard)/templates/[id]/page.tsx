@@ -12,9 +12,11 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  Settings2,
 } from 'lucide-react';
 import api from '@/lib/api-client';
-import { Button, Input, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
+import { USE_CASE_LABELS } from '@/lib/constants';
+import { Button, Input, Modal, ModalBody, ModalFooter, Tooltip, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,23 +34,13 @@ interface Template {
   id: string;
   name: string;
   description: string | null;
-  use_case_type: string;
-  is_published: boolean;
+  useCaseType: string;
+  isPublished: boolean;
   version: number;
   questions: Question[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const USE_CASE_LABELS: Record<string, string> = {
-  compliance_survey: 'コンプライアンス意識調査',
-  whistleblower_investigation: '内部通報調査',
-  process_review: '業務プロセスヒアリング',
-  control_evaluation: '統制評価（J-SOX）',
-  risk_assessment: 'リスクアセスメント',
-  board_effectiveness: '取締役会実効性評価',
-  tacit_knowledge: 'ナレッジ抽出',
-};
 
 export default function TemplateDetailPage() {
   const params = useParams();
@@ -63,6 +55,14 @@ export default function TemplateDetailPage() {
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
+  const [aiSettings, setAiSettings] = useState({
+    temperature: 0.7,
+    maxQuestions: 10,
+    timeLimitMinutes: 30,
+    tone: 'formal',
+    followUpDepth: 2,
+  });
 
   const { data: template, isLoading } = useQuery({
     queryKey: ['template', templateId],
@@ -245,12 +245,12 @@ export default function TemplateDetailPage() {
               className="text-2xl font-bold text-surface-900 dark:text-surface-50 bg-transparent border-none outline-none focus:ring-0 w-full"
               placeholder="テンプレート名"
             />
-            <Badge variant={template?.is_published ? 'success' : 'default'}>
-              {template?.is_published ? '公開中' : '下書き'}
+            <Badge variant={template?.isPublished ? 'success' : 'default'}>
+              {template?.isPublished ? '公開中' : '下書き'}
             </Badge>
           </div>
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-2">
-            {USE_CASE_LABELS[template?.use_case_type] || template?.use_case_type} ・
+            {USE_CASE_LABELS[template?.useCaseType] || template?.useCaseType} ・
             v{template?.version}
           </p>
           <input
@@ -265,7 +265,7 @@ export default function TemplateDetailPage() {
           />
         </div>
         <div className="flex gap-3">
-          {!template?.is_published && (
+          {!template?.isPublished && (
             <Button
               variant="outline"
               leftIcon={<Upload className="w-4 h-4" />}
@@ -294,6 +294,100 @@ export default function TemplateDetailPage() {
           <span className="text-sm">未保存の変更があります</span>
         </div>
       )}
+
+      {/* AI Settings */}
+      <Card>
+        <button
+          onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Settings2 className="w-5 h-5 text-accent-500" />
+            <h2 className="font-semibold text-surface-900 dark:text-surface-50">AIインタビュー設定</h2>
+          </div>
+          <span className="text-sm text-surface-400">{isAiSettingsOpen ? '閉じる' : '開く'}</span>
+        </button>
+        {isAiSettingsOpen && (
+          <div className="px-6 pb-6 border-t border-surface-200 dark:border-surface-700">
+            <p className="text-sm text-surface-500 dark:text-surface-400 pt-4 mb-4">
+              このテンプレートを使用したインタビューのデフォルト設定です。タスク側で個別に上書きできます。
+            </p>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <Tooltip content="AIの応答の多様性を制御します。低いほど定型的、高いほど創造的" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    温度 (Temperature)
+                  </label>
+                </Tooltip>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={aiSettings.temperature}
+                    onChange={(e) => { setAiSettings({ ...aiSettings, temperature: parseFloat(e.target.value) }); handleChange(); }}
+                    className="flex-1 accent-accent-500"
+                  />
+                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300 w-8 text-right">{aiSettings.temperature}</span>
+                </div>
+              </div>
+              <div>
+                <Tooltip content="1回のインタビューでの最大質問数" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    最大質問数
+                  </label>
+                </Tooltip>
+                <input
+                  type="number"
+                  min="3"
+                  max="30"
+                  value={aiSettings.maxQuestions}
+                  onChange={(e) => { setAiSettings({ ...aiSettings, maxQuestions: parseInt(e.target.value) || 10 }); handleChange(); }}
+                  className="w-full px-4 py-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-accent-500/50"
+                />
+              </div>
+              <div>
+                <Tooltip content="AIインタビュアーの対話スタイル" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    トーン
+                  </label>
+                </Tooltip>
+                <select
+                  value={aiSettings.tone}
+                  onChange={(e) => { setAiSettings({ ...aiSettings, tone: e.target.value }); handleChange(); }}
+                  className="w-full px-4 py-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-accent-500/50"
+                >
+                  <option value="formal">フォーマル（丁寧語・敬語）</option>
+                  <option value="casual">カジュアル（ですます調）</option>
+                  <option value="professional">プロフェッショナル（専門的）</option>
+                </select>
+              </div>
+              <div>
+                <Tooltip content="深掘り質問を行う回数の上限" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    深掘り深度
+                  </label>
+                </Tooltip>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="1"
+                    value={aiSettings.followUpDepth}
+                    onChange={(e) => { setAiSettings({ ...aiSettings, followUpDepth: parseInt(e.target.value) }); handleChange(); }}
+                    className="flex-1 accent-accent-500"
+                  />
+                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300 w-16 text-right">
+                    {aiSettings.followUpDepth === 0 ? 'なし' : `${aiSettings.followUpDepth}回`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Questions Builder */}
       <Card>

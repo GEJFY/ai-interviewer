@@ -6,31 +6,23 @@ import { ClipboardList, Calendar, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
+import { USE_CASE_LABELS } from '@/lib/constants';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip } from '@/components/ui/tooltip';
 import { SkeletonListItem } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 
 interface Task {
   id: string;
   name: string;
-  project_id: string;
-  use_case_type: string;
+  projectId: string;
+  useCaseType: string;
   status: string;
-  interview_count: number;
-  completed_interview_count: number;
+  interviewCount: number;
+  completedInterviewCount: number;
   deadline: string | null;
 }
-
-const USE_CASE_LABELS: Record<string, string> = {
-  compliance_survey: 'コンプライアンス意識調査',
-  whistleblower_investigation: '内部通報調査',
-  process_review: '業務プロセスヒアリング',
-  control_evaluation: '統制評価（J-SOX）',
-  risk_assessment: 'リスクアセスメント',
-  board_effectiveness: '取締役会実効性評価',
-  tacit_knowledge: 'ナレッジ抽出',
-};
 
 export default function TasksPage() {
   const { data, isLoading } = useQuery({
@@ -83,14 +75,16 @@ export default function TasksPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-surface-900 dark:text-surface-100">{task.name}</p>
                   <p className="text-sm text-surface-500 dark:text-surface-400">
-                    {USE_CASE_LABELS[task.use_case_type] || task.use_case_type}
+                    {USE_CASE_LABELS[task.useCaseType] || task.useCaseType}
                   </p>
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
-                    <MessageSquare className="w-4 h-4" />
-                    {task.completed_interview_count}/{task.interview_count}
-                  </div>
+                  <Tooltip content="完了/全体のインタビュー数" position="top">
+                    <span className="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 cursor-help">
+                      <MessageSquare className="w-4 h-4" />
+                      {task.completedInterviewCount}/{task.interviewCount}
+                    </span>
+                  </Tooltip>
                   {task.deadline && (
                     <div className="flex items-center gap-2 text-sm text-surface-400">
                       <Calendar className="w-4 h-4" />

@@ -19,7 +19,8 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
 import logger from '@/lib/logger';
-import { Button, Modal, ModalBody, ModalFooter, Select, toast } from '@/components/ui';
+import { REPORT_TYPE_LABELS, REPORT_TYPE_OPTIONS } from '@/lib/constants';
+import { Button, Modal, ModalBody, ModalFooter, Select, Tooltip, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SkeletonListItem } from '@/components/ui/skeleton';
@@ -28,28 +29,19 @@ import { EmptyState } from '@/components/ui/empty-state';
 interface Report {
   id: string;
   title: string;
-  report_type: string;
+  reportType: string;
   status: string;
   format: string;
-  interview_id: string | null;
-  task_id: string | null;
-  created_at: string;
-  updated_at: string;
-  approved_at: string | null;
+  interviewId: string | null;
+  taskId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt: string | null;
 }
 
-const REPORT_TYPE_LABELS: Record<string, string> = {
-  summary: 'インタビュー要約',
-  process_document: '業務記述書',
-  rcm: 'RCM（リスクコントロールマトリクス）',
-  audit_workpaper: '監査調書',
-  compliance_report: 'コンプライアンスレポート',
-  analysis: '分析レポート',
-};
-
-const REPORT_TYPE_OPTIONS = [
+const FILTER_TYPE_OPTIONS = [
   { value: '', label: 'すべてのタイプ' },
-  ...Object.entries(REPORT_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+  ...REPORT_TYPE_OPTIONS,
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -57,6 +49,13 @@ const STATUS_LABELS: Record<string, string> = {
   review: 'レビュー中',
   approved: '承認済み',
   published: '公開',
+};
+
+const STATUS_TOOLTIPS: Record<string, string> = {
+  draft: '編集中のレポートです。レビュー依頼で次のステップへ進みます',
+  review: 'レビュー担当者の確認待ちです',
+  approved: '承認済みで公開・配布が可能です',
+  published: '社内外に公開されたレポートです',
 };
 
 function ReportsContent() {
@@ -171,7 +170,7 @@ function ReportsContent() {
         <Filter className="w-5 h-5 text-surface-400" />
         <div className="w-64">
           <Select
-            options={REPORT_TYPE_OPTIONS}
+            options={FILTER_TYPE_OPTIONS}
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             placeholder="レポートタイプで絞り込み"
@@ -198,19 +197,21 @@ function ReportsContent() {
                 className="flex items-center gap-4 px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors"
               >
                 <div className="p-2 bg-surface-100 dark:bg-surface-800 rounded-lg">
-                  {getReportIcon(report.report_type)}
+                  {getReportIcon(report.reportType)}
                 </div>
                 <Link href={`/reports/${report.id}`} className="flex-1 min-w-0">
                   <p className="font-medium text-surface-900 dark:text-surface-100">{report.title}</p>
                   <div className="flex items-center gap-4 text-sm text-surface-500 dark:text-surface-400">
-                    <span>{REPORT_TYPE_LABELS[report.report_type] || report.report_type}</span>
-                    <span>{format(new Date(report.created_at), 'yyyy/MM/dd HH:mm', { locale: ja })}</span>
+                    <span>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
+                    <span>{format(new Date(report.createdAt), 'yyyy/MM/dd HH:mm', { locale: ja })}</span>
                   </div>
                 </Link>
                 <div className="flex items-center gap-4">
-                  <Badge variant={statusVariant(report.status)}>
-                    {STATUS_LABELS[report.status] || report.status}
-                  </Badge>
+                  <Tooltip content={STATUS_TOOLTIPS[report.status] || ''} position="left">
+                    <Badge variant={statusVariant(report.status)}>
+                      {STATUS_LABELS[report.status] || report.status}
+                    </Badge>
+                  </Tooltip>
                   <div className="flex items-center gap-1">
                     {['pdf', 'docx', 'xlsx'].map((fmt) => (
                       <button
@@ -252,7 +253,7 @@ function ReportsContent() {
             </p>
             <Select
               label="レポートタイプ"
-              options={Object.entries(REPORT_TYPE_LABELS).map(([value, label]) => ({ value, label }))}
+              options={REPORT_TYPE_OPTIONS}
               value={selectedReportType}
               onChange={(e) => setSelectedReportType(e.target.value)}
             />
@@ -262,11 +263,13 @@ function ReportsContent() {
               </h4>
               <p className="text-sm text-surface-500 dark:text-surface-400">
                 {selectedReportType === 'summary' && 'インタビュー内容を要約し、主要なポイントをまとめます。'}
-                {selectedReportType === 'process_document' && '業務プロセスを可視化した業務記述書を作成します。'}
+                {selectedReportType === 'process_doc' && '業務プロセスを可視化した業務記述書を作成します。'}
                 {selectedReportType === 'rcm' && 'リスクと統制の対応関係を整理したRCMを作成します。'}
                 {selectedReportType === 'audit_workpaper' && '監査手続の結果をまとめた監査調書を作成します。'}
+                {selectedReportType === 'survey_analysis' && 'コンプライアンス意識調査等の分析結果をまとめます。'}
                 {selectedReportType === 'compliance_report' && 'コンプライアンス状況の分析レポートを作成します。'}
-                {selectedReportType === 'analysis' && 'インタビュー結果の詳細分析レポートを作成します。'}
+                {selectedReportType === 'risk_heatmap' && 'リスクの発生可能性と影響度をマッピングしたヒートマップを作成します。'}
+                {selectedReportType === 'gap_analysis' && '現状と目標状態のギャップを分析し改善提案をまとめます。'}
               </p>
             </div>
           </div>
