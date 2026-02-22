@@ -261,7 +261,7 @@ class TestPublishUnpublish:
 
         resp = self.client.post("/templates/tmpl-1/publish")
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["is_published"] is True
+        assert resp.json()["isPublished"] is True
 
     @patch("grc_backend.api.routes.templates.TemplateRepository")
     def test_publish_not_found(self, mock_repo_cls):
@@ -283,7 +283,7 @@ class TestPublishUnpublish:
 
         resp = self.client.post("/templates/tmpl-1/unpublish")
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["is_published"] is False
+        assert resp.json()["isPublished"] is False
 
 
 # --- delete_template テスト ---
