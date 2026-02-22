@@ -51,8 +51,8 @@ describe('useAuth', () => {
         email: 'test@example.com',
         name: 'テスト',
         role: 'admin',
-        organization_id: null,
-        mfa_enabled: false,
+        organizationId: null,
+        mfaEnabled: false,
       };
       mockLogin.mockResolvedValueOnce({
         access_token: 'token123',
@@ -75,7 +75,7 @@ describe('useAuth', () => {
         access_token: 'access-abc',
         refresh_token: 'refresh-def',
       });
-      mockMe.mockResolvedValueOnce({ id: '1', email: 'a@b.com', name: 'A', role: 'viewer', organization_id: null, mfa_enabled: false });
+      mockMe.mockResolvedValueOnce({ id: '1', email: 'a@b.com', name: 'A', role: 'viewer', organizationId: null, mfaEnabled: false });
 
       await act(async () => {
         await useAuth.getState().login('a@b.com', 'pass');
@@ -103,7 +103,7 @@ describe('useAuth', () => {
     it('ユーザーとトークンをクリアすること', async () => {
       // まずログイン状態にする
       mockLogin.mockResolvedValueOnce({ access_token: 'a', refresh_token: 'b' });
-      mockMe.mockResolvedValueOnce({ id: '1', email: 'a@b.com', name: 'A', role: 'viewer', organization_id: null, mfa_enabled: false });
+      mockMe.mockResolvedValueOnce({ id: '1', email: 'a@b.com', name: 'A', role: 'viewer', organizationId: null, mfaEnabled: false });
       await act(async () => {
         await useAuth.getState().login('a@b.com', 'pass');
       });
@@ -133,7 +133,7 @@ describe('useAuth', () => {
     });
 
     it('トークンありの場合にユーザーを取得すること', async () => {
-      const mockUser = { id: '2', email: 'user@test.com', name: 'User', role: 'admin', organization_id: null, mfa_enabled: true };
+      const mockUser = { id: '2', email: 'user@test.com', name: 'User', role: 'admin', organizationId: null, mfaEnabled: true };
       localStorageMock.getItem.mockReturnValueOnce('valid-token');
       mockMe.mockResolvedValueOnce(mockUser);
 
@@ -148,7 +148,7 @@ describe('useAuth', () => {
 
   describe('setUser', () => {
     it('ユーザーを直接設定できること', () => {
-      const user = { id: '3', email: 'set@test.com', name: 'Set', role: 'viewer', organization_id: null, mfa_enabled: false };
+      const user = { id: '3', email: 'set@test.com', name: 'Set', role: 'viewer', organizationId: null, mfaEnabled: false };
 
       act(() => {
         useAuth.getState().setUser(user);

@@ -14,6 +14,7 @@ import {
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
+import { USE_CASE_OPTIONS } from '@/lib/constants';
 import { Button, Input, Select, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,26 +22,18 @@ import { Skeleton, SkeletonListItem } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
-const USE_CASE_OPTIONS = [
-  { value: 'compliance_survey', label: 'コンプライアンス意識調査' },
-  { value: 'whistleblower_investigation', label: '内部通報調査' },
-  { value: 'process_review', label: '業務プロセスヒアリング' },
-  { value: 'control_evaluation', label: '統制評価（J-SOX）' },
-  { value: 'risk_assessment', label: 'リスクアセスメント' },
-  { value: 'board_effectiveness', label: '取締役会実効性評価' },
-  { value: 'tacit_knowledge', label: 'ナレッジ抽出' },
-];
-
 interface Task {
   id: string;
   name: string;
   description: string | null;
-  use_case_type: string;
+  useCaseType: string;
   status: string;
-  interview_count: number;
-  completed_interview_count: number;
+  interviewCount: number;
+  completedInterviewCount: number;
   deadline: string | null;
 }
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -52,18 +45,22 @@ export default function ProjectDetailPage() {
   const [newTask, setNewTask] = useState({
     name: '',
     description: '',
-    use_case_type: '',
-    target_count: 1,
+    useCaseType: '',
+    targetCount: 1,
   });
+
+  const isValidId = UUID_REGEX.test(projectId);
 
   const { data: project, isLoading: isLoadingProject } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => api.projects.get(projectId),
+    enabled: isValidId,
   });
 
   const { data: tasksData, isLoading: isLoadingTasks } = useQuery({
     queryKey: ['tasks', { projectId }],
     queryFn: () => api.tasks.list({ projectId }),
+    enabled: isValidId,
   });
 
   const createTaskMutation = useMutation({
@@ -72,7 +69,7 @@ export default function ProjectDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['tasks', { projectId }] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       setIsCreateTaskModalOpen(false);
-      setNewTask({ name: '', description: '', use_case_type: '', target_count: 1 });
+      setNewTask({ name: '', description: '', useCaseType: '', targetCount: 1 });
       toast.success('タスクを作成しました');
     },
     onError: () => {
@@ -81,13 +78,14 @@ export default function ProjectDetailPage() {
   });
 
   const handleCreateTask = () => {
-    if (!newTask.name.trim() || !newTask.use_case_type) return;
+    if (!newTask.name.trim() || !newTask.useCaseType) return;
     createTaskMutation.mutate({
       name: newTask.name,
       description: newTask.description || undefined,
       projectId,
-      useCaseType: newTask.use_case_type,
-      targetCount: newTask.target_count,
+      useCaseType: newTask.useCaseType,
+      targetCount: newTask.targetCount,
+
     });
   };
 
@@ -111,6 +109,11 @@ export default function ProjectDetailPage() {
   const getUseCaseLabel = (type: string) => {
     return USE_CASE_OPTIONS.find((opt) => opt.value === type)?.label || type;
   };
+
+  if (!isValidId) {
+    router.replace('/projects');
+    return null;
+  }
 
   if (isLoadingProject) {
     return (
@@ -142,10 +145,10 @@ export default function ProjectDetailPage() {
               {project?.status === 'active' ? '進行中' : project?.status === 'completed' ? '完了' : project?.status}
             </Badge>
           </div>
-          {project?.client_name && (
+          {project?.clientName && (
             <p className="text-surface-500 dark:text-surface-400 flex items-center gap-2">
               <Users className="w-4 h-4" />
-              {project.client_name}
+              {project.clientName}
             </p>
           )}
           {project?.description && (
@@ -171,21 +174,21 @@ export default function ProjectDetailPage() {
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">タスク数</p>
           <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">
-            {project?.task_count || 0}
+            {project?.taskCount || 0}
           </p>
         </Card>
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">完了タスク</p>
           <p className="text-2xl font-bold text-emerald-500">
-            {project?.completed_task_count || 0}
+            {project?.completedTaskCount || 0}
           </p>
         </Card>
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">進捗率</p>
           <p className="text-2xl font-bold text-accent-500">
-            {project?.task_count
+            {project?.taskCount
               ? Math.round(
-                  ((project?.completed_task_count || 0) / project.task_count) * 100
+                  ((project?.completedTaskCount || 0) / project.taskCount) * 100
                 )
               : 0}
             %
@@ -217,13 +220,13 @@ export default function ProjectDetailPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-surface-900 dark:text-surface-50">{task.name}</p>
                   <p className="text-sm text-surface-500 dark:text-surface-400">
-                    {getUseCaseLabel(task.use_case_type)}
+                    {getUseCaseLabel(task.useCaseType)}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-sm text-surface-500 dark:text-surface-400">
-                      {task.completed_interview_count}/{task.interview_count} 完了
+                      {task.completedInterviewCount}/{task.interviewCount} 完了
                     </p>
                     {task.deadline && (
                       <p className="text-xs text-surface-400 flex items-center gap-1 justify-end">
@@ -267,18 +270,18 @@ export default function ProjectDetailPage() {
             label="ユースケース"
             placeholder="ユースケースを選択"
             options={USE_CASE_OPTIONS}
-            value={newTask.use_case_type}
+            value={newTask.useCaseType}
             onChange={(e) =>
-              setNewTask({ ...newTask, use_case_type: e.target.value })
+              setNewTask({ ...newTask, useCaseType: e.target.value })
             }
           />
           <Input
             label="目標インタビュー数"
             type="number"
             min={1}
-            value={newTask.target_count}
+            value={newTask.targetCount}
             onChange={(e) =>
-              setNewTask({ ...newTask, target_count: parseInt(e.target.value) || 1 })
+              setNewTask({ ...newTask, targetCount: parseInt(e.target.value) || 1 })
             }
           />
           <div>
@@ -307,7 +310,7 @@ export default function ProjectDetailPage() {
             variant="accent"
             onClick={handleCreateTask}
             isLoading={createTaskMutation.isPending}
-            disabled={!newTask.name.trim() || !newTask.use_case_type}
+            disabled={!newTask.name.trim() || !newTask.useCaseType}
           >
             作成
           </Button>

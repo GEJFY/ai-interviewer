@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,11 +11,13 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
+  Settings2,
+  Save,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api from '@/lib/api-client';
-import { Button, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
+import { Button, Input, Modal, ModalBody, ModalFooter, Select, Tooltip, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton, SkeletonListItem } from '@/components/ui/skeleton';
@@ -26,9 +28,9 @@ interface Interview {
   id: string;
   status: string;
   language: string;
-  started_at: string | null;
-  completed_at: string | null;
-  duration_seconds: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  durationSeconds: number | null;
   summary: string | null;
 }
 
@@ -39,6 +41,14 @@ export default function TaskDetailPage() {
   const taskId = params.id as string;
 
   const [isCreateInterviewModalOpen, setIsCreateInterviewModalOpen] = useState(false);
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
+  const [aiSettings, setAiSettings] = useState({
+    temperature: 0.7,
+    maxQuestions: 10,
+    timeLimitMinutes: 30,
+    tone: 'formal',
+    followUpDepth: 2,
+  });
 
   const { data: task, isLoading: isLoadingTask } = useQuery({
     queryKey: ['task', taskId],
@@ -104,7 +114,7 @@ export default function TaskDetailPage() {
       <Breadcrumb
         items={[
           { label: '案件管理', href: '/projects' },
-          { label: '案件', href: `/projects/${task?.project_id}` },
+          { label: '案件', href: `/projects/${task?.projectId}` },
           { label: task?.name || '...' },
         ]}
       />
@@ -147,33 +157,149 @@ export default function TaskDetailPage() {
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">目標数</p>
           <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">
-            {task?.target_count || 0}
+            {task?.targetCount || 0}
           </p>
         </Card>
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">実施数</p>
           <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">
-            {task?.interview_count || 0}
+            {task?.interviewCount || 0}
           </p>
         </Card>
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">完了数</p>
           <p className="text-2xl font-bold text-emerald-500">
-            {task?.completed_interview_count || 0}
+            {task?.completedInterviewCount || 0}
           </p>
         </Card>
         <Card className="p-6">
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-1">達成率</p>
           <p className="text-2xl font-bold text-accent-500">
-            {task?.target_count
+            {task?.targetCount
               ? Math.round(
-                  ((task?.completed_interview_count || 0) / task.target_count) * 100
+                  ((task?.completedInterviewCount || 0) / task.targetCount) * 100
                 )
               : 0}
             %
           </p>
         </Card>
       </div>
+
+      {/* AI Settings */}
+      <Card>
+        <button
+          onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Settings2 className="w-5 h-5 text-accent-500" />
+            <h2 className="font-semibold text-surface-900 dark:text-surface-50">AIインタビュー設定</h2>
+          </div>
+          <span className="text-sm text-surface-400">{isAiSettingsOpen ? '閉じる' : '開く'}</span>
+        </button>
+        {isAiSettingsOpen && (
+          <div className="px-6 pb-6 border-t border-surface-200 dark:border-surface-700">
+            <div className="grid grid-cols-2 gap-6 pt-4">
+              <div>
+                <Tooltip content="AIの応答の多様性を制御します。低いほど定型的、高いほど創造的になります" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    温度 (Temperature)
+                  </label>
+                </Tooltip>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={aiSettings.temperature}
+                    onChange={(e) => setAiSettings({ ...aiSettings, temperature: parseFloat(e.target.value) })}
+                    className="flex-1 accent-accent-500"
+                  />
+                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300 w-8 text-right">{aiSettings.temperature}</span>
+                </div>
+              </div>
+              <div>
+                <Tooltip content="1回のインタビューでAIが行う質問の最大数です" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    最大質問数
+                  </label>
+                </Tooltip>
+                <input
+                  type="number"
+                  min="3"
+                  max="30"
+                  value={aiSettings.maxQuestions}
+                  onChange={(e) => setAiSettings({ ...aiSettings, maxQuestions: parseInt(e.target.value) || 10 })}
+                  className="w-full px-4 py-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-accent-500/50"
+                />
+              </div>
+              <div>
+                <Tooltip content="インタビューの制限時間（分）です。超過すると自動終了します" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    制限時間（分）
+                  </label>
+                </Tooltip>
+                <input
+                  type="number"
+                  min="5"
+                  max="120"
+                  value={aiSettings.timeLimitMinutes}
+                  onChange={(e) => setAiSettings({ ...aiSettings, timeLimitMinutes: parseInt(e.target.value) || 30 })}
+                  className="w-full px-4 py-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-accent-500/50"
+                />
+              </div>
+              <div>
+                <Tooltip content="AIインタビュアーの対話スタイルです" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    トーン
+                  </label>
+                </Tooltip>
+                <select
+                  value={aiSettings.tone}
+                  onChange={(e) => setAiSettings({ ...aiSettings, tone: e.target.value })}
+                  className="w-full px-4 py-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-accent-500/50"
+                >
+                  <option value="formal">フォーマル（丁寧語・敬語）</option>
+                  <option value="casual">カジュアル（ですます調）</option>
+                  <option value="professional">プロフェッショナル（専門的）</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <Tooltip content="回答に対してAIが深掘り質問を行う回数の上限です" position="top">
+                  <label className="inline-block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">
+                    深掘り深度
+                  </label>
+                </Tooltip>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="1"
+                    value={aiSettings.followUpDepth}
+                    onChange={(e) => setAiSettings({ ...aiSettings, followUpDepth: parseInt(e.target.value) })}
+                    className="flex-1 accent-accent-500"
+                  />
+                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300 w-16 text-right">
+                    {aiSettings.followUpDepth === 0 ? 'なし' : `${aiSettings.followUpDepth}回`}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 mt-4 border-t border-surface-200 dark:border-surface-700">
+              <Button
+                variant="accent"
+                size="sm"
+                leftIcon={<Save className="w-4 h-4" />}
+                onClick={() => toast.success('AI設定を保存しました')}
+              >
+                設定を保存
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Interviews */}
       <Card>
@@ -212,18 +338,18 @@ export default function TaskDetailPage() {
                     インタビュー #{interview.id.slice(0, 8)}
                   </p>
                   <div className="flex items-center gap-4 text-sm text-surface-500 dark:text-surface-400">
-                    {interview.started_at && (
+                    {interview.startedAt && (
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {format(new Date(interview.started_at), 'M/d HH:mm', {
+                        {format(new Date(interview.startedAt), 'M/d HH:mm', {
                           locale: ja,
                         })}
                       </span>
                     )}
-                    {interview.duration_seconds && (
+                    {interview.durationSeconds && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {formatDuration(interview.duration_seconds)}
+                        {formatDuration(interview.durationSeconds)}
                       </span>
                     )}
                   </div>

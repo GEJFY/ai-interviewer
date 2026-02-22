@@ -143,6 +143,12 @@ def get_ai_provider(
             "project_id": settings.gcp_project_id,
             "location": settings.gcp_location,
         }
+    elif settings.ai_provider == "local":
+        config_dict["ollama"] = {
+            "base_url": settings.ollama_base_url,
+            "model_name": settings.ollama_model,
+            "embedding_model": settings.ollama_embedding_model,
+        }
 
     config = AIConfig(**config_dict)
     return create_ai_provider(config)

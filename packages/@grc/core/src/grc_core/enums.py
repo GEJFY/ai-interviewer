@@ -55,6 +55,9 @@ class ReportType(StrEnum):
     RCM = "rcm"  # リスクコントロールマトリクス
     AUDIT_WORKPAPER = "audit_workpaper"  # 監査調書
     SURVEY_ANALYSIS = "survey_analysis"  # 意識調査分析
+    COMPLIANCE_REPORT = "compliance_report"  # コンプライアンスレポート
+    RISK_HEATMAP = "risk_heatmap"  # リスクヒートマップ
+    GAP_ANALYSIS = "gap_analysis"  # ギャップ分析
 
 
 class ReportStatus(StrEnum):

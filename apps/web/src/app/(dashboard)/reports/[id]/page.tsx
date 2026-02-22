@@ -20,7 +20,8 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import api, { apiClient } from '@/lib/api-client';
 import logger from '@/lib/logger';
-import { Button, Modal, ModalBody, ModalFooter, toast } from '@/components/ui';
+import { REPORT_TYPE_LABELS } from '@/lib/constants';
+import { Button, Modal, ModalBody, ModalFooter, Tooltip, toast } from '@/components/ui';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +30,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 interface Report {
   id: string;
   title: string;
-  report_type: string;
+  reportType: string;
   status: string;
   format: string;
   content: {
@@ -42,29 +43,27 @@ interface Report {
     recommendations?: string[];
     [key: string]: unknown;
   };
-  interview_id: string | null;
-  task_id: string | null;
-  created_by: string | null;
-  approved_by: string | null;
-  approved_at: string | null;
-  created_at: string;
-  updated_at: string;
+  interviewId: string | null;
+  taskId: string | null;
+  createdBy: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const REPORT_TYPE_LABELS: Record<string, string> = {
-  summary: 'インタビュー要約',
-  process_document: '業務記述書',
-  rcm: 'RCM（リスクコントロールマトリクス）',
-  audit_workpaper: '監査調書',
-  compliance_report: 'コンプライアンスレポート',
-  analysis: '分析レポート',
-};
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '下書き',
   review: 'レビュー中',
   approved: '承認済み',
   published: '公開',
+};
+
+const STATUS_TOOLTIPS: Record<string, string> = {
+  draft: '編集中のレポートです。レビュー依頼で次のステップへ進みます',
+  review: 'レビュー担当者の確認待ちです',
+  approved: '承認済みで公開・配布が可能です',
+  published: '社内外に公開されたレポートです',
 };
 
 export default function ReportDetailPage() {
@@ -213,21 +212,23 @@ export default function ReportDetailPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">{report.title}</h1>
-            <Badge variant={statusBadgeVariant(report.status)}>
-              <span className="flex items-center gap-1">
-                {statusIcon(report.status)}
-                {STATUS_LABELS[report.status] || report.status}
-              </span>
-            </Badge>
+            <Tooltip content={STATUS_TOOLTIPS[report.status] || ''} position="bottom">
+              <Badge variant={statusBadgeVariant(report.status)}>
+                <span className="flex items-center gap-1">
+                  {statusIcon(report.status)}
+                  {STATUS_LABELS[report.status] || report.status}
+                </span>
+              </Badge>
+            </Tooltip>
           </div>
           <div className="flex items-center gap-4 text-sm text-surface-500 dark:text-surface-400">
-            <span>{REPORT_TYPE_LABELS[report.report_type] || report.report_type}</span>
+            <span>{REPORT_TYPE_LABELS[report.reportType] || report.reportType}</span>
             <span>
-              作成日: {format(new Date(report.created_at), 'yyyy/MM/dd HH:mm', { locale: ja })}
+              作成日: {format(new Date(report.createdAt), 'yyyy/MM/dd HH:mm', { locale: ja })}
             </span>
-            {report.approved_at && (
+            {report.approvedAt && (
               <span>
-                承認日: {format(new Date(report.approved_at), 'yyyy/MM/dd HH:mm', { locale: ja })}
+                承認日: {format(new Date(report.approvedAt), 'yyyy/MM/dd HH:mm', { locale: ja })}
               </span>
             )}
           </div>

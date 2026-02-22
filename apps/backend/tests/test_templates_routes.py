@@ -5,6 +5,7 @@
 """
 
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -31,20 +32,21 @@ def _make_user(role="manager", org_id="org-1"):
 
 
 def _make_template(template_id="tmpl-1", org_id="org-1", published=False):
-    tmpl = MagicMock()
-    tmpl.id = template_id
-    tmpl.name = "Test Template"
-    tmpl.description = "Template description"
-    tmpl.use_case_type = UseCaseType.PROCESS_REVIEW
-    tmpl.organization_id = org_id
-    tmpl.created_by = "user-1"
-    tmpl.questions = [{"order": 1, "question": "Q1", "required": True}]
-    tmpl.settings = {}
-    tmpl.version = 1
-    tmpl.is_published = published
-    tmpl.created_at = datetime(2025, 1, 1)
-    tmpl.updated_at = datetime(2025, 1, 1)
-    return tmpl
+    """テスト用テンプレートモック（SimpleNamespaceでcamelCase属性の自動生成を防止）。"""
+    return SimpleNamespace(
+        id=template_id,
+        name="Test Template",
+        description="Template description",
+        use_case_type=UseCaseType.PROCESS_REVIEW,
+        organization_id=org_id,
+        created_by="user-1",
+        questions=[{"order": 1, "question": "Q1", "required": True}],
+        settings={},
+        version=1,
+        is_published=published,
+        created_at=datetime(2025, 1, 1),
+        updated_at=datetime(2025, 1, 1),
+    )
 
 
 def _create_app(user):
@@ -259,7 +261,7 @@ class TestPublishUnpublish:
 
         resp = self.client.post("/templates/tmpl-1/publish")
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["is_published"] is True
+        assert resp.json()["isPublished"] is True
 
     @patch("grc_backend.api.routes.templates.TemplateRepository")
     def test_publish_not_found(self, mock_repo_cls):
@@ -281,7 +283,7 @@ class TestPublishUnpublish:
 
         resp = self.client.post("/templates/tmpl-1/unpublish")
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["is_published"] is False
+        assert resp.json()["isPublished"] is False
 
 
 # --- delete_template テスト ---

@@ -23,11 +23,11 @@ interface KnowledgeItem {
   id: string;
   title: string;
   content: string;
-  source_type: string;
-  source_interview_id: string | null;
+  sourceType: string;
+  sourceInterviewId: string | null;
   tags: string[];
-  created_at: string;
-  relevance_score?: number;
+  createdAt: string;
+  relevanceScore?: number;
 }
 
 export default function KnowledgePage() {
@@ -83,9 +83,9 @@ export default function KnowledgePage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-medium text-surface-900 dark:text-surface-100">{item.title}</h3>
-            {showRelevance && item.relevance_score && (
+            {showRelevance && item.relevanceScore && (
               <Badge variant="success">
-                関連度 {Math.round(item.relevance_score * 100)}%
+                関連度 {Math.round(item.relevanceScore * 100)}%
               </Badge>
             )}
           </div>
@@ -95,11 +95,11 @@ export default function KnowledgePage() {
           <div className="flex items-center gap-4 text-xs text-surface-400">
             <span className="flex items-center gap-1">
               <MessageSquare className="w-3 h-3" />
-              {getSourceLabel(item.source_type)}
+              {getSourceLabel(item.sourceType)}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {format(new Date(item.created_at), 'yyyy/MM/dd', { locale: ja })}
+              {format(new Date(item.createdAt), 'yyyy/MM/dd', { locale: ja })}
             </span>
             {item.tags.length > 0 && (
               <span className="flex items-center gap-1">

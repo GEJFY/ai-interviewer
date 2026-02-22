@@ -80,6 +80,22 @@ export const api = {
       const response = await apiClient.post('/auth/sso/azure', { id_token: idToken });
       return response.data;
     },
+    changePassword: async (currentPassword: string, newPassword: string) => {
+      await apiClient.post('/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+    },
+    listUsers: async () => {
+      const response = await apiClient.get('/auth/admin/users');
+      return response.data;
+    },
+    adminResetPassword: async (userId: string, newPassword: string) => {
+      await apiClient.post('/auth/admin/reset-password', {
+        user_id: userId,
+        new_password: newPassword,
+      });
+    },
   },
 
   // Projects

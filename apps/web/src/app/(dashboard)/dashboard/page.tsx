@@ -12,8 +12,10 @@ import {
   Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { USE_CASE_LABELS } from '@/lib/constants';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/ui/empty-state';
 import api from '@/lib/api-client';
 
@@ -28,6 +30,16 @@ export default function DashboardPage() {
     queryFn: () => api.tasks.list({ pageSize: 5 }),
   });
 
+  const { data: interviews } = useQuery({
+    queryKey: ['interviews', { status: 'completed' }],
+    queryFn: () => api.interviews.list({ status: 'completed' }),
+  });
+
+  const { data: reports } = useQuery({
+    queryKey: ['reports'],
+    queryFn: () => api.reports.list(),
+  });
+
   const stats = [
     {
       label: 'アクティブ案件',
@@ -35,6 +47,7 @@ export default function DashboardPage() {
       icon: FolderKanban,
       color: 'text-accent-500',
       bgColor: 'bg-accent-500/10',
+      tooltip: '現在進行中のGRC案件数です',
     },
     {
       label: '進行中タスク',
@@ -42,39 +55,35 @@ export default function DashboardPage() {
       icon: ClipboardList,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
+      tooltip: 'インタビュー等の実施待ちタスク数です',
     },
     {
       label: '完了インタビュー',
-      value: 0,
+      value: interviews?.total || 0,
       icon: CheckCircle2,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10',
+      tooltip: '完了済みのAIインタビュー件数です',
     },
     {
       label: '生成レポート',
-      value: 0,
+      value: reports?.total || 0,
       icon: FileText,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
+      tooltip: 'AIが生成したレポートの総数です',
     },
   ];
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'おはようございます';
-    if (hour < 18) return 'こんにちは';
-    return 'お疲れさまです';
-  };
-
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* 挨拶 */}
+      {/* ヘッダー */}
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">
-          {getGreeting()}
+          GRC ダッシュボード
         </h1>
         <p className="text-surface-500 dark:text-surface-400 mt-1">
-          インタビュー業務の概要を確認できます
+          ガバナンス・リスク・コンプライアンス業務の進捗を一元管理します
         </p>
       </div>
 
@@ -87,7 +96,9 @@ export default function DashboardPage() {
                 <stat.icon className={cn('w-5 h-5', stat.color)} />
               </div>
               <div>
-                <p className="text-sm text-surface-500 dark:text-surface-400">{stat.label}</p>
+                <Tooltip content={stat.tooltip} position="bottom">
+                  <p className="text-sm text-surface-500 dark:text-surface-400 cursor-help border-b border-dashed border-surface-300 dark:border-surface-600">{stat.label}</p>
+                </Tooltip>
                 <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">{stat.value}</p>
               </div>
             </div>
@@ -127,11 +138,11 @@ export default function DashboardPage() {
                         {project.name}
                       </p>
                       <p className="text-sm text-surface-500 dark:text-surface-400">
-                        {project.client_name || '—'}
+                        {project.clientName || '—'}
                       </p>
                     </div>
                     <span className="text-sm text-surface-400">
-                      {project.task_count} タスク
+                      {project.taskCount} タスク
                     </span>
                   </Link>
                 ))
@@ -174,7 +185,7 @@ export default function DashboardPage() {
                         {task.name}
                       </p>
                       <p className="text-sm text-surface-500 dark:text-surface-400">
-                        {task.use_case_type}
+                        {USE_CASE_LABELS[task.useCaseType] || task.useCaseType}
                       </p>
                     </div>
                     <Badge
@@ -186,7 +197,7 @@ export default function DashboardPage() {
                           : 'default'
                       }
                     >
-                      {task.status}
+                      {task.status === 'pending' ? '未着手' : task.status === 'in_progress' ? '進行中' : task.status === 'completed' ? '完了' : task.status}
                     </Badge>
                   </Link>
                 ))
@@ -223,11 +234,11 @@ export default function DashboardPage() {
                 <span className="font-medium">テンプレート管理</span>
               </Link>
               <Link
-                href="/interviews"
+                href="/tasks"
                 className="flex items-center gap-3 px-4 py-3 rounded-xl border border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
               >
                 <MessageSquare className="w-5 h-5 text-surface-400" />
-                <span className="font-medium">インタビュー開始</span>
+                <span className="font-medium">タスクからインタビュー開始</span>
               </Link>
             </div>
           </Card>

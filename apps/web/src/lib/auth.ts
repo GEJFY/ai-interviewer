@@ -7,8 +7,8 @@ export interface User {
   email: string;
   name: string;
   role: string;
-  organization_id: string | null;
-  mfa_enabled: boolean;
+  organizationId: string | null;
+  mfaEnabled: boolean;
 }
 
 interface AuthState {

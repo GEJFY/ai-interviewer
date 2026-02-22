@@ -7,8 +7,11 @@ GRCアドバイザリー業務向けAIインタビューシステム
 - **AIによる対話形式インタビュー** - 質問自動生成、フォローアップ質問
 - **リアルタイム音声認識・合成** - STT/TTS（Azure, AWS, GCP対応）
 - **多言語対応** - 日本語・英語・中国語・韓国語、リアルタイム同時通訳
-- **レポート自動生成** - 業務記述書、RCM、監査調書、要約レポート
+- **レポート自動生成** - 業務記述書、RCM、監査調書、意識調査分析、リスクヒートマップ等8種類
 - **ナレッジマネジメント** - RAG検索、ベクトル埋め込み、類似インタビュー検索
+- **ユーザー管理** - パスワード変更、管理者によるユーザー管理・パスワードリセット
+- **AIインタビュー設定** - タスク/テンプレート単位でのAIパラメータ調整（温度、最大質問数等）
+- **ローカルLLM対応** - Ollama連携によるクラウドAPIキー不要の開発・テスト環境
 - **エンタープライズ機能** - SSO認証（Azure AD, Okta）、監査ログ
 
 ## 技術スタック (2026年最新版)
@@ -85,8 +88,8 @@ cp .env.example .env
 
 ```env
 # Database
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/aiinterviewer
-REDIS_URL=redis://localhost:6379
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5434/aiinterviewer
+REDIS_URL=redis://localhost:6380
 
 # AI Provider (選択)
 AI_PROVIDER=azure  # azure | aws | gcp | local
@@ -158,9 +161,9 @@ pnpm start
 | 起動方法                    | Backend (ホスト) | Backend (コンテナ内部) | Frontend (ホスト) | 説明             |
 | --------------------------- | ---------------- | ---------------------- | ----------------- | ---------------- |
 | Direct (uvicorn / pnpm dev) | 8000             | -                      | 3000              | ローカル直接起動 |
-| Docker (docker-compose up)  | 8001             | 8000                   | 3001              | Docker経由の起動 |
+| Docker (docker-compose up)  | 8100             | 8000                   | 3100              | Docker経由の起動 |
 
-> **注**: Docker環境ではホストの `BACKEND_PORT` (デフォルト8001) がコンテナ内部の8000にマッピングされます。
+> **注**: Docker環境ではホストの `BACKEND_PORT` (デフォルト8100) がコンテナ内部の8000にマッピングされます。他のローカルサービスとのポート競合を避けるため、デフォルトポートを8100/3100に設定しています。
 
 Direct 起動の場合:
 
@@ -170,9 +173,9 @@ Direct 起動の場合:
 
 Docker 起動の場合:
 
-- Frontend: <http://localhost:3001>
-- Backend API: <http://localhost:8001>
-- API Docs: <http://localhost:8001/api/docs>
+- Frontend: <http://localhost:3100>
+- Backend API: <http://localhost:8100>
+- API Docs: <http://localhost:8100/api/docs>
 
 ## プロジェクト構造
 
@@ -228,6 +231,9 @@ ai-interviewer/
 | `/api/v1/auth/logout` | POST | ログアウト |
 | `/api/v1/auth/sso/azure` | POST | Azure AD SSO認証 |
 | `/api/v1/auth/me` | GET | 現在のユーザー情報 |
+| `/api/v1/auth/change-password` | POST | パスワード変更 |
+| `/api/v1/auth/admin/users` | GET | ユーザー一覧（管理者のみ） |
+| `/api/v1/auth/admin/reset-password` | POST | パスワードリセット（管理者のみ） |
 
 ### Projects (`/api/v1/projects`)
 
@@ -503,7 +509,7 @@ docker-compose -f docker-compose.prod.yml up -d --scale backend=3
 docker-compose up -d
 
 # ブラウザでアクセス
-# http://localhost:3001
+# http://localhost:3100
 ```
 
 ### デモログイン

@@ -24,13 +24,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  client_name: string | null;
+  clientName: string | null;
   status: string;
-  start_date: string | null;
-  end_date: string | null;
-  task_count: number;
-  completed_task_count: number;
-  created_at: string;
+  startDate: string | null;
+  endDate: string | null;
+  taskCount: number;
+  completedTaskCount: number;
+  createdAt: string;
 }
 
 export default function ProjectsPage() {
@@ -41,7 +41,7 @@ export default function ProjectsPage() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    client_name: '',
+    clientName: '',
   });
 
   const { data, isLoading } = useQuery({
@@ -55,7 +55,7 @@ export default function ProjectsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setIsCreateModalOpen(false);
-      setNewProject({ name: '', description: '', client_name: '' });
+      setNewProject({ name: '', description: '', clientName: '' });
       toast.success('案件を作成しました');
     },
     onError: () => {
@@ -65,7 +65,7 @@ export default function ProjectsPage() {
 
   const filteredProjects = data?.items?.filter((project: Project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.client_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    project.clientName?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
   const handleCreateProject = () => {
@@ -73,7 +73,7 @@ export default function ProjectsPage() {
     createMutation.mutate({
       name: newProject.name,
       description: newProject.description || undefined,
-      clientName: newProject.client_name || undefined,
+      clientName: newProject.clientName || undefined,
     });
   };
 
@@ -144,10 +144,10 @@ export default function ProjectsPage() {
                   {project.name}
                 </h3>
 
-                {project.client_name && (
+                {project.clientName && (
                   <p className="text-sm text-surface-500 dark:text-surface-400 mb-3 flex items-center gap-1">
                     <Users className="w-4 h-4" />
-                    {project.client_name}
+                    {project.clientName}
                   </p>
                 )}
 
@@ -159,22 +159,22 @@ export default function ProjectsPage() {
 
                 <div className="flex items-center justify-between text-sm text-surface-400">
                   <span>
-                    {project.completed_task_count}/{project.task_count} タスク完了
+                    {project.completedTaskCount}/{project.taskCount} タスク完了
                   </span>
-                  {project.start_date && (
+                  {project.startDate && (
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      {format(new Date(project.start_date), 'M/d', { locale: ja })}
+                      {format(new Date(project.startDate), 'M/d', { locale: ja })}
                     </span>
                   )}
                 </div>
 
-                {project.task_count > 0 && (
+                {project.taskCount > 0 && (
                   <div className="mt-4 h-1.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-accent-400 to-accent-500 rounded-full transition-all"
                       style={{
-                        width: `${(project.completed_task_count / project.task_count) * 100}%`,
+                        width: `${(project.completedTaskCount / project.taskCount) * 100}%`,
                       }}
                     />
                   </div>
@@ -215,9 +215,9 @@ export default function ProjectsPage() {
           <Input
             label="クライアント名"
             placeholder="例：株式会社〇〇"
-            value={newProject.client_name}
+            value={newProject.clientName}
             onChange={(e) =>
-              setNewProject({ ...newProject, client_name: e.target.value })
+              setNewProject({ ...newProject, clientName: e.target.value })
             }
           />
           <div>

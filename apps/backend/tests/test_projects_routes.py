@@ -5,6 +5,7 @@
 """
 
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -32,20 +33,20 @@ def _make_user(role="manager", org_id="org-1"):
 
 
 def _make_project(project_id="proj-1", org_id="org-1", status_val=ProjectStatus.ACTIVE):
-    """テスト用プロジェクトモック。"""
-    proj = MagicMock()
-    proj.id = project_id
-    proj.name = "Test Project"
-    proj.description = "Description"
-    proj.client_name = "Client A"
-    proj.start_date = None
-    proj.end_date = None
-    proj.organization_id = org_id
-    proj.created_by = "user-1"
-    proj.status = status_val
-    proj.created_at = datetime(2025, 1, 1)
-    proj.updated_at = datetime(2025, 1, 1)
-    return proj
+    """テスト用プロジェクトモック（SimpleNamespaceでcamelCase属性の自動生成を防止）。"""
+    return SimpleNamespace(
+        id=project_id,
+        name="Test Project",
+        description="Description",
+        client_name="Client A",
+        start_date=None,
+        end_date=None,
+        organization_id=org_id,
+        created_by="user-1",
+        status=status_val,
+        created_at=datetime(2025, 1, 1),
+        updated_at=datetime(2025, 1, 1),
+    )
 
 
 def _create_app(user):
