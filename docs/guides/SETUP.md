@@ -415,16 +415,16 @@ curl http://localhost:11434/api/tags
 | 起動方法 | Backend | Frontend |
 | --------- | --------- | ---------- |
 | 直接起動（uvicorn / pnpm dev） | `http://localhost:8000` | `http://localhost:3000` |
-| Docker（docker-compose up） | `http://localhost:8001` | `http://localhost:3001` |
+| Docker（docker-compose up） | `http://localhost:8100` | `http://localhost:3100` |
 
-> **なぜポートが違うの？**: Docker経由で起動した場合、`docker-compose.yml` のポートマッピング設定により、ホスト側のポートが `8001`（Backend）と `3001`（Frontend）になります。直接起動の場合は、アプリケーションがそのまま `8000` / `3000` で待ち受けます。
+> **なぜポートが違うの？**: Docker経由で起動した場合、`docker-compose.yml` のポートマッピング設定により、ホスト側のポートが `8100`（Backend）と `3100`（Frontend）になります。他のローカルサービス（Next.js、FastAPIなど）とのポート競合を避けるため、デフォルトポートをずらしています。直接起動の場合は、アプリケーションがそのまま `8000` / `3000` で待ち受けます。
 
 ### 8.2 全サービスの状態確認
 
 | サービス | URL | 状態確認 |
 |---------|-----|---------|
-| PostgreSQL | localhost:5432 | `docker-compose ps` で確認 |
-| Redis | localhost:6379 | `docker-compose ps` で確認 |
+| PostgreSQL | localhost:5434 | `docker-compose ps` で確認 |
+| Redis | localhost:6380 | `docker-compose ps` で確認 |
 | Backend API | http://localhost:8000/api/v1/health | ブラウザでアクセス |
 | API Docs | http://localhost:8000/api/docs | ブラウザでアクセス |
 | Frontend | http://localhost:3000 | ブラウザでアクセス |
@@ -475,7 +475,7 @@ docker-compose up -d
 python -m grc_backend.demo seed
 
 # デモデータの状態確認
-curl http://localhost:8001/api/v1/demo/status
+curl http://localhost:8100/api/v1/demo/status
 ```
 
 デモ用ログインアカウント（パスワード: `demo1234`）:
