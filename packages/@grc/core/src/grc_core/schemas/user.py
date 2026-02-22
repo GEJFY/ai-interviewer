@@ -13,7 +13,7 @@ class UserBase(BaseSchema):
 
     email: EmailStr
     name: str
-    role: UserRole = UserRole.VIEWER
+    role: UserRole = UserRole.MANAGER
 
 
 class UserCreate(UserBase):
